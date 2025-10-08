@@ -18,7 +18,7 @@ Imports:
     openxlsx2,
     tibble,
     DBI,
-    seatrackR,
+    seatrackR
     tidyr,
     flextable
 Suggests: 
@@ -26,6 +26,6 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0)
 Remotes:
-    NINAnor/seatrack-db/seatrackR
+    seatrackR=github::NINAnor/seatrack-db/seatrackR
 VignetteBuilder: knitr
 Config/testthat/edition: 3
