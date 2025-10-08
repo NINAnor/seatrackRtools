@@ -8,7 +8,14 @@
 <url><loc>https://ninanor.github.io/seatrack-metadata/index.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/add_loggers_from_startup.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/append_encounter_data.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/create_appendix_table.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/export_appendix_table_excel.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/field_plan_check_locations.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/field_plan_combine_locations.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/get_all_locations.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/get_clean_field_plan.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/get_field_plan.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/get_history_table.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/get_master_import_path.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/get_startup_paths.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/get_unfinished_session.html</loc></url>

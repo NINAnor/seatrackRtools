@@ -3,7 +3,7 @@ pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   introduction: introduction.html
-last_built: 2025-10-01T13:29Z
+last_built: 2025-10-08T06:20Z
 urls:
   reference: https://ninanor.github.io/seatrack-metadata/reference
   article: https://ninanor.github.io/seatrack-metadata/articles
