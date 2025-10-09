@@ -319,7 +319,7 @@ get_logger_from_metadata <- function(logger_id, all_master_import_list = NULL) {
             return(list(path = import_sheet$path, data = data_rows, list_index = i, row_index = logger_idx))
         }
     })
-    search_result_nonull <- search_result[[which(!sapply(search_result, is.null))]]
+    search_result_nonull <- search_result[which(!sapply(search_result, is.null))]
     return(search_result_nonull)
 }
 
@@ -699,7 +699,7 @@ add_loggers_from_startup <- function(master_startup) {
 #' unfinished_session <- get_unfinished_session(master_startup, "Logger123", as.Date("2023-01-15"))
 #' }
 #' @export
-#' @concept startups loggers
+#' @concept loggers
 get_unfinished_session <- function(master_startup, logger_id, logger_download_stop_date) {
     # Find session in master_startup
     # Get logger ID unfinished sessions
@@ -754,6 +754,76 @@ get_unfinished_session <- function(master_startup, logger_id, logger_download_st
     unfinished_summary <- master_startup_unfinished[, c("logger_serial_no", "starttime_gmt", "intended_species", "intended_location")]
     log_success("Unfinished session:\n", paste(capture.output(print(unfinished_summary, n = nrow(unfinished_summary)))[c(-1, -3)], collapse = "\n"))
     return(list(index = unfinished_indices, session = master_startup_unfinished))
+}
+
+#' Modify logger status to end a session
+#'
+#' Function to modify a logger status, setting download_date, shutdown_date and logger status
+#'
+#' @param logger_id logger serial number
+#' @param logger_status Character string giving the new logger `download_type`
+#' @param downloaded_by Character string containing the name of the user who is downloading the data. If NULL this will not be modified
+#' @param download_date Date to set the download_date/shutdown_date to. If NULL, this will be today's date.
+#' @param comment Optional comment to append to the existing comment string.
+#' @param master_sheet master sheet in which the logger will be found. If not provided, all sheets will be checked.
+#' @param all_master_sheet If master_sheet is not provided, all sheets will be checked. To save these being loaded every time, they can be provided using `load_all_master_import(combine = FALSE)`
+#'
+#' @return modified version of master_sheet
+#' @export
+#' @concept loggers
+end_logger_session <- function(logger_id, logger_status, downloaded_by = "", download_date = NULL, comment = "", master_sheet = NULL, all_master_sheet = NULL) {
+    if (is.null(download_date)) {
+        download_date <- as.Date(Sys.time())
+    }
+    new_data <- list(download_type = logger_status, downloaded_by = downloaded_by, download_date = download_date, shutdown_date = shutdown_date, comment = comment)
+    new_master_sheet <- modify_logger_status(logger_id, new_data, master_sheet, all_master_sheet)
+    return(new_master_sheet)
+}
+
+#' Modify logger status
+#'
+#' Function to modify a logger status, such as download_date and shutdown_date if the logger session is open.
+#'
+#' @param logger_id logger serial number
+#' @param new_data named list of new data to be inserted, where the name of each element corresponds to a column in the sheet.
+#' @param master_sheet master sheet in which the logger will be found. If not provided, all sheets will be checked.
+#' @param all_master_sheet If master_sheet is not provided, all sheets will be checked. To save these being loaded every time, they can be provided using `load_all_master_import(combine = FALSE)`
+#'
+#' @return modified version of master_sheet
+#' @export
+#' @concept loggers
+modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NULL, all_master_sheet = NULL) {
+    if (is.null(master_sheet)) {
+        if (is.null(all_master_sheet)) {
+            all_master_sheet <- load_all_master_import(combine = FALSE)
+        }
+        logger_search <- get_logger_from_metadata(logger_id, all_master_sheet)
+        if (length(logger_search) == 0) {
+            stop(paste("No master sheet for logger", logger_id))
+        }
+        master_sheet <- all_master_sheet[[logger_search[[1]]$list_index]]
+    }
+    if (!"download_date" %in% names(new_data)) {
+        download_date <- as.Date(Sys.time())
+    }
+    # Check for an open session
+    unfinished_session <- get_unfinished_session(master_sheet$data$STARTUP_SHUTDOWN, logger_id, download_date)
+    if (is.null(unfinished_session)) {
+        stop(paste("No unfinished session for logger", logger_id))
+    }
+    if ("comment" %in% names(new_data)) {
+        master_sheet$data$STARTUP_SHUTDOWN <- set_comments(master_sheet$data$STARTUP_SHUTDOWN, unfinished_session$index, new_data$comment)
+    }
+    for (col_name in names(new_data)[names(new_data) != "comment"]) {
+        master_sheet$data$STARTUP_SHUTDOWN <- set_master_startup_value(
+            master_sheet$data$STARTUP_SHUTDOWN,
+            unfinished_session$index,
+            col_name,
+            new_data[[col_name]]
+        )
+    }
+
+    return(master_sheet)
 }
 
 #' Get All Locations
