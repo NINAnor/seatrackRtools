@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   appendix_table: appendix_table.html
   introduction: introduction.html
-last_built: 2025-10-09T14:25Z
+last_built: 2025-10-14T06:29Z
 urls:
   reference: https://ninanor.github.io/seatrack-metadata/reference
   article: https://ninanor.github.io/seatrack-metadata/articles
