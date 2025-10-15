@@ -19,7 +19,9 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/appendix_table.html">Appendix table</a></li>
+    <li><a class="dropdown-item" href="../articles/handling_loggers.html"> Handling loggers</a></li>
     <li><a class="dropdown-item" href="../articles/introduction.html">Example script</a></li>
+    <li><a class="dropdown-item" href="../articles/nonresponsive_loggers.html"> Nonresponsive loggers</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -49,7 +51,8 @@
 <span>  download_date <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  comment <span class="op">=</span> <span class="st">""</span>,</span>
 <span>  master_sheet <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  all_master_sheet <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  all_master_sheet <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  nonresponsive_list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -84,10 +87,14 @@
 <dt id="arg-all-master-sheet">all_master_sheet<a class="anchor" aria-label="anchor" href="#arg-all-master-sheet"></a></dt>
 <dd><p>If master_sheet is not provided, all sheets will be checked. To save these being loaded every time, they can be provided using <code>load_all_master_import(combine = FALSE)</code></p></dd>
 
+
+<dt id="arg-nonresponsive-list">nonresponsive_list<a class="anchor" aria-label="anchor" href="#arg-nonresponsive-list"></a></dt>
+<dd><p>A named list of tibbles, each containing nonresponsive logger data for different manufacturers.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>modified version of master_sheet</p>
+    <p>list containing modified version of master_sheet, modified version of nonresponsive_list</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

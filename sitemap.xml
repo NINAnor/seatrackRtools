@@ -3,12 +3,15 @@
 <url><loc>https://ninanor.github.io/seatrack-metadata/LICENSE-text.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/LICENSE.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/articles/appendix_table.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/articles/handling_loggers.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/articles/index.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/articles/introduction.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/articles/nonresponsive_loggers.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/authors.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/index.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/add_loggers_from_startup.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/append_encounter_data.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/append_to_nonresponsive.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/create_appendix_table.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/end_logger_session.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/export_appendix_table_excel.html</loc></url>
@@ -32,6 +35,7 @@
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/load_partner_metadata.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/load_sheets_as_list.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/modify_logger_status.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/nonresponsive_from_master.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/save_master_sheet.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/save_nonresponsive.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/seatrackRmetadata-package.html</loc></url>
