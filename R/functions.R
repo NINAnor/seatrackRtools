@@ -50,8 +50,10 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #' Get the path of the master import file
 #'
 #' This function constructs a path to the master import file for a given colony.
+#' On finding the path to a colony's master import sheets, it will be stored in the internal environment for later use.
 #'
 #' @param colony A character string specifying the name of the colony.
+#' @param use_stored If TRUE, use a pre-existing path, rather than searching for a new one. Defaults to TRUE.
 #' @return A character string representing the path to the master import file.
 #' @examples
 #' \dontrun{
@@ -59,9 +61,12 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #' }
 #' @export
 #' @concept metadata
-get_master_import_path <- function(colony) {
+get_master_import_path <- function(colony, use_stored = TRUE) {
     if (is.null(the$sea_track_folder)) {
         stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
+    }
+    if (use_stored && colony %in% names(the$master_sheet_paths)) {
+        return(the$master_sheet_paths[[colony]])
     }
     # Get the path to the master import folder
     master_import_folder <- file.path(the$sea_track_folder, "Database", "Imports_Metadata")
@@ -113,12 +118,13 @@ get_master_import_path <- function(colony) {
 
     if (length(colony_file_name) == 0) {
         log_warn("Master import file for colony '", colony, "' not found")
+        the$master_sheet_paths[[colony]] <- NULL
         return(NULL)
     }
 
     full_colony_file_path <- file.path(master_import_folder, colony_file_name)
     log_success("Master import file for colony '", colony, "' found at: ", full_colony_file_path)
-
+    the$master_sheet_paths[[colony]] <- full_colony_file_path
     return(full_colony_file_path)
 }
 
@@ -225,48 +231,37 @@ load_sheets_as_list <- function(file_path, sheets, skip = 0, force_date = TRUE, 
 #'
 #' This function loads the record of unresponsive loggers. If the filepath provided does not exist, it initialises new sheets.
 #' @param file_path String indicating from where the file should be loaded from.
-#' @param manufacturer String indicating name of the manufacturer. Either "Lotek", "Migrate Technology" or "Pathtrack".
 #' @return A tibble containing the unresponsive logger data.
 #'
 #' @concept nonresponsive
-load_nonresponsive_sheet <- function(file_path, manufacturer = c("Lotek", "Migrate Technology", "PathTrack")) {
-    manufacturer <- match.arg(manufacturer)
+load_nonresponsive_sheet <- function(file_path) {
     loaded_sheet <- NULL
     # Check if file already exists
     if (file.exists(file_path)) {
         # If so, load it
         loaded_sheet <- read_excel(file_path)
     } else {
-        if (manufacturer == "Lotek" || manufacturer == "PathTrack") {
-            loaded_sheet <- tibble(
-                logger_serial_no = character(),
-                logger_model = character(),
-                producer = character(),
-                production_year = numeric(),
-                project = character(),
-                starttime_gmt = as.POSIXct(character()),
-                download_type = character(),
-                download_date = as.Date(character()),
-                comment = character()
-            )
-        } else if (manufacturer == "Migrate Technology") {
-            loaded_sheet <- tibble(
-                logger_serial_no = character(),
-                logger_model = character(),
-                producer = character(),
-                production_year = numeric(),
-                project = character(),
-                starttime_gmt = as.POSIXct(character()),
-                logging_mode = numeric(),
-                days_delayed = numeric(),
-                programmed_gmt_time = as.POSIXct(character()),
-                download_type = character(),
-                download_date = as.Date(character()),
-                comment = character(),
-                priority = character()
-            )
-        } 
-    }
+
+        loaded_sheet <- tibble(
+            logger_serial_no = character(),
+            logger_model = character(),
+            producer = character(),
+            production_year = numeric(),
+            project = character(),
+            starttime_gmt = as.POSIXct(character()),
+            logging_mode = numeric(),
+            days_delayed = numeric(),
+            programmed_gmt_time = as.POSIXct(character()),
+            download_type = character(),
+            download_date = as.Date(character()),
+            intended_species = character(),
+            intended_location = character(),
+            comment = character(),
+            priority = character(),
+            sent = as.POSIXct(character())
+        )
+        }
+
     return(loaded_sheet)
 }
 
@@ -290,7 +285,7 @@ load_nonresponsive <- function(file_paths, manufacturers) {
         stop("file_paths and manufacturers must be the same length.")
     }
     sheets_list <- lapply(seq_along(file_paths), function(i) {
-        load_nonresponsive_sheet(file_paths[i], manufacturers[i])
+        load_nonresponsive_sheet(file_paths[i])
     })
     names(sheets_list) <- tolower(manufacturers)
     return(sheets_list)
@@ -840,20 +835,17 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
             starttime_gmt = nonresponsive_for_manufacturer$starttime_gmt,
             download_type = "Nonresponsive",
             download_date = nonresponsive_for_manufacturer$download_date,
-            comment = nonresponsive_for_manufacturer$comment
-        )
+            comment = nonresponsive_for_manufacturer$comment,
+            intended_species = nonresponsive_for_manufacturer$intended_species,
+            intended_location = nonresponsive_for_manufacturer$intended_location,
+            logging_mode = nonresponsive_for_manufacturer$logging_mode,
+            days_delayed = nonresponsive_for_manufacturer$days_delayed,
+            programmed_gmt_time = nonresponsive_for_manufacturer$programmed_gmt_time,
+            priority = NA,
+            sent = NA)
 
-        if (manufacturer == "migrate technology") {
-            new_nonresponsive$logging_mode <- nonresponsive_for_manufacturer$logging_mode
-            new_nonresponsive$days_delayed <- nonresponsive_for_manufacturer$days_delayed
-            new_nonresponsive$programmed_gmt_time <- nonresponsive_for_manufacturer$programmed_gmt_time
-            new_nonresponsive$priority <- NA
-            # reorder columns
-            new_nonresponsive <- new_nonresponsive[, names(nonresponsive_list[[manufacturer]])]
-        }
+        nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
 
-        nonresponsive_list[[manufacturer]] <- rbind(nonresponsive_list[[manufacturer]], new_nonresponsive)
-        nonresponsive_list[[manufacturer]] <- nonresponsive_list[[manufacturer]][!duplicated(nonresponsive_list[[manufacturer]]$logger_serial_no), ]
     }
 
     return(list(master_sheet = master_sheet, nonresponsive_list = nonresponsive_list))
@@ -868,6 +860,8 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
 #' @param nonresponsive_list A list containing tibbles of unresponsive loggers for different manufacturers.
 #' The name of the list element should match the producer name in master_startup (e.g., "Lotek", "MigrateTech").
 #' This can be generated with the `load_nonresponsive` function
+#' @param start_date Date or character string specifying the start date for considering nonresponsive loggers. If NULL, defaults to January 1st of the current year.
+#' @param end_date Date or character string specifying the end date for considering nonresponsive loggers. If NULL, defaults to Inf (no end date).
 #'
 #' @return Updated list of nonresponsive logger sheets
 #' @concept nonresponsive
@@ -901,21 +895,51 @@ nonresponsive_from_master <- function(all_metadata_combined, nonresponsive_list,
             starttime_gmt = nonresponsive_for_manufacturer$starttime_gmt,
             download_type = "Nonresponsive",
             download_date = nonresponsive_for_manufacturer$download_date,
-            comment = nonresponsive_for_manufacturer$comment
+            comment = nonresponsive_for_manufacturer$comment, 
+            intended_species = nonresponsive_for_manufacturer$intended_species,
+            intended_location = nonresponsive_for_manufacturer$intended_location,
+            logging_mode = nonresponsive_for_manufacturer$logging_mode,
+            days_delayed = nonresponsive_for_manufacturer$days_delayed,
+            programmed_gmt_time = nonresponsive_for_manufacturer$programmed_gmt_time,
+            priority = NA,
+            sent = NA
         )
-        if (manufacturer == "migrate technology") {
-            new_nonresponsive$logging_mode <- nonresponsive_for_manufacturer$logging_mode
-            new_nonresponsive$days_delayed <- nonresponsive_for_manufacturer$days_delayed
-            new_nonresponsive$programmed_gmt_time <- nonresponsive_for_manufacturer$programmed_gmt_time
-            new_nonresponsive$priority <- NA
-            # reorder columns
-            new_nonresponsive <- new_nonresponsive[, names(nonresponsive_list[[manufacturer]])]
-        }
-
-        nonresponsive_list[[manufacturer]] <- rbind(nonresponsive_list[[manufacturer]], new_nonresponsive)
-        nonresponsive_list[[manufacturer]] <- nonresponsive_list[[manufacturer]][!duplicated(nonresponsive_list[[manufacturer]]$logger_serial_no), ]
-        log_success("Added ", nrow(new_nonresponsive), " nonresponsive loggers to ", manufacturer, " sheet.")
+        nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
     }
+    return(nonresponsive_list)
+}
+
+#' Append to nonresponsive list
+#'
+#' This function appends to the approrpiate sheet in a list of nonresponsive sheets. 
+#' It will check for duplicate logger IDs and ensure column ordering matches.
+#'
+#' @param nonresponsive_list A list containing tibbles of unresponsive loggers for different manufacturers.
+#' The name of the list element should match the producer name in master_startup (e.g., "Lotek", "MigrateTech").
+#' This can be generated with the `load_nonresponsive` function
+#' @param new_nonresponsive Tibble containing new rows to be appended.
+#' @param manufacturer Character string of name of manufacturer whose nonresponsive sheet is to be appended to.
+#' @return Modified nonresponsive_list
+#' @concept nonresponsive
+#' @export
+append_to_nonresponsive <- function(nonresponsive_list, new_nonresponsive, manufacturer) {
+    # reorder columns
+
+    current_rows <- nonresponsive_list[[manufacturer]]
+    missing_cols <- setdiff(names(current_rows), names(new_nonresponsive))
+    if (length(missing_cols) > 0) {
+        for (col in missing_cols) {
+            new_nonresponsive[[col]] <- NA
+        }
+    }
+    new_nonresponsive <- new_nonresponsive[, names(current_rows)]
+
+
+    all_rows <- rbind(current_rows, new_nonresponsive)
+    all_rows_non_dup <- all_rows[!duplicated(all_rows$logger_serial_no), ]
+    added_rows <- new_nonresponsive[!new_nonresponsive$logger_serial_no %in% current_rows$logger_serial_no, ]
+    nonresponsive_list[[manufacturer]] <- all_rows_non_dup
+    log_success("Added ", nrow(added_rows), " nonresponsive loggers to ", manufacturer, " sheet.")
     return(nonresponsive_list)
 }
 
@@ -1150,30 +1174,28 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
                 next
             }
 
+            current_startup <- master_startup[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no), ]
 
             new_nonresponsive <- tibble(
                 logger_serial_no = nonresponsive_for_manufacturer$logger_id,
-                logger_model = master_startup$logger_model[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
-                producer = master_startup$producer[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
-                production_year = master_startup$production_year[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
-                project = master_startup$project[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
-                starttime_gmt = master_startup$starttime_gmt[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)],
+                logger_model = current_startup$logger_model,
+                producer = current_startup$producer,
+                production_year = current_startup$production_year,
+                project = current_startup$project,
+                starttime_gmt = current_startup$starttime_gmt,
                 download_type = "Nonresponsive",
                 download_date = nonresponsive_for_manufacturer$`download / stop_date`,
-                comment = nonresponsive_for_manufacturer$comment
-            )
-            if (manufacturer == "migrate technology") {
-                new_nonresponsive$logging_mode <- master_startup$logging_mode[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)]
-                new_nonresponsive$days_delayed <- master_startup$days_delayed[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)]
-                new_nonresponsive$programmed_gmt_time <- master_startup$programmed_gmt_time[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no)]
-                new_nonresponsive$priority <- NA
-                # reorder columns
-                new_nonresponsive <- new_nonresponsive[, names(nonresponsive_list[[manufacturer]])]
-            }
+                comment = nonresponsive_for_manufacturer$comment,
+                intended_species = nonresponsive_for_manufacturer$intended_species,
+                intended_location = nonresponsive_for_manufacturer$intended_location,
+                logging_mode = current_startup$logging_mode,
+                days_delayed = current_startup$days_delayed,
+                programmed_gmt_time = current_startup$programmed_gmt_time,
+                sent = NA,
+                priority = NA)
 
-            nonresponsive_list[[manufacturer]] <- rbind(nonresponsive_list[[manufacturer]], new_nonresponsive)
-            nonresponsive_list[[manufacturer]] <- nonresponsive_list[[manufacturer]][!duplicated(nonresponsive_list[[manufacturer]]$logger_serial_no), ]
-            log_success("Added ", nrow(new_nonresponsive), " nonresponsive loggers to ", manufacturer, " sheet.")
+
+            nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
         }
     }
 
@@ -1264,7 +1286,7 @@ save_nonresponsive <- function(file_paths, nonresponsive_list) {
         stop("nonresponsive_list and file_paths must be the same length.")
     }
     for (i in seq_along(nonresponsive_list)) {
-        openxlsx2::write_xlsx(nonresponsive_list[[i]], file_paths[i], first_row = TRUE, first_col = TRUE, widths = "auto", na.strings = "")
+        openxlsx2::write_xlsx(nonresponsive_list[[i]], file_paths[i], first_row = TRUE, first_active_col = 5, widths = "auto", na.strings = "")
         log_success("Saved nonresponsive sheet to: ", file_paths[i])
     }
 }

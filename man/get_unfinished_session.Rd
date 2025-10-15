@@ -2,8 +2,7 @@
 % Please edit documentation in R/functions.R
 \name{get_unfinished_session}
 \alias{get_unfinished_session}
-\title{Find a logger's unfinished session in the master startup data frame
-This function finds the unfinished session for a given logger in the master startup data frame.}
+\title{Find a logger's unfinished session in the master startup data frame}
 \usage{
 get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
 }
@@ -18,7 +17,6 @@ get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
 A list containing the index of the unfinished session and the session data frame, or NULL if no unfinished session is found.
 }
 \description{
-Find a logger's unfinished session in the master startup data frame
 This function finds the unfinished session for a given logger in the master startup data frame.
 }
 \examples{

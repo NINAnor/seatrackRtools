@@ -174,19 +174,10 @@ describe("Data Manipulation Operations", {
     file.remove(file_path)
   })
 
-  test_that("load_nonresponsive initializes empty sheet for Lotek if file missing", {
+
+  test_that("load_nonresponsive initializes empty sheet if file missing", {
     file_path <- file.path(tmp_dir, "missing_lotek_unresponsive.xlsx")
     result <- load_nonresponsive(file_path, "Lotek")$lotek
-    expect_equal(nrow(result), 0)
-    expect_true(all(c(
-      "logger_serial_no", "logger_model", "producer", "production_year",
-      "project", "starttime_gmt", "download_type", "download_date", "comment"
-    ) %in% names(result)))
-  })
-
-  test_that("load_nonresponsive initializes empty sheet for MigrateTech if file missing", {
-    file_path <- file.path(tmp_dir, "missing_migratetech_unresponsive.xlsx")
-    result <- load_nonresponsive(file_path, "MigrateTech")$migratetech
     expect_equal(nrow(result), 0)
     expect_true(all(c(
       "logger_serial_no", "logger_model", "producer", "production_year", "project",
@@ -252,34 +243,7 @@ describe("Logger Session Management", {
       comment = "No response",
       `stored or sent to?` = "Nonresponsive"
     )
-    nonresponsive_list <- list(
-      Lotek = tibble(
-        logger_serial_no = character(),
-        logger_model = character(),
-        producer = character(),
-        production_year = numeric(),
-        project = character(),
-        starttime_gmt = as.POSIXct(character()),
-        download_type = character(),
-        download_date = as.Date(character()),
-        comment = character()
-      ),
-      MigrateTech = tibble(
-        logger_serial_no = character(),
-        logger_model = character(),
-        producer = character(),
-        production_year = numeric(),
-        project = character(),
-        starttime_gmt = as.POSIXct(character()),
-        logging_mode = numeric(),
-        days_delayed = numeric(),
-        programmed_gmt_time = as.POSIXct(character()),
-        download_type = character(),
-        download_date = as.Date(character()),
-        comment = character(),
-        priority = character()
-      )
-    )
+    nonresponsive_list <- load_nonresponsive("foo", "Lotek")
     result <- handle_returned_loggers(colony, master_startup, lr, restart_times, nonresponsive_list)
     expect_true(is.list(result))
   })

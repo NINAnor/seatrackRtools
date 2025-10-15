@@ -11,7 +11,8 @@ end_logger_session(
   download_date = NULL,
   comment = "",
   master_sheet = NULL,
-  all_master_sheet = NULL
+  all_master_sheet = NULL,
+  nonresponsive_list = list()
 )
 }
 \arguments{
@@ -28,9 +29,11 @@ end_logger_session(
 \item{master_sheet}{master sheet in which the logger will be found. If not provided, all sheets will be checked.}
 
 \item{all_master_sheet}{If master_sheet is not provided, all sheets will be checked. To save these being loaded every time, they can be provided using \code{load_all_master_import(combine = FALSE)}}
+
+\item{nonresponsive_list}{A named list of tibbles, each containing nonresponsive logger data for different manufacturers.}
 }
 \value{
-modified version of master_sheet
+list containing modified version of master_sheet, modified version of nonresponsive_list
 }
 \description{
 Function to modify a logger status, setting download_date, shutdown_date and logger status

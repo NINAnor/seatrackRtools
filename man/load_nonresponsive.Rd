@@ -20,7 +20,7 @@ This function loads nonresponsive logger sheets for multiple file paths and manu
 \examples{
 \dontrun{
 file_paths <- c("lotek.xlsx", "migratetech.xlsx")
-manufacturers <- c("Lotek", "MigrateTech")
+manufacturers <- c("Lotek", "Migrate Technology")
 nonresponsive_list <- load_nonresponsive(file_paths, manufacturers)
 }
 }

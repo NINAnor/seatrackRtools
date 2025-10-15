@@ -2,21 +2,17 @@
 % Please edit documentation in R/functions.R
 \name{load_nonresponsive_sheet}
 \alias{load_nonresponsive_sheet}
-\title{Load nonresponsive logger sheet for current year
-This function loads the record of unresponsive loggers. If the filepath provided does not exist, it initialises new sheets.}
+\title{Load nonresponsive logger sheet for current year}
 \usage{
-load_nonresponsive_sheet(file_path, manufacturer = c("Lotek", "MigrateTech"))
+load_nonresponsive_sheet(file_path)
 }
 \arguments{
 \item{file_path}{String indicating from where the file should be loaded from.}
-
-\item{manufacturer}{String indicating name of the manufacturer. Either "Lotek" or "MigrateTech".}
 }
 \value{
 A tibble containing the unresponsive logger data.
 }
 \description{
-Load nonresponsive logger sheet for current year
 This function loads the record of unresponsive loggers. If the filepath provided does not exist, it initialises new sheets.
 }
 \concept{nonresponsive}
