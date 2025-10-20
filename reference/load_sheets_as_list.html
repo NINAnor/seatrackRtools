@@ -50,7 +50,7 @@ It provides options to skip rows, force date columns to be of Date type, and dro
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">load_sheets_as_list</span><span class="op">(</span></span>
 <span>  <span class="va">file_path</span>,</span>
 <span>  <span class="va">sheets</span>,</span>
-<span>  skip <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  skip_rows <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  force_date <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  drop_unnamed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  col_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NULL</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">sheets</span><span class="op">)</span><span class="op">)</span></span>
@@ -69,7 +69,7 @@ It provides options to skip rows, force date columns to be of Date type, and dro
 <dd><p>A character vector specifying the names of the sheets to be read.</p></dd>
 
 
-<dt id="arg-skip">skip<a class="anchor" aria-label="anchor" href="#arg-skip"></a></dt>
+<dt id="arg-skip-rows">skip_rows<a class="anchor" aria-label="anchor" href="#arg-skip-rows"></a></dt>
 <dd><p>An integer specifying the number of rows to skip at the beginning of each sheet. Default is 0.</p></dd>
 
 
@@ -82,12 +82,12 @@ It provides options to skip rows, force date columns to be of Date type, and dro
 
 
 <dt id="arg-col-types">col_types<a class="anchor" aria-label="anchor" href="#arg-col-types"></a></dt>
-<dd><p>A list the same length as sheets, containing either NULL or a character vector of read_excel classes.</p></dd>
+<dd><p>A list the same length as sheets, containing either NULL or a numeric vector of classes as in <code><a href="https://janmarvin.github.io/openxlsx2/reference/wb_to_df.html" class="external-link">openxlsx2::read_xlsx</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A list of data frames, each corresponding to a sheet in the Excel file.</p>
+    <p>A <code>LoadedMetadata</code> object, with a list of tibbles corresponding to each sheet in <code>data</code> and the original workbook in `wb“</p>
     </div>
 
     <div class="section level2">
