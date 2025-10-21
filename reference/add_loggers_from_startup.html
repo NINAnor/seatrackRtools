@@ -50,7 +50,7 @@ Incorrectly formatted datetime columns can also lead to issues.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_loggers_from_startup</span><span class="op">(</span><span class="va">master_startup</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_loggers_from_startup</span><span class="op">(</span><span class="va">master_startup</span>, <span class="va">partner_metadata</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,6 +59,10 @@ Incorrectly formatted datetime columns can also lead to issues.</p>
 
 <dl><dt id="arg-master-startup">master_startup<a class="anchor" aria-label="anchor" href="#arg-master-startup"></a></dt>
 <dd><p>A data frame containing the master startup and shutdown information.</p></dd>
+
+
+<dt id="arg-partner-metadata">partner_metadata<a class="anchor" aria-label="anchor" href="#arg-partner-metadata"></a></dt>
+<dd><p>Dataframe of loggers handled by partners</p></dd>
 
 </dl></div>
     <div class="section level2">
