@@ -177,7 +177,7 @@ get_startup_paths <- function() {
 #' @param force_date A logical indicating whether to attempt to convert date columns to Date type. Default is TRUE.
 #' @param drop_unnamed A logical indicating whether to drop unnamed columns (columns with no header). Default is TRUE.
 #' @param col_types A list the same length as sheets, containing either NULL or a numeric vector of classes as in `openxlsx2::read_xlsx`.
-#' @param col_types A list the same length as sheets, containing either NULL or a character vector of column names to be forced into uppercase.
+#' @param col_upper A list the same length as sheets, containing either NULL or a character vector of column names to be forced into uppercase.
 #' @return A `LoadedMetadata` object, with a list of tibbles corresponding to each sheet in `data` and the original workbook in `wb``
 #' @examples
 #' \dontrun{
