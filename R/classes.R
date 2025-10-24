@@ -74,13 +74,78 @@ LoadedWBCollection <- R6::R6Class(
     active = list(
         #' @field all_paths The paths of all workbooks in the collection
         all_paths = function() {
-            sapply(sheets_list, function(x) {
+            sapply(self$sheets_list, function(x) {
                 x$path
             })
         },
         #' @field all_names The names of all workbooks in the collection
         all_names = function() {
-            names(sheets_list)
+            names(self$sheets_list)
+        }
+    )
+)
+
+#' @title SessionBatch Class
+#' @description A convenience class for storing a set of logger sessions along with the type of database import they require.
+#' @export
+SessionBatch <- R6::R6Class(
+    "SessionBatch",
+    public = list(
+        #' @description
+        #' Create a new SessionBatch object
+        initialize = function(sessions = tibble(), type = c("close_only", "open_only", "open_and_close")) {
+            self$type <- match.arg(type)
+            self$sessions <- sessions
+        },
+        #' @field sessions Tibble containing session information from master import startup_shutdown.
+        sessions = tibble(),
+        #' The type of import that needs to occur. Must be either "close_only", "open_only" or "open_and_close". 
+        type = character(),
+        #' @description
+        #' Print method for SessionBatch
+        #' @return The SessionBatch object invisibly
+        print = function() {
+            cat("Sessions:\n")
+            print(self$sessions)
+            cat(paste0("Sessions will be ", gsub("_"," ", self$type),"\n"))
+            invisible(self)
+        }       
+    )
+)
+
+#' @title DBImportCollection Class
+#' @description A convenience class for storing logger sessions alongside the deployments and retrievals that are associated with them.
+#' @export
+DBImportCollection <- R6::R6Class(
+    "DBImportCollection",
+    public = list(
+        #' @description
+        #' Create a new DBImportCollection object
+        initialize = function(sessions = SessionBatch$new(), retrievals = tibble(), deployments = tibble()){
+            self$sessions = sessions
+            self$retrievals = retrievals
+            self$deployments = deployments
+        },
+        #' @field sessions SessionBatch containing session information from master import startup_shutdown.
+        sessions = SessionBatch$new(),
+        #' @field retrievals Tibble containing retrievals events information from master import metadata
+        retrievals = tibble(),
+        #' @field deployments Tibble containing retrievals events information from master import metadata
+        deployments = tibble(),
+        print = function() {
+            cat("$sessions:\n")
+            print(self$sessions)
+            cat("$retrievals:\n")
+            print(self$retrievals)
+            cat("$deployments:\n")
+            print(self$deployments)            
+            invisible(self)
+        }       
+    ),
+    active = list(
+        #' @field type The type of import that needs to occur.
+        type = function() {
+            self$sessions$type
         }
     )
 )
