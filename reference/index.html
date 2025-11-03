@@ -259,6 +259,106 @@
         </dt>
         <dd>Append encounter data to the master import metadata</dd>
       </dl></div><div class="section level2">
+      <h2 id="database-import">Database import<a class="anchor" aria-label="anchor" href="#database-import"></a></h2>
+
+      <div class="section-desc"><p>Functions to import master import data into the Database</p></div>
+
+
+    </div><div class="section level2">
+
+      <h3 id="preperation">Preperation<a class="anchor" aria-label="anchor" href="#preperation"></a></h3>
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="prepare_master_sheet_for_db.html">prepare_master_sheet_for_db()</a></code>
+
+        </dt>
+        <dd>Prepare master sheet for database import</dd>
+      </dl><dl><dt>
+
+          <code><a href="prepare_session_batch.html">prepare_session_batch()</a></code>
+
+        </dt>
+        <dd>Prepare session batch for database import</dd>
+      </dl><dl><dt>
+
+          <code><a href="prepare_session_batches.html">prepare_session_batches()</a></code>
+
+        </dt>
+        <dd>Prepare session batches for database import</dd>
+      </dl><dl><dt>
+
+          <code><a href="prepare_session_deployments.html">prepare_session_deployments()</a></code>
+
+        </dt>
+        <dd>Get session deployments</dd>
+      </dl><dl><dt>
+
+          <code><a href="prepare_session_retrievals.html">prepare_session_retrievals()</a></code>
+
+        </dt>
+        <dd>Get session retrievals</dd>
+      </dl></div><div class="section level2">
+
+      <h3 id="import">Import<a class="anchor" aria-label="anchor" href="#import"></a></h3>
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="push_db_import_collection.html">push_db_import_collection()</a></code>
+
+        </dt>
+        <dd>Push database import collection to database</dd>
+      </dl><dl><dt>
+
+          <code><a href="push_db_import_collections.html">push_db_import_collections()</a></code>
+
+        </dt>
+        <dd>Push multiple database import collections to database</dd>
+      </dl><dl><dt>
+
+          <code><a href="push_deployments.html">push_deployments()</a></code>
+
+        </dt>
+        <dd>Push deployments to database</dd>
+      </dl><dl><dt>
+
+          <code><a href="push_master_import_file_to_db.html">push_master_import_file_to_db()</a></code>
+
+        </dt>
+        <dd>Push master import file to database</dd>
+      </dl><dl><dt>
+
+          <code><a href="push_retrievals.html">push_retrievals()</a></code>
+
+        </dt>
+        <dd>Push retrievals to database Function to push retrievals from a master import sheet to the database. It checks the database for existing retrievals and only imports new retrievals to avoid duplicates. It also checks that the loggers being retrieved have an associated deployment in the database.</dd>
+      </dl><dl><dt>
+
+          <code><a href="push_shutdowns.html">push_shutdowns()</a></code>
+
+        </dt>
+        <dd>Push shutdowns to database</dd>
+      </dl><dl><dt>
+
+          <code><a href="push_startup.html">push_startup()</a></code>
+
+        </dt>
+        <dd>Push startups to database</dd>
+      </dl></div><div class="section level2">
       <h2 id="field-planning-sheet-functions">Field planning sheet functions<a class="anchor" aria-label="anchor" href="#field-planning-sheet-functions"></a></h2>
 
       <div class="section-desc"><p>Functions to load and handle data from the field planning sheet</p></div>
@@ -335,10 +435,69 @@
 
       <dl><dt>
 
+          <code><a href="get_open_session_dates.html">get_open_session_dates()</a></code>
+
+        </dt>
+        <dd>Get open session dates Convenience function to get the open date for a set of logger sessions. If the download date is available, use that. If not, use the shutdown date. If both exist, use the later date. If neither are available, use a date far in the future to indicate the session is still open.</dd>
+      </dl><dl><dt>
+
           <code><a href="load_sheets_as_list.html">load_sheets_as_list()</a></code>
 
         </dt>
         <dd>Load specified sheets from an Excel file into a list of data frames</dd>
+      </dl></div><div class="section level2">
+      <h2 id="database-utility-functions">Database utility functions<a class="anchor" aria-label="anchor" href="#database-utility-functions"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="R_df_to_db_values.html">R_df_to_db_values()</a></code>
+
+        </dt>
+        <dd>Convert a dataframe of R values to a string of database values for SQL insertion</dd>
+      </dl><dl><dt>
+
+          <code><a href="R_value_to_db_value.html">R_value_to_db_value()</a></code>
+
+        </dt>
+        <dd>Convert an R value to its corresponding database representation</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_db_metadata_import.html">check_db_metadata_import()</a></code>
+
+        </dt>
+        <dd>Check existing rows in database given certain columns from a metadata dataframe</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_deployment_db.html">check_deployment_db()</a></code>
+
+        </dt>
+        <dd>Check existing deployments in database</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_retrieval_db.html">check_retrieval_db()</a></code>
+
+        </dt>
+        <dd>Check existing retrievals in database</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_shutdown_db.html">check_shutdown_db()</a></code>
+
+        </dt>
+        <dd>Check existing shutdowns in database</dd>
+      </dl><dl><dt>
+
+          <code><a href="check_startups_db.html">check_startups_db()</a></code>
+
+        </dt>
+        <dd>Check existing startups in database</dd>
       </dl></div><div class="section level2">
       <h2 id="classes">Classes<a class="anchor" aria-label="anchor" href="#classes"></a></h2>
 
@@ -362,6 +521,18 @@
 
         </dt>
         <dd>LoadedWBCollection Class</dd>
+      </dl><dl><dt>
+
+          <code><a href="SessionBatch.html">SessionBatch</a></code>
+
+        </dt>
+        <dd>SessionBatch Class</dd>
+      </dl><dl><dt>
+
+          <code><a href="DBImportCollection.html">DBImportCollection</a></code>
+
+        </dt>
+        <dd>DBImportCollection Class</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
