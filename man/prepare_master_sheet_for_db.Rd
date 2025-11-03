@@ -17,4 +17,4 @@ This function prepares the master import sheet for database import by processing
 It checks the database for existing sessions and categorizes them into sessions to be closed, opened, or both opened and closed.
 It then prepares session batches for database import. Metadata is linked to sessions within these batches.
 }
-\concept{db_import}
+\concept{db_import_prep}

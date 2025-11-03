@@ -19,4 +19,4 @@ This function prepares a session batch for database import by processing each ba
 It adds deployments and retrievals associated with the sessions in each batch.
 In cases where sessions have multiple deployments or retrievals, those sessions are removed from the batch and a warning is logged.
 }
-\concept{db_import}
+\concept{db_import_prep}

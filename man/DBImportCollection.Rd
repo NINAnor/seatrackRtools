@@ -6,6 +6,13 @@
 \description{
 A convenience class for storing logger sessions alongside the deployments and retrievals that are associated with them.
 }
+\seealso{
+Other classes: 
+\code{\link{LoadedWB}},
+\code{\link{LoadedWBCollection}},
+\code{\link{SessionBatch}}
+}
+\concept{classes}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{

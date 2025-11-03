@@ -6,6 +6,13 @@
 \description{
 A convenience class for handling metadata loaded from workbooks.
 }
+\seealso{
+Other classes: 
+\code{\link{DBImportCollection}},
+\code{\link{LoadedWBCollection}},
+\code{\link{SessionBatch}}
+}
+\concept{classes}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{

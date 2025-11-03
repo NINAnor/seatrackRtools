@@ -6,6 +6,13 @@
 \description{
 A convenience class for handling collections of LoadedWB objects.
 }
+\seealso{
+Other classes: 
+\code{\link{DBImportCollection}},
+\code{\link{LoadedWB}},
+\code{\link{SessionBatch}}
+}
+\concept{classes}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{

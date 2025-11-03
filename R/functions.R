@@ -185,20 +185,21 @@ get_startup_paths <- function() {
 #' }
 #' @export
 #' @concept utility
-load_sheets_as_list <- function(file_path, sheets, skip_rows = 0, force_date = TRUE, drop_unnamed = TRUE, 
-col_types = rep(NULL, length(sheets)), col_upper = rep(NULL, length(sheets))) {
-load_sheets_as_list <- function(file_path, sheets, skip_rows = 0, force_date = TRUE, drop_unnamed = TRUE, 
-col_types = rep(NULL, length(sheets)), col_upper = rep(NULL, length(sheets))) {
+load_sheets_as_list <- function(
+    file_path, sheets, skip_rows = 0, force_date = TRUE, drop_unnamed = TRUE,
+    col_types = rep(list(NULL), length(sheets)), col_upper = rep(list(NULL), length(sheets))) {
     if (!file.exists(file_path)) {
         stop("The specified file does not exist.")
     }
     log_trace("Loading file: ", file_path)
     wb <- openxlsx2::wb_load(file_path)
     # Iterate through sheets and read data
+print(col_upper)
+
     data_list <- lapply(1:length(sheets), function(sheet_index) {
+        print(sheet_index)
         sheet <- sheets[sheet_index]
         sheet_col_types <- col_types[[sheet_index]]
-        sheet_upper <- col_upper[[sheet_index]]
         sheet_upper <- col_upper[[sheet_index]]
         log_trace("Loading sheet: ", sheet)
 
@@ -303,7 +304,7 @@ load_nonresponsive_sheet <- function(file_path) {
             priority = character(),
             sent = as.POSIXct(character())
         )
-        }
+    }
 
     return(LoadedWB$new(data = list(sheet1 = loaded_sheet), wb = wb))
 }
@@ -548,31 +549,26 @@ load_partner_metadata <- function(file_path) {
     sheets <- c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES")
 
     # Skip the first row as it contains extra headers.
-    metadata_list <- load_sheets_as_list(file_path, sheets, 1, col_types = list(
-        NULL,
-        NULL,
-        c(
-            logger_id = 0,
-            logger_model = 0,
-            startdate_GMT = 2,
-            starttime_GMT = 3,
-            `Logging mode` = 0,
-            intended_species = 0,
-            comment = 0
-        )),
+    metadata_list <- load_sheets_as_list(file_path, sheets, 1,
+        col_types = list(
+            NULL,
+            NULL,
+            c(
+                logger_id = 0,
+                logger_model = 0,
+                startdate_GMT = 2,
+                starttime_GMT = 3,
+                `Logging mode` = 0,
+                intended_species = 0,
+                comment = 0
+            )
+        ),
         col_upper = list(
             c("logger_id_retrieved", "logger_id_deployed"),
             c("logger_id"),
             c("logger_id")
-        )),
-        col_upper = list(
-            c("logger_id_retrieved", "logger_id_deployed"),
-            c("logger_id"),
-            c("logger_id")
         )
-        )
-        )
-
+    )
     return(metadata_list)
 }
 
@@ -731,8 +727,9 @@ add_loggers_from_startup <- function(master_startup, partner_metadata) {
         # Filter to only include rows where the logger has been handled
         startup_file <- startup_file[
             !is.na(startup_file$starttime_gmt) &
-            !is.na(startup_file$logger_serial_no) &
-            startup_file$logger_serial_no %in% partner_logger_ids, ]
+                !is.na(startup_file$logger_serial_no) &
+                startup_file$logger_serial_no %in% partner_logger_ids,
+        ]
 
         if (nrow(startup_file) == 0) {
             next
@@ -923,10 +920,10 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
             days_delayed = nonresponsive_for_manufacturer$days_delayed,
             programmed_gmt_time = nonresponsive_for_manufacturer$programmed_gmt_time,
             priority = NA,
-            sent = NA)
+            sent = NA
+        )
 
         nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
-
     }
 
     return(list(master_sheet = master_sheet, nonresponsive_list = nonresponsive_list))
@@ -976,7 +973,7 @@ nonresponsive_from_master <- function(all_metadata_combined, nonresponsive_list,
             starttime_gmt = nonresponsive_for_manufacturer$starttime_gmt,
             download_type = "Nonresponsive",
             download_date = nonresponsive_for_manufacturer$download_date,
-            comment = nonresponsive_for_manufacturer$comment, 
+            comment = nonresponsive_for_manufacturer$comment,
             intended_species = nonresponsive_for_manufacturer$intended_species,
             intended_location = nonresponsive_for_manufacturer$intended_location,
             logging_mode = nonresponsive_for_manufacturer$logging_mode,
@@ -992,7 +989,7 @@ nonresponsive_from_master <- function(all_metadata_combined, nonresponsive_list,
 
 #' Append to nonresponsive list
 #'
-#' This function appends to the approrpiate sheet in a list of nonresponsive sheets. 
+#' This function appends to the approrpiate sheet in a list of nonresponsive sheets.
 #' It will check for duplicate logger IDs and ensure column ordering matches.
 #'
 #' @param nonresponsive_list A list containing tibbles of unresponsive loggers for different manufacturers.
@@ -1028,6 +1025,7 @@ append_to_nonresponsive <- function(nonresponsive_list, new_nonresponsive, manuf
 #'
 #' Checks a location to see if there is unimported metadata in the "not_processed" folder.
 #' If found, returns a list of file paths to these unimported metadata files.
+#'
 #' @param location Character string specifying the location (colony) to check for unprocessed metadata.
 #'
 #' @concept metadata
@@ -1052,434 +1050,427 @@ get_location_unprocessed <- function(location) {
     })
     unprocessed_files <- unlist(unprocessed_files_list)
     if (length(unprocessed_files) == 0) {
-    if (length(unprocessed_files) == 0) {
-        log_info(paste("No unprocessed files found for location:", location))
-        return(NULL)
-    }
-    return(unprocessed_files)
-}
-
-#' Get All Locations
-#'
-#' Retrieves a list of all locations (colonies) organized by country from the Sea Track folder.
-#'
-#' @return A named list where each element is a vector of colony names for a country.
-#' @details The function expects the global variable `the$sea_track_folder` to be set, and looks for a "Locations" subfolder within it.
-#' Each country is represented as a subdirectory within "Locations", and each colony is a subdirectory within its respective country folder.
-#' If `the$sea_track_folder` is not set, the function will stop with an error message.
-#' @examples
-#' \dontrun{
-#' set_sea_track_folder("/path/to/sea_track")
-#' colonies <- get_all_locations()
-#' print(colonies)
-#' }
-#' @export
-#' @concept setup
-get_all_locations <- function() {
-    if (is.null(the$sea_track_folder)) {
-        stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
-    }
-    locations_path <- file.path(the$sea_track_folder, "Locations")
-    if (!dir.exists(locations_path)) {
-        stop("Locations folder not found in the sea track folder.")
-    }
-
-    countries <- list.dirs(locations_path, full.names = FALSE, recursive = FALSE)
-    countries <- sort(countries)
-    all_locations <- lapply(countries, function(country) {
-        country_path <- file.path(locations_path, country)
-        colonies <- list.dirs(country_path, full.names = FALSE, recursive = FALSE)
-        return(colonies)
-    })
-    names(all_locations) <- countries
-    return(all_locations)
-}
-
-#' Set a value in a specific cell of master startup
-#'
-#' This function updates the value of a specified cell in the `master_startup` data frame.
-#'
-#' @param master_startup Master starup tibble.
-#' @param index Integer. The row index of the cell to update.
-#' @param column Character or integer. The column name or index of the cell to update.
-#' @param value The new value to assign to the specified cell.
-#'
-#' @return The updated `master_startup` data frame.
-#' @examples
-#' \dontrun{
-#' set_master_startup_value(master_startup, 2, "download_type", "Succesfully downloaded")
-#' }
-#' @export
-#' @concept startups
-set_master_startup_value <- function(master_startup, index, column, value) {
-    master_startup[index, column] <- value
-    log_trace(paste0("Set value in master_startup: row ", index, ", column '", column, "' to '", value, "'"))
-    return(master_startup)
-}
-
-
-#' Set or append comments in the master_startup data frame
-#'
-#' This function updates the 'comment' field of the specified row in the master_startup data frame.
-#' If a non-empty logger comment is provided, it will be set as the comment if no existing comment is present.
-#' If an existing comment is present, the logger comment will be appended to it, separated by " | ".
-#'
-#' @param master_startup A data frame containing a 'comment' column to be updated.
-#' @param index Integer index specifying the row in master_startup to update.
-#' @param logger_comments A character string containing the comment to add or append.
-#'
-#' @return The updated master_startup data frame with the modified comment.
-#' @examples
-#' \dontrun{
-#' master_startup <- data.frame(comment = c("", "Existing comment"))
-#' set_comments(master_startup, 1, "New logger comment")
-#' set_comments(master_startup, 2, "Another logger comment")
-#' }
-#' @export
-#' @concept startups
-set_comments <- function(master_startup, index, logger_comments) {
-    if (!is.na(logger_comments) && logger_comments != "") {
-        # If there is a comment:
-        if (is.na(master_startup$comment[index]) || master_startup$comment[index] == "") {
-            # If there is no existing comment:
-            master_startup$comment[index] <- logger_comments
-        } else {
-            # If there is an existing comment, append to it:
-            master_startup$comment[index] <- paste(master_startup$comment[index], logger_comments, sep = " | ")
+        if (length(unprocessed_files) == 0) {
+            log_info(paste("No unprocessed files found for location:", location))
+            return(NULL)
         }
+        return(unprocessed_files)
     }
-    return(master_startup)
 }
 
+    #' Get All Locations
+    #'
+    #' Retrieves a list of all locations (colonies) organized by country from the Sea Track folder.
+    #'
+    #' @return A named list where each element is a vector of colony names for a country.
+    #' @details The function expects the global variable `the$sea_track_folder` to be set, and looks for a "Locations" subfolder within it.
+    #' Each country is represented as a subdirectory within "Locations", and each colony is a subdirectory within its respective country folder.
+    #' If `the$sea_track_folder` is not set, the function will stop with an error message.
+    #' @examples
+    #' \dontrun{
+    #' set_sea_track_folder("/path/to/sea_track")
+    #' colonies <- get_all_locations()
+    #' print(colonies)
+    #' }
+    #' @export
+    #' @concept setup
+    get_all_locations <- function() {
+        if (is.null(the$sea_track_folder)) {
+            stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
+        }
+        locations_path <- file.path(the$sea_track_folder, "Locations")
+        if (!dir.exists(locations_path)) {
+            stop("Locations folder not found in the sea track folder.")
+        }
 
-#' Handle restarted loggers
-#'
-#' This function processes logger return information and updates the master import data frame accordingly.
-#'
-#' @param colony A character string specifying the name of the colony.
-#' @param master_startup A data frame containing the master startup and shutdown information.
-#' @param logger_returns A data frame containing logger return information.
-#' @param restart_times A data frame containing logger restart information.
-#' @param nonresponsive_list A list containing tibbles of unresponsive loggers for different manufacturers.
-#' The name of the list element should match the producer name in master_startup (e.g., "Lotek", "MigrateTech").
-#' @return A list consisting of two elements:
-#'  - `master_startup``: An updated dataframe containing the modified master import data frame.
-#'  - `nonresponsive_list`: An updated list containing the modified nonresponsive logger data frames.
-#' @examples
-#' \dontrun{
-#' updated_master_startup <- handle_returned_loggers(master_startup, logger_returns, restart_times)
-#' }
-#' @export
-#' @concept loggers
-handle_returned_loggers <- function(colony, master_startup, logger_returns, restart_times, nonresponsive_list = list()) {
-    if (nrow(logger_returns) == 0) {
-        log_info("No logger returns to process.")
+        countries <- list.dirs(locations_path, full.names = FALSE, recursive = FALSE)
+        countries <- sort(countries)
+        all_locations <- lapply(countries, function(country) {
+            country_path <- file.path(locations_path, country)
+            colonies <- list.dirs(country_path, full.names = FALSE, recursive = FALSE)
+            return(colonies)
+        })
+        names(all_locations) <- countries
+        return(all_locations)
+    }
+
+    #' Set a value in a specific cell of master startup
+    #'
+    #' This function updates the value of a specified cell in the `master_startup` data frame.
+    #'
+    #' @param master_startup Master starup tibble.
+    #' @param index Integer. The row index of the cell to update.
+    #' @param column Character or integer. The column name or index of the cell to update.
+    #' @param value The new value to assign to the specified cell.
+    #'
+    #' @return The updated `master_startup` data frame.
+    #' @examples
+    #' \dontrun{
+    #' set_master_startup_value(master_startup, 2, "download_type", "Succesfully downloaded")
+    #' }
+    #' @export
+    #' @concept startups
+    set_master_startup_value <- function(master_startup, index, column, value) {
+        master_startup[index, column] <- value
+        log_trace(paste0("Set value in master_startup: row ", index, ", column '", column, "' to '", value, "'"))
+        return(master_startup)
+    }
+
+
+    #' Set or append comments in the master_startup data frame
+    #'
+    #' This function updates the 'comment' field of the specified row in the master_startup data frame.
+    #' If a non-empty logger comment is provided, it will be set as the comment if no existing comment is present.
+    #' If an existing comment is present, the logger comment will be appended to it, separated by " | ".
+    #'
+    #' @param master_startup A data frame containing a 'comment' column to be updated.
+    #' @param index Integer index specifying the row in master_startup to update.
+    #' @param logger_comments A character string containing the comment to add or append.
+    #'
+    #' @return The updated master_startup data frame with the modified comment.
+    #' @examples
+    #' \dontrun{
+    #' master_startup <- data.frame(comment = c("", "Existing comment"))
+    #' set_comments(master_startup, 1, "New logger comment")
+    #' set_comments(master_startup, 2, "Another logger comment")
+    #' }
+    #' @export
+    #' @concept startups
+    set_comments <- function(master_startup, index, logger_comments) {
+        if (!is.na(logger_comments) && logger_comments != "") {
+            # If there is a comment:
+            if (is.na(master_startup$comment[index]) || master_startup$comment[index] == "") {
+                # If there is no existing comment:
+                master_startup$comment[index] <- logger_comments
+            } else {
+                # If there is an existing comment, append to it:
+                master_startup$comment[index] <- paste(master_startup$comment[index], logger_comments, sep = " | ")
+            }
+        }
+        return(master_startup)
+    }
+
+
+    #' Handle restarted loggers
+    #'
+    #' This function processes logger return information and updates the master import data frame accordingly.
+    #'
+    #' @param colony A character string specifying the name of the colony.
+    #' @param master_startup A data frame containing the master startup and shutdown information.
+    #' @param logger_returns A data frame containing logger return information.
+    #' @param restart_times A data frame containing logger restart information.
+    #' @param nonresponsive_list A list containing tibbles of unresponsive loggers for different manufacturers.
+    #' The name of the list element should match the producer name in master_startup (e.g., "Lotek", "MigrateTech").
+    #' @return A list consisting of two elements:
+    #'  - `master_startup``: An updated dataframe containing the modified master import data frame.
+    #'  - `nonresponsive_list`: An updated list containing the modified nonresponsive logger data frames.
+    #' @examples
+    #' \dontrun{
+    #' updated_master_startup <- handle_returned_loggers(master_startup, logger_returns, restart_times)
+    #' }
+    #' @export
+    #' @concept loggers
+    handle_returned_loggers <- function(colony, master_startup, logger_returns, restart_times, nonresponsive_list = list()) {
+        if (nrow(logger_returns) == 0) {
+            log_info("No logger returns to process.")
+            return(list(master_startup = master_startup, nonresponsive_list = nonresponsive_list))
+        }
+
+        log_trace("Check returned loggers")
+        valid_status <- logger_returns$status != "No download attemted"
+        unhandled_loggers <- tibble()
+        if (any(valid_status)) {
+            all_updated_session_summary <- tibble()
+            logger_indexes <- which(valid_status)
+            for (i in logger_indexes) {
+                logger_id <- logger_returns$logger_id[i]
+                logger_status <- logger_returns$status[i]
+                logger_download_stop_date <- logger_returns$`download / stop_date`[i]
+
+                unfinished_session_result <- get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
+                if (is.null(unfinished_session_result)) {
+                    log_trace(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
+                    unhandled_loggers <- rbind(unhandled_loggers, logger_returns[i, ])
+                    next
+                }
+                unfinished_index <- unfinished_session_result$index
+                unfinished_session <- unfinished_session_result$session
+
+                master_startup <- set_master_startup_value(master_startup, unfinished_index, "download_type", logger_status)
+                master_startup <- set_master_startup_value(master_startup, unfinished_index, "download_date", logger_download_stop_date)
+                master_startup <- set_master_startup_value(master_startup, unfinished_index, "shutdown_date", logger_download_stop_date)
+                master_startup <- set_master_startup_value(master_startup, unfinished_index, "downloaded_by", logger_returns$`downloaded by`[i])
+                master_startup <- set_comments(master_startup, unfinished_index, logger_returns$comment[i])
+
+                updated_session_summary <- master_startup[unfinished_index, c("logger_serial_no", "starttime_gmt", "download_type", "download_date")]
+                all_updated_session_summary <- rbind(all_updated_session_summary, updated_session_summary)
+            }
+            log_success("Updated ", nrow(all_updated_session_summary), " sessions.")
+            log_success("Updated sessions:\n", paste(capture.output(print(all_updated_session_summary, n = nrow(all_updated_session_summary)))[c(-1, -3)], collapse = "\n"))
+
+            if (nrow(unhandled_loggers) > 0) {
+                unhandled_loggers_summary <- unhandled_loggers[, c("logger_id", "status", "download / stop_date")]
+                log_warn(nrow(unhandled_loggers_summary), " returns were not processed.")
+                log_warn("Unhandled returns:\n", paste(capture.output(print(unhandled_loggers_summary, n = nrow(unhandled_loggers_summary)))[c(-1, -3)], collapse = "\n"))
+            }
+        }
+
+        # Handle restarts
+        log_trace("Handle restarts")
+        restart_indexes <- which(logger_returns$`stored or sent to?` == "redeployed")
+        if (length(restart_indexes) > 0) {
+            added_sessions <- tibble()
+            for (i in restart_indexes) {
+                return_restart <- logger_returns[i, ]
+                logger_id <- return_restart$logger_id
+                downloader <- return_restart$`downloaded by`
+                restart_info <- restart_times[restart_times$logger_id == logger_id, ]
+                if (nrow(restart_info) == 0) {
+                    stop(paste("Logger ID:", logger_id, "not present in restart times sheet"))
+                }
+                logger_restart_datetime <- paste(restart_info$startdate_GMT, format(restart_info$starttime_GMT, "%H:%M:%S"))
+
+                # Get full logger info from existing sheet
+                previous_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
+                if (nrow(previous_sessions) == 0) {
+                    stop(paste("Logger ID:", logger_id, "not present in master startup sheet"))
+                }
+                # generate new row
+                new_session <- tibble(
+                    logger_serial_no = logger_id,
+                    logger_model = previous_sessions$logger_model[1],
+                    producer = previous_sessions$producer[1],
+                    production_year = previous_sessions$production_year[1],
+                    project = previous_sessions$project[1],
+                    starttime_gmt = logger_restart_datetime,
+                    logging_mode = restart_info$`Logging mode`[1],
+                    started_by = downloader,
+                    started_where = colony,
+                    days_delayed = NA,
+                    programmed_gmt_time = NA,
+                    intended_species = restart_info$intended_species[1],
+                    intended_location = colony,
+                    intended_deployer = NA,
+                    shutdown_session = NA,
+                    field_status = NA,
+                    downloaded_by = NA,
+                    download_type = NA,
+                    download_date = NA,
+                    decomissioned = NA,
+                    shutdown_date = NA,
+                    comment = restart_info$comment[1],
+                )
+                added_sessions <- rbind(added_sessions, new_session)
+            }
+            log_success("Adding ", nrow(added_sessions), " new sessions from restarts.")
+            added_sessions_summary <- added_sessions[, c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "intended_location")]
+            log_success("New sessions:\n", paste(capture.output(print(added_sessions_summary, n = nrow(added_sessions_summary)))[c(-1, -3)], collapse = "\n"))
+
+            master_startup <- rbind(master_startup, added_sessions)
+        }
+
+        # HANDLE UNRESPONSIVES
+        log_trace("Handle nonresponsive loggers")
+
+        nonresponsive_index <- which(logger_returns$`stored or sent to?` == "Nonresponsive")
+        if (length(nonresponsive_index) > 0) {
+            nonresponsive_returns <- logger_returns[nonresponsive_index, ]
+            # Get manufacturers
+            nonresponsive_returns$manufacturer <- master_startup$producer[match(nonresponsive_returns$logger_id, master_startup$logger_serial_no)]
+            nonresponsive_returns$manufacturer_2 <- tolower(nonresponsive_returns$manufacturer)
+
+            # biotrack loggers should go in the lotek sheet
+            nonresponsive_returns$manufacturer_2[nonresponsive_returns$manufacturer_2 == "biotrack"] <- "lotek"
+
+            for (manufacturer in tolower(nonresponsive_list$names())) {
+                nonresponsive_for_manufacturer <- nonresponsive_returns[nonresponsive_returns$manufacturer_2 == manufacturer, ]
+
+                if (nrow(nonresponsive_for_manufacturer) == 0) {
+                    next
+                }
+
+                current_startup <- master_startup[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no), ]
+
+                new_nonresponsive <- tibble(
+                    logger_serial_no = nonresponsive_for_manufacturer$logger_id,
+                    logger_model = current_startup$logger_model,
+                    producer = current_startup$producer,
+                    production_year = current_startup$production_year,
+                    project = current_startup$project,
+                    starttime_gmt = current_startup$starttime_gmt,
+                    download_type = "Nonresponsive",
+                    download_date = nonresponsive_for_manufacturer$`download / stop_date`,
+                    comment = nonresponsive_for_manufacturer$comment,
+                    intended_species = current_startup$intended_species,
+                    intended_location = current_startup$intended_location,
+                    logging_mode = current_startup$logging_mode,
+                    days_delayed = current_startup$days_delayed,
+                    programmed_gmt_time = current_startup$programmed_gmt_time,
+                    sent = NA,
+                    priority = NA
+                )
+
+
+                nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
+            }
+        }
+
+
         return(list(master_startup = master_startup, nonresponsive_list = nonresponsive_list))
     }
 
-    log_trace("Check returned loggers")
-    valid_status <- logger_returns$status != "No download attemted"
-    unhandled_loggers <- tibble()
-    if (any(valid_status)) {
-        all_updated_session_summary <- tibble()
-        logger_indexes <- which(valid_status)
-        for (i in logger_indexes) {
-            logger_id <- logger_returns$logger_id[i]
-            logger_status <- logger_returns$status[i]
-            logger_download_stop_date <- logger_returns$`download / stop_date`[i]
-
-            unfinished_session_result <- get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
-            if (is.null(unfinished_session_result)) {
-                log_trace(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
-                unhandled_loggers <- rbind(unhandled_loggers, logger_returns[i, ])
-                next
-            }
-            unfinished_index <- unfinished_session_result$index
-            unfinished_session <- unfinished_session_result$session
-
-            master_startup <- set_master_startup_value(master_startup, unfinished_index, "download_type", logger_status)
-            master_startup <- set_master_startup_value(master_startup, unfinished_index, "download_date", logger_download_stop_date)
-            master_startup <- set_master_startup_value(master_startup, unfinished_index, "shutdown_date", logger_download_stop_date)
-            master_startup <- set_master_startup_value(master_startup, unfinished_index, "downloaded_by", logger_returns$`downloaded by`[i])
-            master_startup <- set_comments(master_startup, unfinished_index, logger_returns$comment[i])
-
-            updated_session_summary <- master_startup[unfinished_index, c("logger_serial_no", "starttime_gmt", "download_type", "download_date")]
-            all_updated_session_summary <- rbind(all_updated_session_summary, updated_session_summary)
+    #' Add partner provided metadata to the master import file
+    #'
+    #' This function adds metadata provided by partners to a master import file of the appropriate colony.
+    #' It firstly adds missing sessions by checking start up files.
+    #' It then appends the reported encounter data, avoiding duplicate rows.
+    #' Finally it updates sessions based on reported logger returns. This includes generating new sessions for loggers restarted in the field.
+    #'
+    #' @param colony A character string specifying the name of the colony.
+    #' @param new_metadata List of tibbles, each corresponding to a sheet in the partner provided information file.
+    #' @param master_import List of tibbles, each corresponding to a sheet in the master import file.
+    #' @param nonresponsive_list A named list of tibbles, each containing nonresponsive logger data for different manufacturers.
+    #'
+    #' @return An updated version of the master import file, as a list where each element is a sheet from the excel file.
+    #' @export
+    #' @concept metadata
+    handle_partner_metadata <- function(colony, new_metadata, master_import, nonresponsive_list = LoadedWBCollection$new()) {
+        if (!all(c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES") %in% names(new_metadata$data))) {
+            stop("new_metadata must contain the sheets: ENCOUNTER DATA, LOGGER RETURNS, RESTART TIMES")
         }
-        log_success("Updated ", nrow(all_updated_session_summary), " sessions.")
-        log_success("Updated sessions:\n", paste(capture.output(print(all_updated_session_summary, n = nrow(all_updated_session_summary)))[c(-1, -3)], collapse = "\n"))
-
-        if (nrow(unhandled_loggers) > 0) {
-            unhandled_loggers_summary <- unhandled_loggers[, c("logger_id", "status", "download / stop_date")]
-            log_warn(nrow(unhandled_loggers_summary), " returns were not processed.")
-            log_warn("Unhandled returns:\n", paste(capture.output(print(unhandled_loggers_summary, n = nrow(unhandled_loggers_summary)))[c(-1, -3)], collapse = "\n"))
+        if (!all(c("METADATA", "STARTUP_SHUTDOWN") %in% names(master_import$data))) {
+            stop("master_import must contain the sheets: METADATA, STARTUP_SHUTDOWN")
         }
+
+        log_info("Add missing sessions from start up files")
+        updated_loggers <- add_loggers_from_startup(master_import$data$STARTUP_SHUTDOWN, new_metadata$data$`ENCOUNTER DATA`)
+
+        master_import$data$`STARTUP_SHUTDOWN` <- updated_loggers
+
+        log_info("Append encounter data")
+        updated_metadata <- append_encounter_data(master_import$data$METADATA, new_metadata$data$`ENCOUNTER DATA`)
+
+        master_import$data$METADATA <- updated_metadata
+
+        log_info("Update sessions from logger returns")
+        updated_sessions <- handle_returned_loggers(
+            colony,
+            master_import$data$`STARTUP_SHUTDOWN`,
+            new_metadata$data$`LOGGER RETURNS`,
+            new_metadata$data$`RESTART TIMES`,
+            nonresponsive_list
+        )
+
+        master_import$data$`STARTUP_SHUTDOWN` <- updated_sessions$master_startup
+        nonresponsive_list <- updated_sessions$nonresponsive_list
+
+        return(list(master_import = master_import, nonresponsive_list = nonresponsive_list))
     }
 
-    # Handle restarts
-    log_trace("Handle restarts")
-    restart_indexes <- which(logger_returns$`stored or sent to?` == "redeployed")
-    if (length(restart_indexes) > 0) {
-        added_sessions <- tibble()
-        for (i in restart_indexes) {
-            return_restart <- logger_returns[i, ]
-            logger_id <- return_restart$logger_id
-            downloader <- return_restart$`downloaded by`
-            restart_info <- restart_times[restart_times$logger_id == logger_id, ]
-            if (nrow(restart_info) == 0) {
-                stop(paste("Logger ID:", logger_id, "not present in restart times sheet"))
-            }
-            logger_restart_datetime <- paste(restart_info$startdate_GMT, format(restart_info$starttime_GMT, "%H:%M:%S"))
 
-            # Get full logger info from existing sheet
-            previous_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
-            if (nrow(previous_sessions) == 0) {
-                stop(paste("Logger ID:", logger_id, "not present in master startup sheet"))
-            }
-            # generate new row
-            new_session <- tibble(
-                logger_serial_no = logger_id,
-                logger_model = previous_sessions$logger_model[1],
-                producer = previous_sessions$producer[1],
-                production_year = previous_sessions$production_year[1],
-                project = previous_sessions$project[1],
-                starttime_gmt = logger_restart_datetime,
-                logging_mode = restart_info$`Logging mode`[1],
-                started_by = downloader,
-                started_where = colony,
-                days_delayed = NA,
-                programmed_gmt_time = NA,
-                intended_species = restart_info$intended_species[1],
-                intended_location = colony,
-                intended_deployer = NA,
-                shutdown_session = NA,
-                field_status = NA,
-                downloaded_by = NA,
-                download_type = NA,
-                download_date = NA,
-                decomissioned = NA,
-                shutdown_date = NA,
-                comment = restart_info$comment[1],
+    #' Save a master sheet to an Excel file.
+    #'
+    #' This function writes the provided data frame (`new_master_sheets`) to an Excel file
+    #' specified by `filename`.
+    #'
+    #' @param new_master_sheets A LoadedWB object.
+    #' @param filepath A string specifying the path and name of the Excel file to be created.
+    #'
+    #' @return No return value.
+    #'
+    #' @examples
+    #' \dontrun{
+    #' save_master_sheet(new_master_sheets, "output.xlsx")
+    #' }
+    #'
+    #' @export
+    #' @concept metadata
+    save_master_sheet <- function(new_master_sheets, filepath = NULL) {
+        if (is.null(new_master_sheets)) {
+            stop("new_master_sheets is null!")
+        }
+        if (is.null(filepath)) {
+            filepath <- new_master_sheets$wb$path
+        }
+
+        for (sheet in names(new_master_sheets$data)) {
+            sheet_index <- which(names(new_master_sheets$data) == sheet)
+            hidden_rows <- new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden
+            new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden <- rep("", length(hidden_rows))
+
+            sheet_index <- which(names(new_master_sheets$data) == sheet)
+            hidden_rows <- new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden
+            new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden <- rep("", length(hidden_rows))
+
+            new_master_sheets$wb$add_data(
+                sheet = sheet,
+                x = new_master_sheets$data[[sheet]],
+                with_filter = TRUE,
+                remove_cell_style = TRUE,
+                na.strings = ""
             )
-            added_sessions <- rbind(added_sessions, new_session)
-        }
-        log_success("Adding ", nrow(added_sessions), " new sessions from restarts.")
-        added_sessions_summary <- added_sessions[, c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "intended_location")]
-        log_success("New sessions:\n", paste(capture.output(print(added_sessions_summary, n = nrow(added_sessions_summary)))[c(-1, -3)], collapse = "\n"))
+            new_master_sheets$wb$freeze_pane(
+                sheet = sheet,
+                first_active_col = 5,
+                first_active_row <- 2
+            )
+            new_master_sheets$wb$set_col_widths(sheet = sheet, cols = seq_len(ncol(new_master_sheets$data[[sheet]])), widths = "auto")
+            new_master_sheets$wb$set_row_heights(sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
+            wb_set_row_heights(new_master_sheets$wb, sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
+            new_master_sheets$wb$set_col_widths(sheet = sheet, cols = seq_len(ncol(new_master_sheets$data[[sheet]])), widths = "auto")
+            new_master_sheets$wb$set_row_heights(sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
+            wb_set_row_heights(new_master_sheets$wb, sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
+            new_master_sheets$wb$remove_conditional_formatting(sheet = sheet)
+            col_dims <- seq_len(ncol(new_master_sheets$data[[sheet]]))
+            dims_mat_header <- openxlsx2::wb_dims(rows = 1, cols = col_dims)
+            new_master_sheets$wb$add_fill(sheet, dims_mat_header, openxlsx2::wb_color(hex = "#ACB9CA"))
 
-        master_startup <- rbind(master_startup, added_sessions)
-    }
 
-    # HANDLE UNRESPONSIVES
-    log_trace("Handle nonresponsive loggers")
+            if (sheet == "STARTUP_SHUTDOWN") {
+                col_dims <- openxlsx2::wb_dims(
+                    x = new_master_sheets$data[[sheet]],
+                    cols = c("download_date", "shutdown_date"), select = "col_names"
+                )
 
-    nonresponsive_index <- which(logger_returns$`stored or sent to?` == "Nonresponsive")
-    if (length(nonresponsive_index) > 0) {
-        nonresponsive_returns <- logger_returns[nonresponsive_index, ]
-        # Get manufacturers
-        nonresponsive_returns$manufacturer <- master_startup$producer[match(nonresponsive_returns$logger_id, master_startup$logger_serial_no)]
-        nonresponsive_returns$manufacturer_2 <- tolower(nonresponsive_returns$manufacturer)
+                col_letters <- sapply(strsplit(col_dims, ","), function(x) gsub("[[:digit:]]+", "", x))
 
-        # biotrack loggers should go in the lotek sheet
-        nonresponsive_returns$manufacturer_2[nonresponsive_returns$manufacturer_2 == "biotrack"] <- "lotek"
+                cf_formula <- sprintf('=OR($%s2<>"", $%s2<>"")', col_letters[1], col_letters[2])
 
-        for (manufacturer in tolower(nonresponsive_list$names())) {
-            nonresponsive_for_manufacturer <- nonresponsive_returns[nonresponsive_returns$manufacturer_2 == manufacturer, ]
+                tryCatch(
+                    {
+                        suppressWarnings(
+                            new_master_sheets$wb$add_dxfs_style(
+                                "seatrack_pos",
+                                fontColour = openxlsx2::wb_color(hex = "#006100"),
+                                bgFill = openxlsx2::wb_color("#C6EFCE")
+                            )
+                        )
+                    },
+                    error = function(e) {
+                        invisible(NULL)
+                    }
+                )
 
-            if (nrow(nonresponsive_for_manufacturer) == 0) {
-                next
+                new_master_sheets$wb$add_conditional_formatting(
+                    sheet,
+                    dims = openxlsx2::wb_dims(x = new_master_sheets$data[[sheet]], select = "data"),
+                    rule = cf_formula,
+                    style = "seatrack_pos"
+                )
             }
-
-            current_startup <- master_startup[match(nonresponsive_for_manufacturer$logger_id, master_startup$logger_serial_no), ]
-
-            new_nonresponsive <- tibble(
-                logger_serial_no = nonresponsive_for_manufacturer$logger_id,
-                logger_model = current_startup$logger_model,
-                producer = current_startup$producer,
-                production_year = current_startup$production_year,
-                project = current_startup$project,
-                starttime_gmt = current_startup$starttime_gmt,
-                download_type = "Nonresponsive",
-                download_date = nonresponsive_for_manufacturer$`download / stop_date`,
-                comment = nonresponsive_for_manufacturer$comment,
-                intended_species = current_startup$intended_species,
-                intended_location = current_startup$intended_location,
-                logging_mode = current_startup$logging_mode,
-                days_delayed = current_startup$days_delayed,
-                programmed_gmt_time = current_startup$programmed_gmt_time,
-                sent = NA,
-                priority = NA)
-
-
-            nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
+            # full_dims <- openxlsx2::wb_dims(x = new_master_sheets$data[[sheet]])
+            # all_col_filters <- lapply(1:ncol(new_master_sheets$data[[sheet]]), function(i) {
+            #     glue::glue('<filterColumn colId="{i}">
+            #     </filterColumn>')
+            # })
+            # all_col_filters <- paste(all_col_filters, collapse = "\n")
+            # autoFilter_value <- glue::glue('
+            # <autoFilter ref="{full_dims}">
+            # {all_col_filters}
+            # </autoFilter>
+            # ')
+            # new_master_sheets$wb$worksheets[[which(names(new_master_sheets$data) == sheet)]]$autoFilter <- autoFilter_value
         }
-    }
-
-
-    return(list(master_startup = master_startup, nonresponsive_list = nonresponsive_list))
-}
-
-#' Add partner provided metadata to the master import file
-#'
-#' This function adds metadata provided by partners to a master import file of the appropriate colony.
-#' It firstly adds missing sessions by checking start up files.
-#' It then appends the reported encounter data, avoiding duplicate rows.
-#' Finally it updates sessions based on reported logger returns. This includes generating new sessions for loggers restarted in the field.
-#'
-#' @param colony A character string specifying the name of the colony.
-#' @param new_metadata List of tibbles, each corresponding to a sheet in the partner provided information file.
-#' @param master_import List of tibbles, each corresponding to a sheet in the master import file.
-#' @param nonresponsive_list A named list of tibbles, each containing nonresponsive logger data for different manufacturers.
-#'
-#' @return An updated version of the master import file, as a list where each element is a sheet from the excel file.
-#' @export
-#' @concept metadata
-handle_partner_metadata <- function(colony, new_metadata, master_import, nonresponsive_list = LoadedWBCollection$new()) {
-    if (!all(c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES") %in% names(new_metadata$data))) {
-        stop("new_metadata must contain the sheets: ENCOUNTER DATA, LOGGER RETURNS, RESTART TIMES")
-    }
-    if (!all(c("METADATA", "STARTUP_SHUTDOWN") %in% names(master_import$data))) {
-        stop("master_import must contain the sheets: METADATA, STARTUP_SHUTDOWN")
-    }
-
-    log_info("Add missing sessions from start up files")
-    updated_loggers <- add_loggers_from_startup(master_import$data$STARTUP_SHUTDOWN, new_metadata$data$`ENCOUNTER DATA`)
-
-    master_import$data$`STARTUP_SHUTDOWN` <- updated_loggers
-
-    log_info("Append encounter data")
-    updated_metadata <- append_encounter_data(master_import$data$METADATA, new_metadata$data$`ENCOUNTER DATA`)
-
-    master_import$data$METADATA <- updated_metadata
-
-    log_info("Update sessions from logger returns")
-    updated_sessions <- handle_returned_loggers(
-        colony,
-        master_import$data$`STARTUP_SHUTDOWN`,
-        new_metadata$data$`LOGGER RETURNS`,
-        new_metadata$data$`RESTART TIMES`,
-        nonresponsive_list
-    )
-
-    master_import$data$`STARTUP_SHUTDOWN` <- updated_sessions$master_startup
-    nonresponsive_list <- updated_sessions$nonresponsive_list
-
-    return(list(master_import = master_import, nonresponsive_list = nonresponsive_list))
-}
-
-
-#' Save a master sheet to an Excel file.
-#'
-#' This function writes the provided data frame (`new_master_sheets`) to an Excel file
-#' specified by `filename`.
-#'
-#' @param new_master_sheets A LoadedWB object.
-#' @param filepath A string specifying the path and name of the Excel file to be created.
-#'
-#' @return No return value.
-#'
-#' @examples
-#' \dontrun{
-#' save_master_sheet(new_master_sheets, "output.xlsx")
-#' }
-#'
-#' @export
-#' @concept metadata
-save_master_sheet <- function(new_master_sheets, filepath = NULL) {
-    if (is.null(new_master_sheets)) {
-        stop("new_master_sheets is null!")
-    }
-    if (is.null(filepath)){
-        filepath = new_master_sheets$wb$path
-    }
-
-    for (sheet in names(new_master_sheets$data)){
-        sheet_index <- which(names(new_master_sheets$data) == sheet)
-        hidden_rows <- new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden
-        new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden <- rep("", length(hidden_rows))
-
-        sheet_index <- which(names(new_master_sheets$data) == sheet)
-        hidden_rows <- new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden
-        new_master_sheets$wb$worksheets[[sheet_index]]$sheet_data$row_attr$hidden <- rep("", length(hidden_rows))
-
-        new_master_sheets$wb$add_data(
-            sheet = sheet,
-            x = new_master_sheets$data[[sheet]],
-            with_filter = TRUE,
-            remove_cell_style = TRUE,
-            na.strings = "")
-        new_master_sheets$wb$freeze_pane(
-            sheet = sheet,
-            first_active_col = 5,
-            first_active_row  = 2
-            )
-        new_master_sheets$wb$set_col_widths(sheet = sheet, cols = seq_len(ncol(new_master_sheets$data[[sheet]])), widths = "auto")
-        new_master_sheets$wb$set_row_heights(sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
-        wb_set_row_heights(new_master_sheets$wb, sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
-        new_master_sheets$wb$set_col_widths(sheet = sheet, cols = seq_len(ncol(new_master_sheets$data[[sheet]])), widths = "auto")
-        new_master_sheets$wb$set_row_heights(sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
-        wb_set_row_heights(new_master_sheets$wb, sheet = sheet, rows = seq_len(nrow(new_master_sheets$data[[sheet]]) + 1), hidden = FALSE)
-        new_master_sheets$wb$remove_conditional_formatting(sheet = sheet)
-        col_dims <- seq_len(ncol(new_master_sheets$data[[sheet]]))
-        dims_mat_header <- openxlsx2::wb_dims(rows = 1, cols = col_dims)
-        new_master_sheets$wb$add_fill(sheet, dims_mat_header, openxlsx2::wb_color(hex = "#ACB9CA"))
-
-
-        if (sheet == "STARTUP_SHUTDOWN"){
-            col_dims <- openxlsx2::wb_dims(
-            x = new_master_sheets$data[[sheet]],
-            cols = c("download_date", "shutdown_date"), select = "col_names")
-
-            col_letters <- sapply(strsplit(col_dims, ","), function(x) gsub("[[:digit:]]+", "",x ))
-
-            cf_formula <- sprintf('=OR($%s2<>"", $%s2<>"")', col_letters[1], col_letters[2])
-
-            tryCatch({
-                suppressWarnings(
-                    new_master_sheets$wb$add_dxfs_style(
-                        "seatrack_pos",
-                        fontColour = openxlsx2::wb_color(hex = "#006100"),
-                        bgFill = openxlsx2::wb_color("#C6EFCE")
-                    )
-                    )
-            }, error = function(e) {
-                invisible(NULL)
-            })
-
-            new_master_sheets$wb$add_conditional_formatting(
-                sheet,
-                dims = openxlsx2::wb_dims(x = new_master_sheets$data[[sheet]], select = "data"),
-                rule = cf_formula,
-                style = "seatrack_pos"
-            )
-        }
-        # full_dims <- openxlsx2::wb_dims(x = new_master_sheets$data[[sheet]])
-        # all_col_filters <- lapply(1:ncol(new_master_sheets$data[[sheet]]), function(i) {
-        #     glue::glue('<filterColumn colId="{i}">
-        #     </filterColumn>')
-        # })
-        # all_col_filters <- paste(all_col_filters, collapse = "\n")
-        # autoFilter_value <- glue::glue('
-        # <autoFilter ref="{full_dims}">
-        # {all_col_filters}
-        # </autoFilter>
-        # ')
-        # new_master_sheets$wb$worksheets[[which(names(new_master_sheets$data) == sheet)]]$autoFilter <- autoFilter_value
-    }
-
-        # full_dims <- openxlsx2::wb_dims(x = new_master_sheets$data[[sheet]])
-        # all_col_filters <- lapply(1:ncol(new_master_sheets$data[[sheet]]), function(i) {
-        #     glue::glue('<filterColumn colId="{i}">
-        #     </filterColumn>')
-        # })
-        # all_col_filters <- paste(all_col_filters, collapse = "\n")
-        # autoFilter_value <- glue::glue('
-        # <autoFilter ref="{full_dims}">
-        # {all_col_filters}
-        # </autoFilter>
-        # ')
-        # new_master_sheets$wb$worksheets[[which(names(new_master_sheets$data) == sheet)]]$autoFilter <- autoFilter_value
-    }
 
 
     new_master_sheets$wb$save(filepath)

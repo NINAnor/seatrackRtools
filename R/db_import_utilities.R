@@ -1,18 +1,17 @@
-
 #' Convert an R value to its corresponding database representation
-#' 
+#'
 #' This function takes an R value and converts it to its corresponding database representation.
 #' It handles different data types such as Date, NA, character, and others.
 #' @param r_value An R value to be converted.
 #' @param force_type An optional string specifying the database type to force for NULL values.
 #' @return A string representing the database value.
-#' @export 
+#' @export
 #' @concept db_import_utility
 R_value_to_db_value <- function(r_value, force_type = "") {
     if (is.na(r_value)) {
-        if(force_type != ""){
+        if (force_type != "") {
             db_value <- glue::glue("NULL::{force_type}")
-        }else{
+        } else {
             db_value <- "NULL"
         }
     } else if ("Date" %in% class(r_value)) {
@@ -34,7 +33,7 @@ R_value_to_db_value <- function(r_value, force_type = "") {
 #' @param db_cols A dataframe containing the columns to be converted.
 #' @param db_types A named vector specifying the database types for each column. Default is an empty string for each column.
 #' @return A string of database values formatted for SQL insertion.
-#' @export 
+#' @export
 #' @concept db_import_utility
 R_df_to_db_values <- function(db_cols, db_types = rep("", length(db_cols))) {
     names(db_types) <- names(db_cols)
@@ -53,13 +52,13 @@ R_df_to_db_values <- function(db_cols, db_types = rep("", length(db_cols))) {
 #' This function checks for existing rows in a database table based on specified columns from a metadata dataframe.
 #' It constructs a SQL query to compare the values in the dataframe with those in the database table. IF a row from the dataframe
 #' does not exist in the database table based on the specified columns, it is marked as missing.
-#' 
+#'
 #' @param metadata_df A dataframe containing metadata to be checked against the database.
 #' @param table The name of the database table to check against.
 #' @param col_names A vector of column names from the metadata dataframe to be used for comparison. If NULL, all columns are used.
 #' @param db_col_names A vector of column names in the database table corresponding to `col_names`. If NULL, `col_names` are used.
 #' @return A logical vector indicating which rows in the metadata dataframe do not exist in the database table.
-#' @export 
+#' @export
 #' @concept db_import_utility
 check_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_names = NULL) {
     existing_rows <- get_db_metadata_import(metadata_df, table, col_names, db_col_names)
@@ -77,7 +76,7 @@ check_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_co
     return(missing_row_bool)
 }
 
-get_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_names = NULL, additional_db_col_names = c()){
+get_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_names = NULL, additional_db_col_names = c()) {
     metadata_df <- tibble(metadata_df)
     if (is.null(col_names)) {
         col_names <- names(metadata_df)
@@ -99,12 +98,12 @@ get_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_
     temp_values <- R_df_to_db_values(db_cols, column_info$type)
 
     t_db_names <- paste0("t.", db_col_names)
-    if (length(additional_db_col_names) > 0){
+    if (length(additional_db_col_names) > 0) {
         t_additional_db_names <- paste0("t.", additional_db_col_names)
-    }else{
+    } else {
         t_additional_db_names <- c()
     }
-    
+
     t_db_names_combined <- paste(c(t_db_names, t_additional_db_names), collapse = ",\n")
     mv_db_names <- paste0("mv.", db_col_names)
     mv_db_names_combined <- paste(mv_db_names, collapse = ",\n")
@@ -136,7 +135,7 @@ get_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_
 }
 
 #' Check existing startups in database
-#' 
+#'
 #' Function to check which startups from the master import sheet are not already present in the database.
 #' It constructs a dataframe of session IDs and start times, and uses the `check_db_metadata_import` function
 #' to determine which startups are new and need to be added to the database.
@@ -144,21 +143,22 @@ get_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_
 #' @return A tibble of startups that are not already present in the database.
 #' @concept db_import_utility
 #' @export
-check_startups_db <- function(startup_shutdown){
-    if(nrow(startup_shutdown) == 0){
+check_startups_db <- function(startup_shutdown) {
+    if (nrow(startup_shutdown) == 0) {
         return(startup_shutdown)
     }
-    db_startup_df <-    data.frame(
-        session_id = paste(startup_shutdown$logger_serial_no,as.Date(startup_shutdown$starttime_gmt), sep ="_"),
-        starttime_gmt = startup_shutdown$starttime_gmt)
+    db_startup_df <- data.frame(
+        session_id = paste(startup_shutdown$logger_serial_no, as.Date(startup_shutdown$starttime_gmt), sep = "_"),
+        starttime_gmt = startup_shutdown$starttime_gmt
+    )
 
     sessions_to_startup_bool <- check_db_metadata_import(db_startup_df, "loggers.startup")
-    startup_new <- startup_shutdown[sessions_to_startup_bool,]
+    startup_new <- startup_shutdown[sessions_to_startup_bool, ]
     return(startup_new)
 }
 
 #' Check existing shutdowns in database
-#' 
+#'
 #' Function to check which shutdowns from the master import sheet are not already present in the database.
 #' It constructs a dataframe of session IDs and download dates, and uses the `check_db_metadata_import` function
 #' to determine which shutdowns are new and need to be added to the database.
@@ -166,25 +166,26 @@ check_startups_db <- function(startup_shutdown){
 #' @return A tibble of shutdowns that are not already present in the database.
 #' @concept db_import_utility
 #' @export
-check_shutdown_db <- function(startup_shutdown){
-    if(nrow(startup_shutdown) == 0){
+check_shutdown_db <- function(startup_shutdown) {
+    if (nrow(startup_shutdown) == 0) {
         return(startup_shutdown)
     }
-    shutdown <- startup_shutdown[!is.na(startup_shutdown$download_date)|!is.na(startup_shutdown$shutdown_date), ]
-    db_shutdown_df <- 
-    data.frame(
-        session_id = paste(shutdown$logger_serial_no,as.Date(shutdown$starttime_gmt), sep ="_"),
-        download_date = shutdown$download_date)
-    
+    shutdown <- startup_shutdown[!is.na(startup_shutdown$download_date) | !is.na(startup_shutdown$shutdown_date), ]
+    db_shutdown_df <-
+        data.frame(
+            session_id = paste(shutdown$logger_serial_no, as.Date(shutdown$starttime_gmt), sep = "_"),
+            download_date = shutdown$download_date
+        )
+
     db_shutdown_df$download_date[is.na(db_shutdown_df$download_date)] <- shutdown$shutdown_date[is.na(db_shutdown_df$download_date)]
 
     sessions_to_shutdown_bool <- check_db_metadata_import(db_shutdown_df, "loggers.shutdown")
-    shutdown_new <- shutdown[sessions_to_shutdown_bool,]
+    shutdown_new <- shutdown[sessions_to_shutdown_bool, ]
     return(shutdown_new)
 }
 
 #' Check existing retrievals in database
-#' 
+#'
 #' Function to check which retrievals from the master import sheet are not already present in the database.
 #' It constructs a dataframe of retrieval dates and individ IDs, and uses the `check_db_metadata_import` function
 #' to determine which retrievals are new and need to be added to the database.
@@ -192,8 +193,8 @@ check_shutdown_db <- function(startup_shutdown){
 #' @return A tibble of retrievals that are not already present in the database.
 #' @concept db_import_utility
 #' @export
-check_retrieval_db <- function(retrievals){
-    if(nrow(retrievals) == 0){
+check_retrieval_db <- function(retrievals) {
+    if (nrow(retrievals) == 0) {
         return(retrievals)
     }
     db_retrievals_df <- tibble(
@@ -202,7 +203,7 @@ check_retrieval_db <- function(retrievals){
     )
     new_rows_bool <- check_db_metadata_import(db_retrievals_df, "loggers.retrieval")
     new_retrievals <- retrievals[new_rows_bool, ]
-    return(new_retrievals)    
+    return(new_retrievals)
 }
 
 #' Check existing deployments in database
@@ -214,8 +215,8 @@ check_retrieval_db <- function(retrievals){
 #' @return A tibble of deployments that are not already present in the database.
 #' @concept db_import_utility
 #' @export
-check_deployment_db <- function(deployments){
-    if(nrow(deployments) == 0){
+check_deployment_db <- function(deployments) {
+    if (nrow(deployments) == 0) {
         return(deployments)
     }
     db_deployments_df <- tibble(

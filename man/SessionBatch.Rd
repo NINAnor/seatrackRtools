@@ -6,6 +6,13 @@
 \description{
 A convenience class for storing a set of logger sessions along with the type of database import they require.
 }
+\seealso{
+Other classes: 
+\code{\link{DBImportCollection}},
+\code{\link{LoadedWB}},
+\code{\link{LoadedWBCollection}}
+}
+\concept{classes}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
