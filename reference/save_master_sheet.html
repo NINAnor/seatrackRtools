@@ -47,7 +47,7 @@ specified by <code>filename</code>.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">save_master_sheet</span><span class="op">(</span><span class="va">new_master_sheets</span>, filepath <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">save_master_sheet</span><span class="op">(</span><span class="va">new_master_sheets</span>, filepath <span class="op">=</span> <span class="cn">NULL</span>, modified_only <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,7 +59,11 @@ specified by <code>filename</code>.</p>
 
 
 <dt id="arg-filepath">filepath<a class="anchor" aria-label="anchor" href="#arg-filepath"></a></dt>
-<dd><p>A string specifying the path and name of the Excel file to be created.</p></dd>
+<dd><p>A string specifying the path and name of the Excel file to be created. If NULL will be path of the loaded sheet.</p></dd>
+
+
+<dt id="arg-modified-only">modified_only<a class="anchor" aria-label="anchor" href="#arg-modified-only"></a></dt>
+<dd><p>Only save the file if the sheet has been flagged as modified.</p></dd>
 
 </dl></div>
     <div class="section level2">
