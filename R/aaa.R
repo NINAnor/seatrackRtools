@@ -42,7 +42,7 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #' @export
 #' @concept setup
 set_sea_track_folder <- function(dir, language = "English_United Kingdom") {
-    if (!dir.exists(dir)) {
+    if (!is.null(dir) && !dir.exists(dir)) {
         stop("The specified directory does not exist.")
     }
 
@@ -52,12 +52,18 @@ set_sea_track_folder <- function(dir, language = "English_United Kingdom") {
     } else {
         environ_lines <- c()
     }
+    if (!is.null(dir)) {
+        environ_lines <- c(environ_lines, paste0("SEA_TRACK_FOLDER = '", dir, "'"))
+        log_info("Sea track folder set to: ", the$sea_track_folder)
+    }else {
+        environ_lines <- environ_lines[!grepl("SEA_TRACK_FOLDER", environ_lines, fixed = TRUE)]
+        log_info("Sea track folder unset")
+    }
 
-    environ_lines <- c(environ_lines, paste0("SEA_TRACK_FOLDER = '", dir, "'"))
 
     writeLines(unique(environ_lines), ".Renviron")
 
-    log_info("Sea track folder set to: ", the$sea_track_folder)
+
     if (!grepl("utf", tolower(Sys.getlocale()), fixed = TRUE)) {
         log_info("Forcing locale to allow handling of Norwegian characters")
         Sys.setlocale("LC_CTYPE", paste0(language, ".utf8"))

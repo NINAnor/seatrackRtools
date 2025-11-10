@@ -22,7 +22,11 @@ Imports:
     tidyr,
     flextable,
     cellranger,
-    glue
+    glue,
+    shiny,
+    shinyFiles,
+    fs,
+    shinybusy
 Suggests: 
     knitr,
     rmarkdown,
