@@ -196,11 +196,6 @@ Functions to create and export annual report appendix tables
 
 ## Database utility functions
 
-- [`R_df_to_db_values()`](https://ninanor.github.io/seatrack-metadata/reference/R_df_to_db_values.md)
-  : Convert a dataframe of R values to a string of database values for
-  SQL insertion
-- [`R_value_to_db_value()`](https://ninanor.github.io/seatrack-metadata/reference/R_value_to_db_value.md)
-  : Convert an R value to its corresponding database representation
 - [`check_db_metadata_import()`](https://ninanor.github.io/seatrack-metadata/reference/check_db_metadata_import.md)
   : Check existing rows in database given certain columns from a
   metadata dataframe
