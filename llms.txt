@@ -1,0 +1,238 @@
+Initial draft of utility functions to aid in the handling of seatrack
+data.
+
+Installation:
+
+    devtools::install_github("NINAnor/seatrack-metadata")
+
+Documentation can be found
+[here](https://NINAnor.github.io/seatrack-metadata/)
+
+An example of using the functions can be found
+[here](https://NINAnor.github.io/seatrack-metadata/articles/introduction.html)
+
+# Package index
+
+## Setup functions
+
+Functions to set up the sea track folder and paths.
+
+- [`get_all_locations()`](https://ninanor.github.io/seatrack-metadata/reference/get_all_locations.md)
+  : Get All Locations
+- [`set_sea_track_folder()`](https://ninanor.github.io/seatrack-metadata/reference/set_sea_track_folder.md)
+  : Set the base directory for the sea track folder
+- [`start_logging()`](https://ninanor.github.io/seatrack-metadata/reference/start_logging.md)
+  : Start logging to a file
+
+## GLS functions
+
+Functions to assist in running the within-seatrack GLS pipeline
+
+- [`gls_metadata()`](https://ninanor.github.io/seatrack-metadata/reference/gls_metadata.md)
+  : Get metadata from database based on GLS files in import directory
+
+- [`gls_prepare_calibration()`](https://ninanor.github.io/seatrack-metadata/reference/gls_prepare_calibration.md)
+  : Prepare GLS calibration data using seatrack database
+
+- [`gls_prepare_file_upload()`](https://ninanor.github.io/seatrack-metadata/reference/gls_prepare_file_upload.md)
+  : Prepare a single GLS position data file for database upload
+
+- [`gls_prepare_folder_upload()`](https://ninanor.github.io/seatrack-metadata/reference/gls_prepare_folder_upload.md)
+  : Prepare GLS position data for database upload
+
+- [`gls_seatrack_calibration()`](https://ninanor.github.io/seatrack-metadata/reference/gls_seatrack_calibration.md)
+  : Handle existing GLS calibration data
+
+- [`gls_seatrack_colony_info()`](https://ninanor.github.io/seatrack-metadata/reference/gls_seatrack_colony_info.md)
+  :
+
+  Get `all_colony_info` for GLS processing
+
+## Metdata functions
+
+Functions to handle and process metadata sheets.
+
+### General metadata functions
+
+- [`get_location_unprocessed()`](https://ninanor.github.io/seatrack-metadata/reference/get_location_unprocessed.md)
+  : Get unimported metadata
+- [`get_master_import_path()`](https://ninanor.github.io/seatrack-metadata/reference/get_master_import_path.md)
+  : Get the path of the master import file
+- [`handle_partner_metadata()`](https://ninanor.github.io/seatrack-metadata/reference/handle_partner_metadata.md)
+  : Add partner provided metadata to the master import file
+- [`load_all_master_import()`](https://ninanor.github.io/seatrack-metadata/reference/load_all_master_import.md)
+  : Load master import file for all colonies
+- [`load_master_import()`](https://ninanor.github.io/seatrack-metadata/reference/load_master_import.md)
+  : Load master import file for a given colony
+- [`load_partner_metadata()`](https://ninanor.github.io/seatrack-metadata/reference/load_partner_metadata.md)
+  : Load partner provided metadata from an Excel file
+- [`save_all_modified()`](https://ninanor.github.io/seatrack-metadata/reference/save_all_modified.md)
+  : Save all modified master sheets
+- [`save_master_sheet()`](https://ninanor.github.io/seatrack-metadata/reference/save_master_sheet.md)
+  : Save a master sheet to an Excel file.
+
+### Logger metadata functions
+
+Functions to load logger data
+
+- [`end_logger_session()`](https://ninanor.github.io/seatrack-metadata/reference/end_logger_session.md)
+  : Modify logger status to end a session
+- [`get_logger_from_metadata()`](https://ninanor.github.io/seatrack-metadata/reference/get_logger_from_metadata.md)
+  : Find logger instances in files
+- [`get_unfinished_session()`](https://ninanor.github.io/seatrack-metadata/reference/get_unfinished_session.md)
+  : Find a logger's unfinished session in the master startup data frame
+- [`handle_returned_loggers()`](https://ninanor.github.io/seatrack-metadata/reference/handle_returned_loggers.md)
+  : Handle restarted loggers
+- [`modify_logger_status()`](https://ninanor.github.io/seatrack-metadata/reference/modify_logger_status.md)
+  : Modify logger status
+
+### Nonresponsive logger metadata functions
+
+Functions to load and update non-responsive sheets
+
+- [`append_to_nonresponsive()`](https://ninanor.github.io/seatrack-metadata/reference/append_to_nonresponsive.md)
+  : Append to nonresponsive list
+- [`load_nonresponsive()`](https://ninanor.github.io/seatrack-metadata/reference/load_nonresponsive.md)
+  : Load multiple nonresponsive logger sheets
+- [`load_nonresponsive_sheet()`](https://ninanor.github.io/seatrack-metadata/reference/load_nonresponsive_sheet.md)
+  : Load nonresponsive logger sheet for current year
+- [`nonresponsive_from_master()`](https://ninanor.github.io/seatrack-metadata/reference/nonresponsive_from_master.md)
+  : Get all nonresponsive loggers and export
+- [`save_nonresponsive()`](https://ninanor.github.io/seatrack-metadata/reference/save_nonresponsive.md)
+  : Save multiple nonresponsive logger sheets to Excel files
+
+### Startup metadata functions
+
+Functions to load and update startup sheets
+
+- [`add_loggers_from_startup()`](https://ninanor.github.io/seatrack-metadata/reference/add_loggers_from_startup.md)
+  : Attempt to add logger from startup sheets
+- [`get_startup_paths()`](https://ninanor.github.io/seatrack-metadata/reference/get_startup_paths.md)
+  : Get paths to all startup Excel files
+- [`set_comments()`](https://ninanor.github.io/seatrack-metadata/reference/set_comments.md)
+  : Set or append comments in the master_startup data frame
+- [`set_master_startup_value()`](https://ninanor.github.io/seatrack-metadata/reference/set_master_startup_value.md)
+  : Set a value in a specific cell of master startup
+
+### Encounter metadata functions
+
+Functions to load and update encounter data
+
+- [`append_encounter_data()`](https://ninanor.github.io/seatrack-metadata/reference/append_encounter_data.md)
+  : Append encounter data to the master import metadata
+
+## Database import
+
+Functions to import master import data into the Database
+
+### Preperation
+
+- [`prepare_master_sheet_for_db()`](https://ninanor.github.io/seatrack-metadata/reference/prepare_master_sheet_for_db.md)
+  : Prepare master sheet for database import
+- [`prepare_session_batch()`](https://ninanor.github.io/seatrack-metadata/reference/prepare_session_batch.md)
+  : Prepare session batch for database import
+- [`prepare_session_batches()`](https://ninanor.github.io/seatrack-metadata/reference/prepare_session_batches.md)
+  : Prepare session batches for database import
+- [`prepare_session_deployments()`](https://ninanor.github.io/seatrack-metadata/reference/prepare_session_deployments.md)
+  : Get session deployments
+- [`prepare_session_retrievals()`](https://ninanor.github.io/seatrack-metadata/reference/prepare_session_retrievals.md)
+  : Get session retrievals
+
+### Import
+
+- [`push_db_import_collection()`](https://ninanor.github.io/seatrack-metadata/reference/push_db_import_collection.md)
+  : Push database import collection to database
+- [`push_db_import_collections()`](https://ninanor.github.io/seatrack-metadata/reference/push_db_import_collections.md)
+  : Push multiple database import collections to database
+- [`push_deployments()`](https://ninanor.github.io/seatrack-metadata/reference/push_deployments.md)
+  : Push deployments to database
+- [`push_master_import_file_to_db()`](https://ninanor.github.io/seatrack-metadata/reference/push_master_import_file_to_db.md)
+  : Push master import file to database
+- [`push_retrievals()`](https://ninanor.github.io/seatrack-metadata/reference/push_retrievals.md)
+  : Push retrievals to database Function to push retrievals from a
+  master import sheet to the database. It checks the database for
+  existing retrievals and only imports new retrievals to avoid
+  duplicates. It also checks that the loggers being retrieved have an
+  associated deployment in the database.
+- [`push_shutdowns()`](https://ninanor.github.io/seatrack-metadata/reference/push_shutdowns.md)
+  : Push shutdowns to database
+- [`push_startup()`](https://ninanor.github.io/seatrack-metadata/reference/push_startup.md)
+  : Push startups to database
+
+## Field planning sheet functions
+
+Functions to load and handle data from the field planning sheet
+
+- [`field_plan_check_locations()`](https://ninanor.github.io/seatrack-metadata/reference/field_plan_check_locations.md)
+  : Check and update locations in the field plan sheet
+- [`field_plan_combine_locations()`](https://ninanor.github.io/seatrack-metadata/reference/field_plan_combine_locations.md)
+  : Combine duplicate locations/species in the field plan sheet
+- [`get_clean_field_plan()`](https://ninanor.github.io/seatrack-metadata/reference/get_clean_field_plan.md)
+  : Read and clean the field plan data
+- [`get_field_plan()`](https://ninanor.github.io/seatrack-metadata/reference/get_field_plan.md)
+  : Read and process the field plan Excel sheet
+
+## Annual report
+
+### Appendix table createion
+
+Functions to create and export annual report appendix tables
+
+- [`create_appendix_table()`](https://ninanor.github.io/seatrack-metadata/reference/create_appendix_table.md)
+  : Create a formatted flextable for the appendix table
+- [`export_appendix_table_excel()`](https://ninanor.github.io/seatrack-metadata/reference/export_appendix_table_excel.md)
+  : Export the flextable to an Excel file with formatting
+
+## General utility functions
+
+- [`get_open_session_dates()`](https://ninanor.github.io/seatrack-metadata/reference/get_open_session_dates.md)
+  : Get open session dates Convenience function to get the open date for
+  a set of logger sessions. If the download date is available, use that.
+  If not, use the shutdown date. If both exist, use the later date. If
+  neither are available, use a date far in the future to indicate the
+  session is still open.
+- [`load_sheets_as_list()`](https://ninanor.github.io/seatrack-metadata/reference/load_sheets_as_list.md)
+  : Load specified sheets from an Excel file into a list of data frames
+
+## Database utility functions
+
+- [`R_df_to_db_values()`](https://ninanor.github.io/seatrack-metadata/reference/R_df_to_db_values.md)
+  : Convert a dataframe of R values to a string of database values for
+  SQL insertion
+- [`R_value_to_db_value()`](https://ninanor.github.io/seatrack-metadata/reference/R_value_to_db_value.md)
+  : Convert an R value to its corresponding database representation
+- [`check_db_metadata_import()`](https://ninanor.github.io/seatrack-metadata/reference/check_db_metadata_import.md)
+  : Check existing rows in database given certain columns from a
+  metadata dataframe
+- [`check_deployment_db()`](https://ninanor.github.io/seatrack-metadata/reference/check_deployment_db.md)
+  : Check existing deployments in database
+- [`check_retrieval_db()`](https://ninanor.github.io/seatrack-metadata/reference/check_retrieval_db.md)
+  : Check existing retrievals in database
+- [`check_shutdown_db()`](https://ninanor.github.io/seatrack-metadata/reference/check_shutdown_db.md)
+  : Check existing shutdowns in database
+- [`check_startups_db()`](https://ninanor.github.io/seatrack-metadata/reference/check_startups_db.md)
+  : Check existing startups in database
+
+## Classes
+
+- [`LoadedWB`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWB.md)
+  : LoadedMetadata Class
+- [`LoadedWBCollection`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWBCollection.md)
+  : LoadedWBCollection Class
+- [`SessionBatch`](https://ninanor.github.io/seatrack-metadata/reference/SessionBatch.md)
+  : SessionBatch Class
+- [`DBImportCollection`](https://ninanor.github.io/seatrack-metadata/reference/DBImportCollection.md)
+  : DBImportCollection Class
+
+# Articles
+
+### All vignettes
+
+- [Appendix
+  table](https://ninanor.github.io/seatrack-metadata/articles/appendix_table.md):
+- [Handling
+  loggers](https://ninanor.github.io/seatrack-metadata/articles/handling_loggers.md):
+- [Example
+  script](https://ninanor.github.io/seatrack-metadata/articles/introduction.md):
+- [Nonresponsive
+  loggers](https://ninanor.github.io/seatrack-metadata/articles/nonresponsive_loggers.md):
