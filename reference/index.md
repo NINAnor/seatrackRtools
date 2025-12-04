@@ -27,6 +27,9 @@ Functions to assist in running the within-seatrack GLS pipeline
 - [`gls_prepare_folder_upload()`](https://ninanor.github.io/seatrack-metadata/reference/gls_prepare_folder_upload.md)
   : Prepare GLS position data for database upload
 
+- [`gls_process_positions()`](https://ninanor.github.io/seatrack-metadata/reference/gls_process_positions.md)
+  : Process GLS position data using seatrackRgls
+
 - [`gls_seatrack_calibration()`](https://ninanor.github.io/seatrack-metadata/reference/gls_seatrack_calibration.md)
   : Handle existing GLS calibration data
 
@@ -79,6 +82,8 @@ Functions to load and update non-responsive sheets
 
 - [`append_to_nonresponsive()`](https://ninanor.github.io/seatrack-metadata/reference/append_to_nonresponsive.md)
   : Append to nonresponsive list
+- [`get_raw_data_prev_session()`](https://ninanor.github.io/seatrack-metadata/reference/get_raw_data_prev_session.md)
+  : Get raw data from previous sessions
 - [`load_nonresponsive()`](https://ninanor.github.io/seatrack-metadata/reference/load_nonresponsive.md)
   : Load multiple nonresponsive logger sheets
 - [`load_nonresponsive_sheet()`](https://ninanor.github.io/seatrack-metadata/reference/load_nonresponsive_sheet.md)

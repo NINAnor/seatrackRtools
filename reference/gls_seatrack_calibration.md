@@ -6,7 +6,7 @@ immediate use in seatrackRgls
 ## Usage
 
 ``` r
-gls_seatrack_calibration(metadata_path)
+gls_seatrack_calibration(metadata_path, split_years = "06-01")
 ```
 
 ## Arguments

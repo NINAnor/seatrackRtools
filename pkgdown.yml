@@ -6,7 +6,8 @@ articles:
   handling_loggers: handling_loggers.html
   introduction: introduction.html
   nonresponsive_loggers: nonresponsive_loggers.html
-last_built: 2025-11-28T14:24Z
+  seatrack_gls: seatrack_gls.html
+last_built: 2025-12-04T12:11Z
 urls:
   reference: https://ninanor.github.io/seatrack-metadata/reference
   article: https://ninanor.github.io/seatrack-metadata/articles

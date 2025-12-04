@@ -7,7 +7,13 @@ Track database.
 ## Usage
 
 ``` r
-gls_prepare_calibration(import_directory, output_directory, no_pos_only = TRUE)
+gls_prepare_calibration(
+  import_directory,
+  output_directory,
+  no_pos_only = TRUE,
+  existing_calibration_dir = NULL,
+  include_existing = TRUE
+)
 ```
 
 ## Arguments
@@ -25,6 +31,17 @@ gls_prepare_calibration(import_directory, output_directory, no_pos_only = TRUE)
 
   Logical indicating whether to include only loggers without position
   data in the database. Default is TRUE.
+
+- existing_calibration_dir:
+
+  Directory containing existing calibration data. Default is NULL. If
+  provided, loggers already present in this directory will be excluded
+  from the new calibration data.
+
+- include_existing:
+
+  Logical indicating whether to include existing calibration data in the
+  final output. Default is TRUE.
 
 ## Value
 

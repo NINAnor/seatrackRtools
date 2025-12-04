@@ -10,3 +10,5 @@
   script](https://ninanor.github.io/seatrack-metadata/articles/introduction.md):
 - [Nonresponsive
   loggers](https://ninanor.github.io/seatrack-metadata/articles/nonresponsive_loggers.md):
+- [GLS
+  workflow](https://ninanor.github.io/seatrack-metadata/articles/seatrack_gls.md):

@@ -37,6 +37,7 @@
     <li><a class="dropdown-item" href="../articles/handling_loggers.html"> Handling loggers</a></li>
     <li><a class="dropdown-item" href="../articles/introduction.html">Example script</a></li>
     <li><a class="dropdown-item" href="../articles/nonresponsive_loggers.html"> Nonresponsive loggers</a></li>
+    <li><a class="dropdown-item" href="../articles/seatrack_gls.html">GLS workflow</a></li>
   </ul>
 </li>
       </ul>
@@ -93,7 +94,7 @@ contained in this package.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">path_to_seatrack</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"a_filepath"</span>,<span class="st">"SEATRACK - shared"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/set_sea_track_folder.html">set_sea_track_folder</a></span><span class="op">(</span><span class="va">path_to_seatrack</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; INFO [2025-11-28 14:25:03] Sea track folder set to: /tmp/Rtmp8apM4G/seatrack_vignette_264916d8655f/SEATRACK - shared</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; INFO [2025-12-04 12:11:18] Sea track folder set to: /tmp/RtmpqPOvNN/seatrack_vignette_26f220921f1c/SEATRACK - shared</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="loading-data">Loading data<a class="anchor" aria-label="anchor" href="#loading-data"></a>
@@ -127,7 +128,7 @@ path directly.</p>
 be done by using the colony name.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">master_import</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_master_import.html">load_master_import</a></span><span class="op">(</span><span class="st">"TestColony"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:03] Master import file for colony 'TestColony' found at: /tmp/Rtmp8apM4G/seatrack_vignette_264916d8655f/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Master import file for colony 'TestColony' found at: /tmp/RtmpqPOvNN/seatrack_vignette_26f220921f1c/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
 <span><span class="co">#&gt; [[1]]</span></span>
 <span><span class="co">#&gt; NULL</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -178,7 +179,7 @@ checking startup files for missing logger sessions.</p>
 <span>  <span class="va">master_import_data</span><span class="op">$</span><span class="va">METADATA</span>,</span>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`ENCOUNTER DATA`</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Appended 1 rows to master metadata. New total is 2 rows.</span></span></code></pre></div>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Appended 1 rows to master metadata. New total is 2 rows.</span></span></code></pre></div>
 <p>Finally the processing reported logger returns and attempts to update
 the appropriate session in the master startup sheet, setting download
 status and dates.</p>
@@ -193,12 +194,12 @@ generating new sessions for them in the master startup sheet.</p>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`RESTART TIMES`</span>,</span>
 <span>  <span class="va">nonresponsive_list</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Found unfinished session for logger ID: L1 2025-01-10</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Unfinished session:</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Found unfinished session for logger ID: L1 2025-01-10</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Unfinished session:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       intended_species intended_location</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> bird             TestColony       </span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Updated 1 sessions.</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Updated sessions:</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Updated 1 sessions.</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Updated sessions:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       download_type download_date</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> Downloaded    2025-01-10</span></span></code></pre></div>
 <p>At every stage, the log will report the changes that the functions
@@ -220,16 +221,16 @@ updated master sheets, and the updated nonresponsive sheets.</p>
 <span>  <span class="va">partner_data</span>,</span>
 <span>  <span class="va">master_import</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; INFO [2025-11-28 14:25:04] Add missing sessions from start up files</span></span>
-<span><span class="co">#&gt; INFO [2025-11-28 14:25:04] Append encounter data</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Appended 1 rows to master metadata. New total is 2 rows.</span></span>
-<span><span class="co">#&gt; INFO [2025-11-28 14:25:04] Update sessions from logger returns</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Found unfinished session for logger ID: L1 2025-01-10</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Unfinished session:</span></span>
+<span><span class="co">#&gt; INFO [2025-12-04 12:11:19] Add missing sessions from start up files</span></span>
+<span><span class="co">#&gt; INFO [2025-12-04 12:11:19] Append encounter data</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Appended 1 rows to master metadata. New total is 2 rows.</span></span>
+<span><span class="co">#&gt; INFO [2025-12-04 12:11:19] Update sessions from logger returns</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Found unfinished session for logger ID: L1 2025-01-10</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:19] Unfinished session:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       intended_species intended_location</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> bird             TestColony       </span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Updated 1 sessions.</span></span>
-<span><span class="co">#&gt; SUCCESS [2025-11-28 14:25:04] Updated sessions:</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:20] Updated 1 sessions.</span></span>
+<span><span class="co">#&gt; SUCCESS [2025-12-04 12:11:20] Updated sessions:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       download_type download_date</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> Downloaded    2025-01-10</span></span>
 <span><span class="va">new_master_sheets</span> <span class="op">&lt;-</span> <span class="va">new_sheets</span><span class="op">$</span><span class="va">master_import</span></span>
