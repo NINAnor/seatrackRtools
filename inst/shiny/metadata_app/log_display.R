@@ -1,4 +1,7 @@
 ReadLastLines <- function(x, n, ...) {
+    if (!file.exists(x)) {
+        return("Waiting for logging file..")
+    }
     con <- file(x)
     open(con)
     out <- scan(con, n, what = "char(0)", sep = "\n", quiet = TRUE, ...)
@@ -35,11 +38,11 @@ logger_server <- function(id) {
             filePath = log_path,
             intervalMillis = 1000,
             readFunc = function(filepath) {
-                return(paste(ReadLastLines(filepath, 10), collapse = "\n"))
+                return(paste(ReadLastLines(filepath, 5), collapse = "\n"))
             }
         )
 
-        output$logpath <- renderUI(h3(
+        output$logpath <- renderUI(h4(
             HTML(
                 paste(
                     "Log", em(log_path)

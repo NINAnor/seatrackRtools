@@ -16,8 +16,14 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
     if (is.null(the$sea_track_folder)) {
         stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
     }
+    log_info("Get Master import file for colony '", colony, "', use existing paths: ", use_stored)
     if (use_stored && colony %in% names(the$master_sheet_paths)) {
-        return(the$master_sheet_paths[[colony]])
+        full_colony_file_path <- the$master_sheet_paths[[colony]]
+
+        if (file.exists(full_colony_file_path)) {
+            log_success("Master import file for colony '", colony, "' loaded from: ", full_colony_file_path)
+            return(full_colony_file_path)
+        }
     }
     # Get the path to the master import folder
     master_import_folder <- file.path(the$sea_track_folder, "Database", "Imports_Metadata")
@@ -148,18 +154,20 @@ load_master_import <- function(colony = NULL, file_path = NULL, use_stored = TRU
 #' @param combine Boolean determining whether or not to combine the sheets into a single dataframe.
 #' @param skip character vector of location names to not load.
 #' @param distinct Boolean determining whether to only keep unique sheets (non duplicated paths)
+#' @pararm use_stored Boolean determining whether previously discovered paths can be reused. Default is TRUE
 #' @return If combine is TRUE: A tibble consisting of combined metadata and startup_shutdown sheets, with an extra column for path appended to each.
 #'  Otherwise a list where every element is a LoadedWB object.
 #' @export
 #' @concept metadata
-load_all_master_import <- function(combine = TRUE, skip = c(), distinct = TRUE) {
+load_all_master_import <- function(combine = TRUE, skip = c(), distinct = TRUE, use_stored = TRUE) {
     if (is.null(the$sea_track_folder)) {
         stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
     }
+    log_info(paste("Loading master imports from", the$sea_track_folder))
     all_colony <- unlist(get_all_locations())
     all_colony <- all_colony[!all_colony %in% skip]
 
-    all_paths <- lapply(all_colony, get_master_import_path)
+    all_paths <- lapply(all_colony, get_master_import_path, use_stored = use_stored)
 
     no_path <- all_colony[which(sapply(all_paths, is.null))]
     if (length(no_path) > 0) {
@@ -350,10 +358,16 @@ handle_partner_metadata <- function(colony, new_metadata, master_import, nonresp
 #' @param new_master_import A modified master import sheet to be distributed throughout the list
 modify_master_import_in_list <- function(all_master_import, new_master_import) {
     new_master_import_path <- new_master_import$path
-    all_master_import[which(all_master_import, function(x) {
-        x$path == new_master_import_path
-    })] <- new_master_import
-    return(all_master_import)
+    print(new_master_import_path)
+    new_all_master_import <- lapply(all_master_import, function(x) {
+        if (x$path == new_master_import_path) {
+            return(new_master_import)
+        } else {
+            return(x)
+        }
+    })
+
+    return(new_all_master_import)
 }
 
 
@@ -525,5 +539,6 @@ save_master_sheet <- function(new_master_sheets, filepath = NULL, modified_only 
 
 
     new_master_sheets$wb$save(filepath)
-    # SET FORMATTING
+    new_master_sheets$modified <- FALSE
+    return(new_master_sheets)
 }

@@ -5,7 +5,6 @@
 #' @param log_dir A character string specifying the directory where the log file will be saved. If NULL, the log file will be saved in the current working directory.
 #' @param log_file A character string specifying the name of the log file. Default is "seatrack_functions_log.txt".
 #' @param silent Boolean. If FALSE, logger will not log that it has start logging.
-#' @param silent Boolean. If FALSE, logger will not log that it has start logging.
 #' @return None
 #'
 #' @examples
@@ -40,6 +39,7 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #'
 #' @param dir A character string specifying the path to the base directory.
 #' @param language Character string specifying system language to add utf8 encoding to.
+#' @param save_path Save seatrack folder to renviron to allow reuse.
 #'
 #' @return None
 #' @examples
@@ -48,28 +48,35 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #' }
 #' @export
 #' @concept setup
-set_sea_track_folder <- function(dir, language = "English_United Kingdom") {
-    if (!dir.exists(dir)) {
+set_sea_track_folder <- function(dir, language = "English_United Kingdom", save_path = TRUE) {
+    if (!is.null(dir) && !dir.exists(dir)) {
         log_error("The specified directory does not exist.")
         return()
     }
 
     the$sea_track_folder <- dir
-    if (file.exists(".Renviron")) {
-        environ_lines <- readLines(".Renviron")
-    } else {
-        environ_lines <- c()
+    the$master_sheet_paths <- list()
+    if (save_path) {
+        if (file.exists(".Renviron")) {
+            environ_lines <- readLines(".Renviron")
+        } else {
+            environ_lines <- c()
+        }
+        environ_lines <- environ_lines[!grepl("SEA_TRACK_FOLDER", environ_lines, fixed = TRUE)]
     }
+
     if (!is.null(dir)) {
-        environ_lines <- c(environ_lines, paste0("SEA_TRACK_FOLDER = '", dir, "'"))
+        if (save_path) {
+            environ_lines <- c(environ_lines, paste0("SEA_TRACK_FOLDER = '", dir, "'"))
+        }
         log_info("Sea track folder set to: ", the$sea_track_folder)
     } else {
-        environ_lines <- environ_lines[!grepl("SEA_TRACK_FOLDER", environ_lines, fixed = TRUE)]
         log_info("Sea track folder unset")
     }
 
-
-    writeLines(unique(environ_lines), ".Renviron")
+    if (save_path) {
+        writeLines(unique(environ_lines), ".Renviron")
+    }
 
 
     if (!grepl("utf", tolower(Sys.getlocale()), fixed = TRUE)) {

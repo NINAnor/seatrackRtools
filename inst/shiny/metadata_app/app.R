@@ -1,6 +1,7 @@
 library(shiny)
+library(bslib)
 library(shinyFiles)
-library(seatrackRmetadata)
+
 library(shinybusy)
 library(promises)
 library(future)
@@ -8,31 +9,25 @@ library(future)
 source("main_ui.R")
 source("main_server.R")
 source("folder_selector.R")
-# source("file_selector.R")
+source("manage_loggers.R")
 source("log_display.R")
+source("appender_file_safe.R")
 plan(multisession)
 
 library(logger)
+readRenviron(".Renviron")
+library(seatrackRmetadata)
 
-appender_file_safe <- function(file) {
-    force(file)
-    function(line) {
-        # make sure folder exists
-        dir <- dirname(file)
-        if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
-
-        con <- file(file, open = "a")
-        writeLines(line, con)
-        close(con)
-    }
-}
-
-log_appender(appender_file_safe("app.log"))
+log_path <- getShinyOption("logging_path", "app.log")
+log_appender(appender_file_safe(log_path))
 log_threshold(INFO)
+
+
 
 shinyApp(
     ui = main_ui("main"),
     server = function(input, output, session) {
+        # bs_themer()
         main_server("main")
     }
 )
