@@ -1,19 +1,17 @@
-# Prepare GLS calibration data using seatrack database
+# Prepare a seatrack species/colony combination for calibration
 
-Function to prepare GLS calibration data for use with seatrackRgls,
-based on GLS files in the import directory and metadata from the Sea
-Track database.
+Uses hard coded file paths to call gls_prepare_calibration. Filters
+metadata passed to gls_prepare_calibration by species/colony.
 
 ## Usage
 
 ``` r
-gls_prepare_calibration(
-  import_directory,
-  output_directory,
-  species = NULL,
-  colony = NULL,
+gls_calibrate_species_colony(
+  import_directory = file.path(the$sea_track_folder,
+    "Database\\Imports_Logger data\\Raw logger data\\ALL"),
+  species,
+  colony,
   no_pos_only = TRUE,
-  existing_calibration_dir = NULL,
   rerun_existing = TRUE,
   include_existing = TRUE,
   filter_plots = FALSE
@@ -26,28 +24,18 @@ gls_prepare_calibration(
 
   Path to the directory containing GLS files.
 
-- output_directory:
-
-  Path to the directory where the prepared calibration data will be
-  saved.
-
 - species:
 
-  Species name to filter metadata. Default is NULL (no filtering).
+  Species name to filter metadata.
 
 - colony:
 
-  Colony name to filter metadata. Default is NULL (no filtering).
+  Colony name to filter metadata.
 
 - no_pos_only:
 
   Logical indicating whether to include only loggers without position
   data in the database. Default is TRUE.
-
-- existing_calibration_dir:
-
-  Directory containing existing calibration data. Default is NULL. If
-  provided, calibration data from this directory will be merged.
 
 - rerun_existing:
 

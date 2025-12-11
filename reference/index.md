@@ -15,6 +15,13 @@ Functions to set up the sea track folder and paths.
 
 Functions to assist in running the within-seatrack GLS pipeline
 
+- [`gls_calibrate_all()`](https://ninanor.github.io/seatrack-metadata/reference/gls_calibrate_all.md)
+  : Calibrate all species/colony combinations found in seatrack logger
+  data import folder
+
+- [`gls_calibrate_species_colony()`](https://ninanor.github.io/seatrack-metadata/reference/gls_calibrate_species_colony.md)
+  : Prepare a seatrack species/colony combination for calibration
+
 - [`gls_metadata()`](https://ninanor.github.io/seatrack-metadata/reference/gls_metadata.md)
   : Get metadata from database based on GLS files in import directory
 
