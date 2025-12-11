@@ -29,7 +29,8 @@ Imports:
     fs,
     shinybusy,
     shinyjs,
-    DT
+    DT,
+    zip
 Suggests: 
     knitr,
     rmarkdown,
