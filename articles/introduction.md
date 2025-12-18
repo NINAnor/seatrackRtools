@@ -42,7 +42,7 @@ path_to_seatrack <- file.path("a_filepath","SEATRACK - shared")
 set_sea_track_folder(path_to_seatrack)
 ```
 
-    #> INFO [2025-12-11 08:31:19] Sea track folder set to: /tmp/RtmpjTZdZl/seatrack_vignette_475f3e9ea77a/SEATRACK - shared
+    #> INFO [2025-12-18 07:59:24] Sea track folder set to: /tmp/RtmpYEXJIG/seatrack_vignette_6193709ffedd/SEATRACK - shared
 
 ## Loading data
 
@@ -62,18 +62,6 @@ The partner metadata excel can then be loaded into R.
 ``` r
 
 partner_data <- load_partner_metadata(partner_xlsx)
-#> [[1]]
-#> [1] "logger_id_retrieved" "logger_id_deployed" 
-#> 
-#> [[2]]
-#> [1] "logger_id"
-#> 
-#> [[3]]
-#> [1] "logger_id"
-#> 
-#> [1] 1
-#> [1] 2
-#> [1] 3
 #> Warning in (function (file, sheet, start_row = NULL, start_col = NULL,
 #> row_names = FALSE, : variable from `types` not found in data
 ```
@@ -83,15 +71,6 @@ done by using the colony name.
 
 ``` r
 master_import <- load_master_import("TestColony")
-#> SUCCESS [2025-12-11 08:31:19] Master import file for colony 'TestColony' found at: /tmp/RtmpjTZdZl/seatrack_vignette_475f3e9ea77a/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
-#> [[1]]
-#> NULL
-#> 
-#> [[2]]
-#> NULL
-#> 
-#> [1] 1
-#> [1] 2
 #> Warning in FUN(X[[i]], ...): NAs introduced by coercion
 #> Warning in FUN(X[[i]], ...): NAs introduced by coercion
 #> Warning in convert_date(x, origin = origin): NAs introduced by coercion
@@ -144,7 +123,7 @@ updated_metadata <- append_encounter_data(
   master_import_data$METADATA,
   partner_data$data$`ENCOUNTER DATA`
 )
-#> SUCCESS [2025-12-11 08:31:20] Appended 1 rows to master metadata. New total is 2 rows.
+#> SUCCESS [2025-12-18 07:59:25] Appended 1 rows to master metadata. New total is 2 rows.
 ```
 
 Finally the processing reported logger returns and attempts to update
@@ -164,12 +143,12 @@ updated_sessions <- handle_returned_loggers(
   partner_data$data$`RESTART TIMES`,
   nonresponsive_list
 )
-#> SUCCESS [2025-12-11 08:31:20] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2025-12-11 08:31:20] Unfinished session:
+#> SUCCESS [2025-12-18 07:59:25] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2025-12-18 07:59:25] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2025-12-11 08:31:20] Updated 1 sessions.
-#> SUCCESS [2025-12-11 08:31:20] Updated sessions:
+#> SUCCESS [2025-12-18 07:59:25] Updated 1 sessions.
+#> SUCCESS [2025-12-18 07:59:25] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
 #> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10
 ```
@@ -193,16 +172,17 @@ new_sheets <- handle_partner_metadata(
   partner_data,
   master_import
 )
-#> INFO [2025-12-11 08:31:20] Add missing sessions from start up files
-#> INFO [2025-12-11 08:31:20] Append encounter data
-#> SUCCESS [2025-12-11 08:31:20] Appended 1 rows to master metadata. New total is 2 rows.
-#> INFO [2025-12-11 08:31:20] Update sessions from logger returns
-#> SUCCESS [2025-12-11 08:31:20] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2025-12-11 08:31:20] Unfinished session:
+#> INFO [2025-12-18 07:59:25] Handle partner metadata for TestColony
+#> INFO [2025-12-18 07:59:25] Add missing sessions from start up files
+#> INFO [2025-12-18 07:59:25] Append encounter data
+#> SUCCESS [2025-12-18 07:59:25] Appended 1 rows to master metadata. New total is 2 rows.
+#> INFO [2025-12-18 07:59:25] Update sessions from logger returns
+#> SUCCESS [2025-12-18 07:59:25] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2025-12-18 07:59:25] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2025-12-11 08:31:20] Updated 1 sessions.
-#> SUCCESS [2025-12-11 08:31:20] Updated sessions:
+#> SUCCESS [2025-12-18 07:59:25] Updated 1 sessions.
+#> SUCCESS [2025-12-18 07:59:25] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
 #> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10
 new_master_sheets <- new_sheets$master_import
