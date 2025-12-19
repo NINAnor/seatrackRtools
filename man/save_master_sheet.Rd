@@ -14,7 +14,7 @@ save_master_sheet(new_master_sheets, filepath = NULL, modified_only = FALSE)
 \item{modified_only}{Only save the file if the sheet has been flagged as modified.}
 }
 \value{
-No return value.
+The function returns the updated LoadedWB object after saving.
 }
 \description{
 This function writes the provided data frame (\code{new_master_sheets}) to an Excel file

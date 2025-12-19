@@ -6,13 +6,16 @@
 \usage{
 start_logging(
   log_dir = NULL,
-  log_file = paste0("seatrack_functions_log_", Sys.Date(), ".txt")
+  log_file = paste0("seatrack_functions_log_", Sys.Date(), ".txt"),
+  silent = FALSE
 )
 }
 \arguments{
 \item{log_dir}{A character string specifying the directory where the log file will be saved. If NULL, the log file will be saved in the current working directory.}
 
 \item{log_file}{A character string specifying the name of the log file. Default is "seatrack_functions_log.txt".}
+
+\item{silent}{Boolean. If FALSE, logger will not log that it has start logging.}
 }
 \value{
 None

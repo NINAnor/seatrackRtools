@@ -4,12 +4,18 @@
 \alias{set_sea_track_folder}
 \title{Set the base directory for the sea track folder}
 \usage{
-set_sea_track_folder(dir, language = "English_United Kingdom")
+set_sea_track_folder(
+  dir,
+  language = "English_United Kingdom",
+  save_path = TRUE
+)
 }
 \arguments{
 \item{dir}{A character string specifying the path to the base directory.}
 
 \item{language}{Character string specifying system language to add utf8 encoding to.}
+
+\item{save_path}{Save seatrack folder to renviron to allow reuse.}
 }
 \value{
 None

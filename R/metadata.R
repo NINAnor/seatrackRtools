@@ -154,7 +154,7 @@ load_master_import <- function(colony = NULL, file_path = NULL, use_stored = TRU
 #' @param combine Boolean determining whether or not to combine the sheets into a single dataframe.
 #' @param skip character vector of location names to not load.
 #' @param distinct Boolean determining whether to only keep unique sheets (non duplicated paths)
-#' @pararm use_stored Boolean determining whether previously discovered paths can be reused. Default is TRUE
+#' @param use_stored Boolean determining whether previously discovered paths can be reused. Default is TRUE
 #' @return If combine is TRUE: A tibble consisting of combined metadata and startup_shutdown sheets, with an extra column for path appended to each.
 #'  Otherwise a list where every element is a LoadedWB object.
 #' @export

@@ -4,12 +4,21 @@
 \alias{load_all_master_import}
 \title{Load master import file for all colonies}
 \usage{
-load_all_master_import(combine = TRUE, skip = c())
+load_all_master_import(
+  combine = TRUE,
+  skip = c(),
+  distinct = TRUE,
+  use_stored = TRUE
+)
 }
 \arguments{
 \item{combine}{Boolean determining whether or not to combine the sheets into a single dataframe.}
 
 \item{skip}{character vector of location names to not load.}
+
+\item{distinct}{Boolean determining whether to only keep unique sheets (non duplicated paths)}
+
+\item{use_stored}{Boolean determining whether previously discovered paths can be reused. Default is TRUE}
 }
 \value{
 If combine is TRUE: A tibble consisting of combined metadata and startup_shutdown sheets, with an extra column for path appended to each.
