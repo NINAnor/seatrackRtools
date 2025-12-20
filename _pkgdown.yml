@@ -2,6 +2,10 @@ url: https://ninanor.github.io/seatrack-metadata/
 template:
   bootstrap: 5
 reference:
+  - title: Start interface
+    desc: Run a shiny app to perform (some) of the functions below
+    contents:
+      - has_concept("shiny_app")
   - title: Setup functions
     desc: Functions to set up the sea track folder and paths.
     contents:

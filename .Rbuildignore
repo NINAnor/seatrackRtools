@@ -3,7 +3,6 @@
 ^\.Rproj$
 ^\.Rproj\.user$
 log.txt
-^test_data
 ^.*\.xlsx
 ^.*\.Rproj
 test_script.R
@@ -17,3 +16,4 @@ test_script.R
 ^.env$
 ^scaffolding\.R$
 ^\.devcontainer$
+^test_data$

@@ -30,13 +30,18 @@ Imports:
     shinybusy,
     shinyjs,
     DT,
-    zip
+    zip,
+    future,
+    doFuture,
+    foreach,
+    promises,
+    progressr
 Suggests: 
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
 Remotes:
     seatrackR=github::NINAnor/seatrackR,
-    seatrackRgls=github::NINAnor/seatrack-gls
+    seatrackRgls=github::NINAnor/seatrackRgls
 VignetteBuilder: knitr
 Config/testthat/edition: 3

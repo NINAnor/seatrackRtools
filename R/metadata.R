@@ -154,7 +154,7 @@ load_master_import <- function(colony = NULL, file_path = NULL, use_stored = TRU
 #' @param combine Boolean determining whether or not to combine the sheets into a single dataframe.
 #' @param skip character vector of location names to not load.
 #' @param distinct Boolean determining whether to only keep unique sheets (non duplicated paths)
-#' @pararm use_stored Boolean determining whether previously discovered paths can be reused. Default is TRUE
+#' @param use_stored Boolean determining whether previously discovered paths can be reused. Default is TRUE
 #' @return If combine is TRUE: A tibble consisting of combined metadata and startup_shutdown sheets, with an extra column for path appended to each.
 #'  Otherwise a list where every element is a LoadedWB object.
 #' @export
@@ -200,11 +200,11 @@ load_all_master_import <- function(combine = TRUE, skip = c(), distinct = TRUE, 
         return(all_sheets)
     }
 
-    return(combine_all_metadata(all_sheets))
+    return(combine_all_metadata(all_sheets, all_paths))
 
 }
 
-combine_all_metadata <- function(all_sheets){
+combine_all_metadata <- function(all_sheets, all_paths){
     all_data <- lapply(all_sheets, function(x) x$data)
     # combine metadata
     all_metadata <- lapply(all_data, function(x) x$METADATA)
@@ -356,6 +356,9 @@ handle_partner_metadata <- function(colony, new_metadata, master_import, nonresp
 #'
 #' @param all_master_import A list of master imports, as produced by load_all_master_import(combine = FALSE, distinct = FALSE)
 #' @param new_master_import A modified master import sheet to be distributed throughout the list
+#' @return An updated list of master imports, with the new master import replacing any with the same path.
+#' @export
+#' @concept metadata
 modify_master_import_in_list <- function(all_master_import, new_master_import) {
     new_master_import_path <- new_master_import$path
 
