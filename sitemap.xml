@@ -57,6 +57,7 @@
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/load_partner_metadata.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/load_sheets_as_list.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/modify_logger_status.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/modify_master_import_in_list.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/nonresponsive_from_master.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/prepare_master_sheet_for_db.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/prepare_session_batch.html</loc></url>
@@ -70,6 +71,7 @@
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/push_retrievals.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/push_shutdowns.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/push_startup.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrack-metadata/reference/run_app.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/save_all_modified.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/save_master_sheet.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrack-metadata/reference/save_nonresponsive.html</loc></url>

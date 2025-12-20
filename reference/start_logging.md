@@ -7,7 +7,8 @@ This function initializes logging to a specified directory.
 ``` r
 start_logging(
   log_dir = NULL,
-  log_file = paste0("seatrack_functions_log_", Sys.Date(), ".txt")
+  log_file = paste0("seatrack_functions_log_", Sys.Date(), ".txt"),
+  silent = FALSE
 )
 ```
 
@@ -23,6 +24,10 @@ start_logging(
 
   A character string specifying the name of the log file. Default is
   "seatrack_functions_log.txt".
+
+- silent:
+
+  Boolean. If FALSE, logger will not log that it has start logging.
 
 ## Value
 

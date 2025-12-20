@@ -26,7 +26,7 @@ save_master_sheet(new_master_sheets, filepath = NULL, modified_only = FALSE)
 
 ## Value
 
-No return value.
+The function returns the updated LoadedWB object after saving.
 
 ## Examples
 

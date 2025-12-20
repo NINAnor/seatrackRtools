@@ -1,24 +1,27 @@
 # Process GLS position data using seatrackRgls
 
 Function to process GLS position data from a specified directory using
-seatrackRgls. The only additional functionality is fetching colony
-information from the Sea Track database.
+seatrackRgls.
 
 ## Usage
 
 ``` r
-gls_process_positions(import_directory, calibration_data, output_directory)
+gls_process_positions(species, colony, import_directory, output_directory)
 ```
 
 ## Arguments
 
+- species:
+
+  Species name for colony information.
+
+- colony:
+
+  Colony name for colony information.
+
 - import_directory:
 
   Path to the directory containing GLS files.
-
-- calibration_data:
-
-  Dataframe containing GLS calibration data.
 
 - output_directory:
 

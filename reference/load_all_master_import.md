@@ -6,7 +6,12 @@ seatrack folder.
 ## Usage
 
 ``` r
-load_all_master_import(combine = TRUE, skip = c())
+load_all_master_import(
+  combine = TRUE,
+  skip = c(),
+  distinct = TRUE,
+  use_stored = TRUE
+)
 ```
 
 ## Arguments
@@ -19,6 +24,16 @@ load_all_master_import(combine = TRUE, skip = c())
 - skip:
 
   character vector of location names to not load.
+
+- distinct:
+
+  Boolean determining whether to only keep unique sheets (non duplicated
+  paths)
+
+- use_stored:
+
+  Boolean determining whether previously discovered paths can be reused.
+  Default is TRUE
 
 ## Value
 

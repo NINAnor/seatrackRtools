@@ -16,7 +16,8 @@ gls_prepare_calibration(
   existing_calibration_dir = NULL,
   rerun_existing = TRUE,
   include_existing = TRUE,
-  filter_plots = FALSE
+  filter_plots = FALSE,
+  rerun_existing_plots = FALSE
 )
 ```
 

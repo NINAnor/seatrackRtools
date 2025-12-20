@@ -13,6 +13,13 @@ An example of using the functions can be found
 
 # Package index
 
+## Start interface
+
+Run a shiny app to perform (some) of the functions below
+
+- [`run_app()`](https://ninanor.github.io/seatrack-metadata/reference/run_app.md)
+  : Run the Shiny App
+
 ## Setup functions
 
 Functions to set up the sea track folder and paths.
@@ -76,6 +83,9 @@ Functions to handle and process metadata sheets.
   : Load master import file for a given colony
 - [`load_partner_metadata()`](https://ninanor.github.io/seatrack-metadata/reference/load_partner_metadata.md)
   : Load partner provided metadata from an Excel file
+- [`modify_master_import_in_list()`](https://ninanor.github.io/seatrack-metadata/reference/modify_master_import_in_list.md)
+  : Given a new master import, modify all master imports in a list
+  sharing the same path
 - [`save_all_modified()`](https://ninanor.github.io/seatrack-metadata/reference/save_all_modified.md)
   : Save all modified master sheets
 - [`save_master_sheet()`](https://ninanor.github.io/seatrack-metadata/reference/save_master_sheet.md)

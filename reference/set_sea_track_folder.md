@@ -7,7 +7,11 @@ filenames.
 ## Usage
 
 ``` r
-set_sea_track_folder(dir, language = "English_United Kingdom")
+set_sea_track_folder(
+  dir,
+  language = "English_United Kingdom",
+  save_path = TRUE
+)
 ```
 
 ## Arguments
@@ -19,6 +23,10 @@ set_sea_track_folder(dir, language = "English_United Kingdom")
 - language:
 
   Character string specifying system language to add utf8 encoding to.
+
+- save_path:
+
+  Save seatrack folder to renviron to allow reuse.
 
 ## Value
 
