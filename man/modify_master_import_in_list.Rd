@@ -11,8 +11,12 @@ modify_master_import_in_list(all_master_import, new_master_import)
 
 \item{new_master_import}{A modified master import sheet to be distributed throughout the list}
 }
+\value{
+An updated list of master imports, with the new master import replacing any with the same path.
+}
 \description{
 When loading all master import files with distinct = FALSE, we will end up with duplicate master import files.
 This is because multiple colonies can share the same master import file.
 If we modify one of these (for example, updating from partner metadata for that colony), we need to make sure the files stay in sync.
 }
+\concept{metadata}

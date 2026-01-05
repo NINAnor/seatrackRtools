@@ -30,7 +30,12 @@ Imports:
     shinybusy,
     shinyjs,
     DT,
-    zip
+    zip,
+    future,
+    doFuture,
+    foreach,
+    promises,
+    progressr
 Suggests: 
     knitr,
     rmarkdown,

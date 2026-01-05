@@ -6,6 +6,7 @@
 #' @import flextable
 #' @import logger
 #' @importFrom cellranger cell_cols
+#' @importFrom doFuture %dofuture%
 #' @importFrom readxl read_excel
 #' @importFrom tibble tibble
 #' @importFrom utils capture.output

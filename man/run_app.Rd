@@ -9,3 +9,4 @@ run_app(log_path = "app.log")
 \description{
 Run the Shiny App
 }
+\concept{shiny_app}
