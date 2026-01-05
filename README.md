@@ -3,9 +3,9 @@ Initial draft of utility functions to aid in the handling of seatrack data.
 Installation:
 
 ```
-devtools::install_github("NINAnor/seatrack-metadata")
+devtools::install_github("NINAnor/seatrackRtools")
 ```
 
-Documentation can be found [here](https://NINAnor.github.io/seatrack-metadata/)
+Documentation can be found [here](https://NINAnor.github.io/seatrackRtools/)
 
-An example of using the functions can be found [here](https://NINAnor.github.io/seatrack-metadata/articles/introduction.html)
+An example of using the functions can be found [here](https://NINAnor.github.io/seatrackRtools/articles/introduction.html)

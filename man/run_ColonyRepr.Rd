@@ -30,6 +30,9 @@ run_ColonyRepr(
 A list with all components of the colony representativeness analysis
 }
 \description{
-Function to extract desired data from the SEATRACK database and fully run the colony representativeness analysis
+This is a wrapper function around \code{prep_SEATRACK_ColonyRepr()} and the analysis pipeline.
+It will thus extract the specified gls positional data and plug it into the pipeline that will produce
+a listed output with various elements that can be used to indicate captured colony representativeness.
+An active connection with the SEATRACK data base is required.
 }
 \concept{ColonyRepr}

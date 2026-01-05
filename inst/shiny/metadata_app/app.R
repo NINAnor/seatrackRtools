@@ -21,7 +21,7 @@ plan(multisession)
 
 library(logger)
 readRenviron(".Renviron")
-library(seatrackRmetadata)
+library(seatrackRtools)
 
 log_path <- getShinyOption("logging_path", "app.log")
 log_appender(appender_file_safe(log_path))

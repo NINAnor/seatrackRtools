@@ -60,41 +60,53 @@ get_unfinished_session <- function(master_startup, logger_id, logger_download_st
             log_trace(paste0("Unfinished session found for logger ID: ", logger_id, ". Checking dates."))
         }
 
-        if (!is.na(logger_download_stop_date)) {
-            # Check the closest startup date before the download date where there is not a finished session in between
+        logger_session_indices <- which(master_startup$logger_serial_no == logger_id &
+            !is.na(master_startup$starttime_gmt))
 
-            # calculate difference between reported download date and startup date
-
-            logger_session_indices <- which(master_startup$logger_serial_no == logger_id &
-                !is.na(master_startup$starttime_gmt))
-
+        if (length(logger_session_indices) > 0) {
             logger_sessions <- master_startup[logger_session_indices, ]
+            if (!is.na(logger_download_stop_date)) {
+                # Check the closest startup date before the download date where there is not a finished session in between
 
-            time_diffs <- as.numeric(difftime(logger_download_stop_date,
-                logger_sessions$starttime_gmt,
-                units = "days"
-            ))
+                # calculate difference between reported download date and startup date
 
-            logger_sessions_finished <- which(!(is.na(logger_sessions$shutdown_date) | is.na(logger_sessions$download_date)))
+                time_diffs <- as.numeric(difftime(logger_download_stop_date,
+                    logger_sessions$starttime_gmt,
+                    units = "days"
+                ))
 
-            time_diffs[time_diffs < 0] <- NA # Ignore future dates
-            if (length(logger_sessions_finished) > 0) {
-                time_diffs[1:max(logger_sessions_finished)] <- NA # ignore finished sessions and unfinished sessions falling before a finished session
-            }
+                logger_sessions_finished <- which(!(is.na(logger_sessions$shutdown_date) | is.na(logger_sessions$download_date)))
 
-            closest_index <- which(time_diffs == min(time_diffs, na.rm = TRUE) & !is.na(time_diffs))
-            if (length(closest_index) == 0) {
-                log_warn(paste("No suitable unfinished session found for:", logger_id))
+                time_diffs[time_diffs < 0] <- NA # Ignore future dates
+                if (length(logger_sessions_finished) > 0) {
+                    time_diffs[1:max(logger_sessions_finished)] <- NA # ignore finished sessions and unfinished sessions falling before a finished session
+                }
+
+                closest_index <- which(time_diffs == min(time_diffs, na.rm = TRUE) & !is.na(time_diffs))
+                if (length(closest_index) == 0) {
+                    log_warn(paste("No suitable unfinished session found for:", logger_id))
+                    return(NULL)
+                } else if (length(closest_index) > 1) {
+                    log_warn(paste("Cannot resolve multiple unfinished sessions for:", logger_id))
+                    return(NULL)
+                }
+                unfinished_indices <- logger_session_indices[closest_index]
+                master_startup_unfinished <- master_startup[unfinished_indices, ]
+            } else if (nrow(master_startup_unfinished) > 1) {
+                log_warn(paste0("No download date available for logger ID:", logger_id, ". Cannot resolve multiple unfinished sessions."))
                 return(NULL)
-            } else if (length(closest_index) > 1) {
-                log_warn(paste("Cannot resolve multiple unfinished sessions for:", logger_id))
-                return(NULL)
             }
-            unfinished_indices <- logger_session_indices[closest_index]
-            master_startup_unfinished <- master_startup[unfinished_indices, ]
         } else {
-            log_warn(paste0("No download date available for logger ID:", logger_id, ". Cannot resolve multiple unfinished sessions."))
-            return(NULL)
+            log_trace(paste0("No sessions with start times fround for ", logger_id))
+            logger_session_indices <- which(master_startup$logger_serial_no == logger_id)
+            logger_sessions <- master_startup[logger_session_indices, ]
+            logger_sessions_unfinished <- which((is.na(logger_sessions$shutdown_date) | is.na(logger_sessions$download_date)))
+            if (length(logger_sessions_unfinished) > 1) {
+                log_warn(paste("Cannot resolve multiple unfinished sessions for:", logger_id, "due to lack of start dates."))
+                return(NULL)
+            }
+            unfinished_indices <- logger_session_indices[logger_sessions_unfinished]
+            master_startup_unfinished <- master_startup[unfinished_indices, ]
         }
     }
     log_success(paste("Found unfinished session for logger ID:", logger_id, logger_download_stop_date))
@@ -198,7 +210,6 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
         )
 
         nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
-
     }
     master_sheet$modified <- TRUE
     return(list(master_sheet = master_sheet, nonresponsive_list = nonresponsive_list))

@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 Loading the library:
 
 ```{r setup}
-library(seatrackRmetadata)
+library(seatrackRtools)
 ```
 
 ```{r setlog, echo = FALSE}
