@@ -3,12 +3,12 @@
 ### All vignettes
 
 - [Appendix
-  table](https://ninanor.github.io/seatrack-metadata/articles/appendix_table.md):
+  table](https://ninanor.github.io/seatrackRtools/articles/appendix_table.md):
 - [Handling
-  loggers](https://ninanor.github.io/seatrack-metadata/articles/handling_loggers.md):
+  loggers](https://ninanor.github.io/seatrackRtools/articles/handling_loggers.md):
 - [Example
-  script](https://ninanor.github.io/seatrack-metadata/articles/introduction.md):
+  script](https://ninanor.github.io/seatrackRtools/articles/introduction.md):
 - [Nonresponsive
-  loggers](https://ninanor.github.io/seatrack-metadata/articles/nonresponsive_loggers.md):
+  loggers](https://ninanor.github.io/seatrackRtools/articles/nonresponsive_loggers.md):
 - [GLS
-  workflow](https://ninanor.github.io/seatrack-metadata/articles/seatrack_gls.md):
+  workflow](https://ninanor.github.io/seatrackRtools/articles/seatrack_gls.md):

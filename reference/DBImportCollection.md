@@ -6,9 +6,9 @@ deployments and retrievals that are associated with them.
 ## See also
 
 Other classes:
-[`LoadedWB`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWB.md),
-[`LoadedWBCollection`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWBCollection.md),
-[`SessionBatch`](https://ninanor.github.io/seatrack-metadata/reference/SessionBatch.md)
+[`LoadedWB`](https://ninanor.github.io/seatrackRtools/reference/LoadedWB.md),
+[`LoadedWBCollection`](https://ninanor.github.io/seatrackRtools/reference/LoadedWBCollection.md),
+[`SessionBatch`](https://ninanor.github.io/seatrackRtools/reference/SessionBatch.md)
 
 ## Public fields
 

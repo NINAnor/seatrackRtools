@@ -5,9 +5,9 @@ A convenience class for handling collections of LoadedWB objects.
 ## See also
 
 Other classes:
-[`DBImportCollection`](https://ninanor.github.io/seatrack-metadata/reference/DBImportCollection.md),
-[`LoadedWB`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWB.md),
-[`SessionBatch`](https://ninanor.github.io/seatrack-metadata/reference/SessionBatch.md)
+[`DBImportCollection`](https://ninanor.github.io/seatrackRtools/reference/DBImportCollection.md),
+[`LoadedWB`](https://ninanor.github.io/seatrackRtools/reference/LoadedWB.md),
+[`SessionBatch`](https://ninanor.github.io/seatrackRtools/reference/SessionBatch.md)
 
 ## Public fields
 

@@ -5,9 +5,9 @@ A convenience class for handling metadata loaded from workbooks.
 ## See also
 
 Other classes:
-[`DBImportCollection`](https://ninanor.github.io/seatrack-metadata/reference/DBImportCollection.md),
-[`LoadedWBCollection`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWBCollection.md),
-[`SessionBatch`](https://ninanor.github.io/seatrack-metadata/reference/SessionBatch.md)
+[`DBImportCollection`](https://ninanor.github.io/seatrackRtools/reference/DBImportCollection.md),
+[`LoadedWBCollection`](https://ninanor.github.io/seatrackRtools/reference/LoadedWBCollection.md),
+[`SessionBatch`](https://ninanor.github.io/seatrackRtools/reference/SessionBatch.md)
 
 ## Public fields
 

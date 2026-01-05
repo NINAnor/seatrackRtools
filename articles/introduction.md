@@ -5,7 +5,7 @@
 Loading the library:
 
 ``` r
-library(seatrackRmetadata)
+library(seatrackRtools)
 ```
 
 There are a few things that need to be set before the functions can be
@@ -42,7 +42,7 @@ path_to_seatrack <- file.path("a_filepath","SEATRACK - shared")
 set_sea_track_folder(path_to_seatrack)
 ```
 
-    #> INFO [2026-01-05 07:19:46] Sea track folder set to: /tmp/RtmpM2f0Qk/seatrack_vignette_2abc76139960/SEATRACK - shared
+    #> INFO [2026-01-05 12:35:59] Sea track folder set to: /tmp/RtmpavmCu8/seatrack_vignette_2abd8aef508/SEATRACK - shared
 
 ## Loading data
 
@@ -123,7 +123,7 @@ updated_metadata <- append_encounter_data(
   master_import_data$METADATA,
   partner_data$data$`ENCOUNTER DATA`
 )
-#> SUCCESS [2026-01-05 07:19:47] Appended 1 rows to master metadata. New total is 2 rows.
+#> SUCCESS [2026-01-05 12:36:00] Appended 1 rows to master metadata. New total is 2 rows.
 ```
 
 Finally the processing reported logger returns and attempts to update
@@ -143,12 +143,12 @@ updated_sessions <- handle_returned_loggers(
   partner_data$data$`RESTART TIMES`,
   nonresponsive_list
 )
-#> SUCCESS [2026-01-05 07:19:47] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2026-01-05 07:19:47] Unfinished session:
+#> SUCCESS [2026-01-05 12:36:01] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2026-01-05 12:36:01] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2026-01-05 07:19:47] Updated 1 sessions.
-#> SUCCESS [2026-01-05 07:19:47] Updated sessions:
+#> SUCCESS [2026-01-05 12:36:01] Updated 1 sessions.
+#> SUCCESS [2026-01-05 12:36:01] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
 #> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10
 ```
@@ -172,17 +172,17 @@ new_sheets <- handle_partner_metadata(
   partner_data,
   master_import
 )
-#> INFO [2026-01-05 07:19:47] Handle partner metadata for TestColony
-#> INFO [2026-01-05 07:19:47] Add missing sessions from start up files
-#> INFO [2026-01-05 07:19:47] Append encounter data
-#> SUCCESS [2026-01-05 07:19:47] Appended 1 rows to master metadata. New total is 2 rows.
-#> INFO [2026-01-05 07:19:47] Update sessions from logger returns
-#> SUCCESS [2026-01-05 07:19:47] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2026-01-05 07:19:47] Unfinished session:
+#> INFO [2026-01-05 12:36:01] Handle partner metadata for TestColony
+#> INFO [2026-01-05 12:36:01] Add missing sessions from start up files
+#> INFO [2026-01-05 12:36:01] Append encounter data
+#> SUCCESS [2026-01-05 12:36:01] Appended 1 rows to master metadata. New total is 2 rows.
+#> INFO [2026-01-05 12:36:01] Update sessions from logger returns
+#> SUCCESS [2026-01-05 12:36:01] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2026-01-05 12:36:01] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2026-01-05 07:19:47] Updated 1 sessions.
-#> SUCCESS [2026-01-05 07:19:47] Updated sessions:
+#> SUCCESS [2026-01-05 12:36:01] Updated 1 sessions.
+#> SUCCESS [2026-01-05 12:36:01] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
 #> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10
 new_master_sheets <- new_sheets$master_import

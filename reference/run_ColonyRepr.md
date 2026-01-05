@@ -1,7 +1,12 @@
 # Function to extract desired data from the SEATRACK database and fully run the colony representativeness analysis
 
-Function to extract desired data from the SEATRACK database and fully
-run the colony representativeness analysis
+This is a wrapper function around
+[`prep_SEATRACK_ColonyRepr()`](https://ninanor.github.io/seatrackRtools/reference/prep_SEATRACK_ColonyRepr.md)
+and the analysis pipeline. It will thus extract the specified gls
+positional data and plug it into the pipeline that will produce a listed
+output with various elements that can be used to indicate captured
+colony representativeness. An active connection with the SEATRACK data
+base is required.
 
 ## Usage
 

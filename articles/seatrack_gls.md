@@ -5,7 +5,7 @@
 Loading the library:
 
 ``` r
-library(seatrackRmetadata)
+library(seatrackRtools)
 library(seatrackRgls)
 ```
 

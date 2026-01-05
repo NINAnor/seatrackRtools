@@ -6,9 +6,9 @@ type of database import they require.
 ## See also
 
 Other classes:
-[`DBImportCollection`](https://ninanor.github.io/seatrack-metadata/reference/DBImportCollection.md),
-[`LoadedWB`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWB.md),
-[`LoadedWBCollection`](https://ninanor.github.io/seatrack-metadata/reference/LoadedWBCollection.md)
+[`DBImportCollection`](https://ninanor.github.io/seatrackRtools/reference/DBImportCollection.md),
+[`LoadedWB`](https://ninanor.github.io/seatrackRtools/reference/LoadedWB.md),
+[`LoadedWBCollection`](https://ninanor.github.io/seatrackRtools/reference/LoadedWBCollection.md)
 
 ## Public fields
 
