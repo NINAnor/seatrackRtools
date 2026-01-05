@@ -15,3 +15,5 @@ docs
 app.log
 /*app.log
 *.Rproj
+*.Rhistory
+*.Rproj
