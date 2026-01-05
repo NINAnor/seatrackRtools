@@ -227,3 +227,14 @@ Functions to create and export annual report appendix tables
   : SessionBatch Class
 - [`DBImportCollection`](https://ninanor.github.io/seatrack-metadata/reference/DBImportCollection.md)
   : DBImportCollection Class
+
+## ColonyRepr prep
+
+Functions to assist in working with the ColonyRepr-package
+
+- [`Prep_SEATRACK_data_for_ColonyRepr()`](https://ninanor.github.io/seatrack-metadata/reference/Prep_SEATRACK_data_for_ColonyRepr.md)
+  : Extracts data from the SEATRACK DB and prepares it for the
+  ColonyRepr functions
+- [`run_ColonyRepr()`](https://ninanor.github.io/seatrack-metadata/reference/run_ColonyRepr.md)
+  : Function to extract desired data from the SEATRACK database and
+  fully run the colony representativeness analysis
