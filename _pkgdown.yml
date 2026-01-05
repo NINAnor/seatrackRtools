@@ -64,3 +64,7 @@ reference:
       - LoadedWBCollection
       - SessionBatch
       - DBImportCollection
+  - title: ColonyRepr prep
+    desc: Functions to assist in working with the ColonyRepr-package
+    contents:
+      - has_concept("ColonyRepr")
