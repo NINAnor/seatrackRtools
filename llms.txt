@@ -19,6 +19,8 @@ Run a shiny app to perform (some) of the functions below
 
 - [`run_app()`](https://ninanor.github.io/seatrackRtools/reference/run_app.md)
   : Run the Shiny App
+- [`setup_app_logs()`](https://ninanor.github.io/seatrackRtools/reference/setup_app_logs.md)
+  : Set up logs for shiny app
 
 ## Setup functions
 
