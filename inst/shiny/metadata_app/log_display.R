@@ -31,7 +31,9 @@ logger_server <- function(id) {
         # log_path <- paste0("seatrack_functions_log_", Sys.Date(), ".txt")
         # start_logging(log_file = log_path)
 
-        log_path <- "app.log"
+        log_dir <- getShinyOption("logging_path", "seatrackRtools_logs")
+        log_names <- getShinyOption("app_log_names")
+        log_path <- file.path(log_dir, log_names$global)
 
         log_file <- reactiveFileReader(
             session = session,
@@ -45,7 +47,7 @@ logger_server <- function(id) {
         output$logpath <- renderUI(h4(
             HTML(
                 paste(
-                    "Log", em(log_path)
+                    "Log", em(log_names$global)
                 )
             )
         ))

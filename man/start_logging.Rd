@@ -5,9 +5,12 @@
 \title{Start logging to a file}
 \usage{
 start_logging(
-  log_dir = NULL,
-  log_file = paste0("seatrack_functions_log_", Sys.Date(), ".txt"),
-  silent = FALSE
+  log_dir = "logs",
+  log_file = paste0("seatrackRtools_log_", Sys.Date(), ".txt"),
+  silent = FALSE,
+  log_namespace = "global",
+  log_level = logger::INFO,
+  file_safe = FALSE
 )
 }
 \arguments{
@@ -16,6 +19,12 @@ start_logging(
 \item{log_file}{A character string specifying the name of the log file. Default is "seatrack_functions_log.txt".}
 
 \item{silent}{Boolean. If FALSE, logger will not log that it has start logging.}
+
+\item{log_namespace}{A character string specifying the namespace for the logger. Default is "global".}
+
+\item{log_level}{The logging level. Default is logger::INFO.}
+
+\item{file_safe}{Boolean. If TRUE, uses a file-safe appender that handles file writing errors gracefully.}
 }
 \value{
 None

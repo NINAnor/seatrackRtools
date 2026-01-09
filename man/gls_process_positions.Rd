@@ -4,21 +4,12 @@
 \alias{gls_process_positions}
 \title{Process GLS position data using seatrackRgls}
 \usage{
-gls_process_positions(species, colony, import_directory, output_directory)
-}
-\arguments{
-\item{species}{Species name for colony information.}
-
-\item{colony}{Colony name for colony information.}
-
-\item{import_directory}{Path to the directory containing GLS files.}
-
-\item{output_directory}{Path to the directory where the processed position data will be saved.}
+gls_process_positions()
 }
 \value{
-None. The function saves the processed position data to the specified output directory.
+None. The function saves the processed position data to \verb{Database\\\\Imports_Logger data\\\\Output_GLSpositions}
 }
 \description{
-Function to process GLS position data from a specified directory using seatrackRgls.
+Function to process calibrated GLS position data using seatrackRgls.
 }
 \concept{gls_helper}

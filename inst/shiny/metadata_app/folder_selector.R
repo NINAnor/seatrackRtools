@@ -72,17 +72,20 @@ folder_selector_server <- function(id, busy, all_locations) {
             if (!is.null(new_path)) {
                 locations_path <- file.path(new_path, "Locations")
 
-                shiny_dir <- getwd()
+
                 if (dir.exists(locations_path)) {
                     log_info("Loading locations")
                     busy(TRUE)
+                    log_names <- getShinyOption("app_log_names")
+                    log_path <- getShinyOption("logging_path")
                     future <- future_promise({
-                        log_path <- getShinyOption("logging_path", "app.log")
-                        log_appender(appender_file_safe(log_path))
-                        log_threshold(INFO)
+                        print(log_names)
+                        print(log_path)
+                        print(setup_app_logs)
+                        setup_app_logs(silent = TRUE, log_path = log_path, log_names = log_names)
                         set_sea_track_folder(new_path, save_path = FALSE)
 
-                        # start_logging(shiny_dir, "app.log", silent = TRUE)
+
                         all_files <- load_all_master_import(
                             combine = FALSE, skip = c("Blomstrand", "Keysite Vestland", "Lowestoft", "Iceland_processed_metadata", "not_processed", distinct = FALSE, use_stored = !clear)
                         )

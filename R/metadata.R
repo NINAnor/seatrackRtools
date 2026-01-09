@@ -21,7 +21,7 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
         full_colony_file_path <- the$master_sheet_paths[[colony]]
 
         if (file.exists(full_colony_file_path)) {
-            log_trace("Master import file for colony '", colony, "' loaded from: ", full_colony_file_path)
+            log_success("Master import file for colony '", colony, "' loaded from: ", full_colony_file_path)
             return(full_colony_file_path)
         }
     }

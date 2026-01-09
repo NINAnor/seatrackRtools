@@ -31,12 +31,18 @@ append_encounter_data <- function(master_metadata, encounter_data) {
         master_metadata$nest_longitude <- NA
     }
 
+    # Why is the partner metadata defining column order?
+    # Surely, should be other way round
+    # Equally, we should just discard extra columns?
     # Throw an error if there are any columns in encounter_data that are not in master_metadata
     if (any(!colnames(encounter_data) %in% colnames(master_metadata))) {
+        # just warn about columns getting discarded?
+        log_error(paste("The following columns are in encounter_data but not in master_metadata:", paste(colnames(encounter_data)[!colnames(encounter_data) %in% colnames(master_metadata)], collapse = ", ")))
         stop(paste("The following columns are in encounter_data but not in master_metadata:", paste(colnames(encounter_data)[!colnames(encounter_data) %in% colnames(master_metadata)], collapse = ", ")))
     }
 
     # Make sure the column order matches
+    # surely should reorder encounter_data instead.
     master_metadata <- master_metadata[, colnames(encounter_data)]
 
     # Check if duplicate rows exist based on logger_id and date

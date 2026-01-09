@@ -14,7 +14,6 @@ source("log_display.R")
 source("manage_metadata.R")
 source("manage_partner_metadata.R")
 
-source("appender_file_safe.R")
 source("mod_dt_tabs.R")
 
 plan(multisession)
@@ -23,12 +22,8 @@ library(logger)
 readRenviron(".Renviron")
 library(seatrackRtools)
 
-log_path <- getShinyOption("logging_path", "app.log")
-log_appender(appender_file_safe(log_path))
-log_threshold(INFO)
-
-
-
+app_log_names <- seatrackRtools:::setup_app_logs()
+shiny::shinyOptions(app_log_names = app_log_names)
 shinyApp(
     ui = main_ui("main"),
     server = function(input, output, session) {

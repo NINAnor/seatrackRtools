@@ -160,7 +160,8 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
         }
         logger_search <- get_logger_from_metadata(logger_id, all_master_sheet)
         if (length(logger_search) == 0) {
-            stop(paste("No master sheet for logger", logger_id))
+            log_error(paste("No master found sheet for logger", logger_id))
+            return()
         }
         master_sheet <- all_master_sheet[[logger_search[[1]]$list_index]]
     }
@@ -172,7 +173,8 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
     # Check for an open session
     unfinished_session <- get_unfinished_session(master_sheet$data$STARTUP_SHUTDOWN, logger_id, download_date)
     if (is.null(unfinished_session)) {
-        stop(paste("No unfinished session for logger", logger_id))
+        log_error(paste(master_sheet$path, "No unfinished session for logger", logger_id))
+        return()
     }
     if ("comment" %in% names(new_data)) {
         master_sheet$data$STARTUP_SHUTDOWN <- set_comments(master_sheet$data$STARTUP_SHUTDOWN, unfinished_session$index, new_data$comment)
@@ -253,7 +255,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
 
             unfinished_session_result <- get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
             if (is.null(unfinished_session_result)) {
-                log_trace(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
+                log_warn(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
                 unhandled_loggers <- rbind(unhandled_loggers, logger_returns[i, ])
                 next
             }
@@ -290,14 +292,16 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
             downloader <- return_restart$`downloaded by`
             restart_info <- restart_times[restart_times$logger_id == logger_id, ]
             if (nrow(restart_info) == 0) {
-                stop(paste("Logger ID:", logger_id, "not present in restart times sheet"))
+                log_error(paste("Logger ID:", logger_id, "not present in restart times sheet, but present in logger returns. Cannot continue."))
+                next
             }
             logger_restart_datetime <- paste(restart_info$startdate_GMT, format(restart_info$starttime_GMT, "%H:%M:%S"))
 
             # Get full logger info from existing sheet
             previous_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
             if (nrow(previous_sessions) == 0) {
-                stop(paste("Logger ID:", logger_id, "not present in master startup sheet"))
+                log_error(paste("Logger ID:", logger_id, "not present in master startup sheet. Cannot get full info for restart."))
+                next
             }
             # generate new row
             new_session <- tibble(

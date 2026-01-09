@@ -15,7 +15,7 @@ gls_seatrack_calibration <- function(metadata_path, split_years = "06-01") {
 
     cols_to_get <- c("logger_id", "logger_model", "species", "date_deployed", "date_retrieved", "colony", "sun_angle_start", "sun_angle_end", "light_threshold", "analyzer", "year_tracked")
     if (!any(cols_to_get %in% names(metadata))) {
-        log_error("Calibration data missing required columns.")
+        log_error("Calibration data missing required columns.", namespace = "error")
         return(NULL)
     }
 
@@ -205,6 +205,3 @@ gls_seatrack_colony_info <- function() {
     all_colony_info <- data.frame(colony = all_colony_info$colony_int_name, col_lat = all_colony_info$lat, col_lon = all_colony_info$lon)
     return(all_colony_info)
 }
-
-
-

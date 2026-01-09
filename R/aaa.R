@@ -5,6 +5,9 @@
 #' @param log_dir A character string specifying the directory where the log file will be saved. If NULL, the log file will be saved in the current working directory.
 #' @param log_file A character string specifying the name of the log file. Default is "seatrack_functions_log.txt".
 #' @param silent Boolean. If FALSE, logger will not log that it has start logging.
+#' @param log_namespace A character string specifying the namespace for the logger. Default is "global".
+#' @param log_level The logging level. Default is logger::INFO.
+#' @param file_safe Boolean. If TRUE, uses a file-safe appender that handles file writing errors gracefully.
 #' @return None
 #'
 #' @examples
@@ -13,22 +16,46 @@
 #' }
 #' @export
 #' @concept setup
-start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_log_", Sys.Date(), ".txt"), silent = FALSE) {
-    if (!is.null(log_dir)) {
-        if (!dir.exists(log_dir)) {
-            dir.create(log_dir, recursive = TRUE)
+start_logging <- function(log_dir = "logs", log_file = paste0("seatrackRtools_log_", Sys.Date(), ".txt"), silent = FALSE, log_namespace = "global", log_index = 1, log_level = logger::INFO, file_safe = FALSE) {
+    
+    appender_file_safe <- function(file) {
+        force(file)
+        function(line) {
+            # make sure folder exists
+            dir <- dirname(file)
+            if (!dir.exists(dir)) dir.create(dir, recursive = TRUE)
+
+            tryCatch(
+                {
+                    print(line)
+                    con <- file(file, open = "a")
+                    writeLines(line, con)
+                    close(con)
+                },
+                error = function(e) {
+                    warning("Failed to write to file: ", conditionMessage(e))
+                }
+            )
         }
-        log_file <- file.path(log_dir, log_file)
     }
 
-    log_appender(appender_tee(log_file))
-    log_threshold(INFO)
-    if (!silent) {
-        log_info("Logging started. Log file: ", log_file)
+    if (!dir.exists(log_dir)) {
+            dir.create(log_dir, recursive = TRUE)
     }
-    if (!silent) {
-        log_info("Logging started. Log file: ", log_file)
+    log_path <- file.path(log_dir, log_file)
+
+    if (file_safe) {
+        log_appender_func <- appender_file_safe
+    } else {
+        log_appender_func <- appender_tee
     }
+    log_appender(log_appender_func(log_path), namespace = log_namespace, index = log_index)
+    log_threshold(log_level, namespace = log_namespace, index = log_index)
+
+    if (!silent) {
+        log_info("Logging started. Log file: ", log_path)
+    }
+
 }
 
 
@@ -50,7 +77,7 @@ start_logging <- function(log_dir = NULL, log_file = paste0("seatrack_functions_
 #' @concept setup
 set_sea_track_folder <- function(dir, language = "English_United Kingdom", save_path = TRUE) {
     if (!is.null(dir) && !dir.exists(dir)) {
-        log_error("The specified directory does not exist.")
+        log_error("The specified directory does not exist.", namespace = "error")
         return()
     }
 

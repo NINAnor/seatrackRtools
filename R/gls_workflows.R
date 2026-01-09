@@ -198,15 +198,11 @@ gls_prepare_calibration <- function(import_directory, output_directory, species 
 
 #' Process GLS position data using seatrackRgls
 #'
-#' Function to process GLS position data from a specified directory using seatrackRgls.
-#' @param species Species name for colony information.
-#' @param colony Colony name for colony information.
-#' @param import_directory Path to the directory containing GLS files.
-#' @param output_directory Path to the directory where the processed position data will be saved.
-#' @return None. The function saves the processed position data to the specified output directory.
+#' Function to process calibrated GLS position data using seatrackRgls.
+#' @return None. The function saves the processed position data to `Database\\Imports_Logger data\\Output_GLSpositions`
 #' @export
 #' @concept gls_helper
-gls_process_positions <- function(species, colony, import_directory, output_directory) {
+gls_process_positions <- function() {
     progressr::handlers(global = FALSE)
     progressr::handlers("progress")
     future::plan(future::multisession)

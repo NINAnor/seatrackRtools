@@ -84,7 +84,7 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
                         load_partner_metadata(current_metadata_path())
                     },
                     error = function(e) {
-                        log_error(paste("ERROR", e))
+                        log_error(paste("ERROR", e), namespace = "error")
                         return(NULL)
                     }
                 )
@@ -124,7 +124,7 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
                     )
                 },
                 error = function(e) {
-                    log_error(paste("ERROR: ", e))
+                    log_error(paste("ERROR: ", e), namespace = "error")
                     return(NULL)
                 }
             )
