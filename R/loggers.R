@@ -7,6 +7,7 @@
 #'
 #' @return list of all matches, where each element of the list is a list containing the row of data, the file path and the index.
 #' @concept loggers
+#' @export
 get_logger_from_metadata <- function(logger_id, all_master_import_list = NULL) {
     if (is.null(all_master_import_list)) {
         all_master_import_list <- load_all_master_import(combine = FALSE)

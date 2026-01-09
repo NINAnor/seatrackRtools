@@ -9,6 +9,7 @@ start_logging(
   log_file = paste0("seatrackRtools_log_", Sys.Date(), ".txt"),
   silent = FALSE,
   log_namespace = "global",
+  log_index = 1,
   log_level = logger::INFO,
   file_safe = FALSE
 )
