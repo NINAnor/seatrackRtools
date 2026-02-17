@@ -16,12 +16,12 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
     if (is.null(the$sea_track_folder)) {
         stop("Sea track folder is not set. Please use set_sea_track_folder() to set it.")
     }
-    log_trace("Get Master import file for colony '", colony, "', use existing paths: ", use_stored)
+    log_info("Get Master import file for colony '", colony, "', use existing paths: ", use_stored)
     if (use_stored && colony %in% names(the$master_sheet_paths)) {
         full_colony_file_path <- the$master_sheet_paths[[colony]]
 
         if (file.exists(full_colony_file_path)) {
-            log_success("Master import file for colony '", colony, "' loaded from: ", full_colony_file_path)
+            log_info("Master import file for colony '", colony, "' loaded from: ", full_colony_file_path)
             return(full_colony_file_path)
         }
     }
@@ -55,7 +55,7 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
             colony_file_name <- files[country_file_bool]
         } else {
             # Final fallback, open the file and check
-            log_trace("Master import file for colony '", colony, "' not found by location or country. Checking intended_location")
+            log_info("Master import file for colony '", colony, "' not found by location or country. Checking intended_location")
             colony_file_name <- character()
             for (import_file in files) {
                 log_trace("Check ", import_file)
@@ -81,7 +81,7 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
     }
 
     full_colony_file_path <- file.path(master_import_folder, colony_file_name)
-    log_trace("Master import file for colony '", colony, "' found at: ", full_colony_file_path)
+    log_info("Master import file for colony '", colony, "' found at: ", full_colony_file_path)
     the$master_sheet_paths[[colony]] <- full_colony_file_path
     return(full_colony_file_path)
 }
@@ -142,6 +142,11 @@ load_master_import <- function(colony = NULL, file_path = NULL, use_stored = TRU
     )
 
     import_list <- load_sheets_as_list(file_path, sheets, col_types = list(NULL, startup_col_types))
+
+    if (class(import_list$data$METADATA$date) != "Date") {
+        log_warn(glue::glue("{file_path}: Trying to force metadata date. Check results before saving, or correct excel sheet and reimport."))
+        import_list$data$METADATA$date <- as.Date(import_list$data$METADATA$date)
+    }
 
     return(import_list)
 }
@@ -314,7 +319,7 @@ get_location_unprocessed <- function(location) {
 #' @export
 #' @concept metadata
 handle_partner_metadata <- function(colony, new_metadata, master_import, nonresponsive_list = LoadedWBCollection$new()) {
-    log_info(paste("Handle partner metadata for", colony))
+    log_info_all(paste("Handle partner metadata", new_metadata$path, "\n for", colony, master_import$path))
     if (!all(c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES") %in% names(new_metadata$data))) {
         stop("new_metadata must contain the sheets: ENCOUNTER DATA, LOGGER RETURNS, RESTART TIMES")
     }
@@ -322,10 +327,16 @@ handle_partner_metadata <- function(colony, new_metadata, master_import, nonresp
         stop("master_import must contain the sheets: METADATA, STARTUP_SHUTDOWN")
     }
 
+
+
     log_info("Add missing sessions from start up files")
-    updated_loggers <- add_loggers_from_startup(master_import$data$STARTUP_SHUTDOWN, new_metadata$data$`ENCOUNTER DATA`)
+    updated_loggers <- add_loggers_from_startup(master_import, new_metadata)
 
     master_import$data$`STARTUP_SHUTDOWN` <- updated_loggers
+
+    log_info("Check for duplicate sessions")
+    logger_id_date <- paste(master_import$data$STARTUP_SHUTDOWN$logger_serial_no, as.character(master_import$data$STARTUP_SHUTDOWN$starttime_gmt))
+    master_import$data$`STARTUP_SHUTDOWN` <- master_import$data$`STARTUP_SHUTDOWN`[!duplicated(logger_id_date), ]
 
     log_info("Append encounter data")
     updated_metadata <- append_encounter_data(master_import$data$METADATA, new_metadata$data$`ENCOUNTER DATA`)
@@ -344,7 +355,7 @@ handle_partner_metadata <- function(colony, new_metadata, master_import, nonresp
     master_import$data$`STARTUP_SHUTDOWN` <- updated_sessions$master_startup
     master_import$modified <- TRUE
     nonresponsive_list <- updated_sessions$nonresponsive_list
-
+    log_info_all(paste("Finished handling partner metadata", new_metadata$path, "\n for", colony, master_import$path))
     return(list(master_import = master_import, nonresponsive_list = nonresponsive_list))
 }
 
@@ -398,7 +409,15 @@ load_partner_metadata <- function(file_path) {
     metadata_list <- load_sheets_as_list(file_path, sheets, 1,
         col_types = list(
             NULL,
-            NULL,
+            c(
+                logger_id = 0,
+                `logger model` = 0,
+                `downloaded by` = 0,
+                `download / stop_date` = 2,
+                status = 0,
+                `stored or sent to?` = 0,
+                comment = 0
+            ),
             c(
                 logger_id = 0,
                 logger_model = 0,
@@ -415,6 +434,9 @@ load_partner_metadata <- function(file_path) {
             c("logger_id")
         )
     )
+    if (any(is.na(as.Date(metadata_list$data$`ENCOUNTER DATA`$date)))) {
+        stop("Error reading ENCOUNTER DATA date column. Check date formatting.")
+    }
     return(metadata_list)
 }
 

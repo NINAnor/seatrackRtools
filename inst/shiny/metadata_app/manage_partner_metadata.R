@@ -11,14 +11,14 @@ manage_partner_metadata_ui <- function(id) {
             ),
             col_widths = c(6, 3),
             fillable = FALSE,
-            actionButton(ns("update_master_btn"), "Update master metadata"),
+            actionButton(ns("update_master_btn"), "Update master metadata from partner data"),
         ),
         br(),
         mod_dt_tabs_ui(ns("viewer"))
     )
 }
 
-manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, current_location_idx, current_location_name) {
+manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, current_location_idx, current_location_name, refresh_tables) {
     moduleServer(id, function(input, output, session) {
         current_metadata_path <- reactiveVal(NA)
         current_metadata <- reactiveVal(NULL)
@@ -113,6 +113,7 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
 
         observeEvent(input$update_master_btn, {
             busy(TRUE)
+            tryCatch({
             locations <- all_locations()
 
             partner_result <- tryCatch(
@@ -137,6 +138,10 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
 
             all_locations(new_locations)
             unsaved(TRUE)
+            refresh_tables()
+            }, error = function(e) {
+                log_error(paste("ERROR", e), namespace = "error")
+            })
             busy(FALSE)
         })
 

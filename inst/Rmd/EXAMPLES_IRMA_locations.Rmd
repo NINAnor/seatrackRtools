@@ -1,0 +1,81 @@
+### GLS positional data
+
+#### Prepare workspace & load data
+```{r, fake_loc_setup, echo=TRUE, eval = FALSE, message=FALSE}
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+library(lubridate) # for some enhanced date functionality
+library(ggplot2) # for plotting
+library(sf) # for GIS work
+library(maps)
+
+# deactivate spherical geometry (s2) for sf
+sf::sf_use_s2(FALSE)
+
+# point R to the folder where the data is, e.g.
+data_dir <- "path/where/you/unzipped/files/data"
+```
+
+```{r, loc_setup, echo=FALSE, message=FALSE}
+# THE ABOVE BLOCK IS FAKE TO SHOW HOW TO SET THE PATH
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+library(lubridate) # for some enhanced date functionality
+library(ggplot2) # for plotting
+library(sf) # for GIS work
+library(maps)
+
+# deactivate spherical geometry (s2) for sf
+sf::sf_use_s2(FALSE)
+```
+
+```{r, generate_loc_path, echo = FALSE, message = FALSE}
+load_chunk <- knitr::knit_expand(text = c(
+    "```{r, load_loc_files}",
+    'myirmalocs <- read_parquet(file.path(data_dir, "{{IRMA_pos_path}}"))',
+    "```"))
+
+```
+
+`r knitr::knit(text=load_chunk)`
+
+#### Explore data
+
+Some examples on how to quickly explore your IRMA positional data.
+
+```{r, loc_explore,  echo=TRUE, message=TRUE}
+myirmalocs %>%
+    dplyr::group_by(colony, year_tracked, age_deployment) %>%
+    dplyr::summarise(n_birds_tracked = n_distinct(individ_id))
+```
+
+```{r, loc_explore,  echo=TRUE, message=TRUE}
+myirmalocs %>%
+    dplyr::group_by(colony, year_tracked, loc_type) %>%
+    dplyr::summarise(n_positions = n_distinct(id))
+```
+
+#### Make a map
+
+Some examples on how to quickly map your IRMA positional data.
+
+```{r, plot_loc, echo = TRUE, message = TRUE}
+myirmalocs %>%
+    dplyr::mutate(year = year(date_time)) %>%
+    sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) ->
+myirmalocs
+
+worldmap <- ggplot2::map_data("world")
+
+ggplot() +
+    geom_polygon(data = worldmap, aes(x = long, y = lat, group = group)) +
+    geom_sf(data = myirmalocs, aes(colour = loc_type), size = .1) +
+    coord_sf(
+        lims_method = "geometry_bbox"
+    ) +
+    theme_light() +
+    theme(legend.position = "bottom")
+```
+

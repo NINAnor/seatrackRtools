@@ -28,7 +28,6 @@ load_sheets_as_list <- function(
     # Iterate through sheets and read data
 
     data_list <- lapply(1:length(sheets), function(sheet_index) {
-
         sheet <- sheets[sheet_index]
         sheet_col_types <- col_types[[sheet_index]]
         sheet_upper <- col_upper[[sheet_index]]
@@ -45,8 +44,7 @@ load_sheets_as_list <- function(
             sheet = sheet,
             start_row = skip_rows + 1,
             skip_empty_rows = TRUE,
-            cols = col_range,
-            na.strings = c("", "End", "end", "none", "-")
+            cols = col_range, na.strings = c("", "End", "end", "none", "-", "N/A", "NA")
         )
         if (!is.null(sheet_col_types)) {
             arg_list$types <- sheet_col_types
@@ -78,7 +76,7 @@ load_sheets_as_list <- function(
             unnamed_cols <- grepl("NA.", names(sheet_df))
             if (sum(unnamed_cols > 0)) {
                 # Drop columns that are unnamed (i.e., their names start with "..." or are NA)
-                log_trace("Dropping ", sum(unnamed_cols), " unnamed columns from sheet: ", sheet)
+                log_warn("Dropping ", sum(unnamed_cols), " unnamed columns from sheet: ", sheet)
                 current_sheet <- current_sheet[, !unnamed_cols]
             }
         }
@@ -93,10 +91,33 @@ load_sheets_as_list <- function(
                 current_sheet[[col_name]] <- toupper(current_sheet[[col_name]])
             }
         }
+        # Remove trailing spaces from character columns
+        char_cols <- sapply(current_sheet, is.character)
+        current_sheet[char_cols] <- lapply(current_sheet[char_cols], trimws)
 
         return(current_sheet)
     })
     names(data_list) <- sheets
     loaded_sheets <- LoadedWB$new(data = data_list, wb = wb)
     return(loaded_sheets)
+}
+
+translate_logger_status <- function(download_type = c(), list_valid_only = FALSE) {
+    valid_download <- c("Error", "Failed", "Lost", "Nonresponsive", "Reconstructed", "Successfully downloaded", "Unknown", "Unsuccessful reconstruction", "Sleep mode", "Not used")
+    if (list_valid_only) {
+        return(valid_download)
+    }
+    download_alias <- data.frame(db_name = c("Not used", "Not used", "Successfully downloaded", "Nonresponsive", "Unknown", "Error", "Lost", "Nonresponsive"), alias = c(
+        "Not used, still running",
+        "Not used, stopped (sleep mode)",
+        "Successfully downloaded",
+        "Nonresponsive",
+        "No download attemted",
+        "Downloaded with an error message",
+        "Lost",
+        "Non-responsive"
+    ))
+    invalid_download_bool <- !download_type %in% valid_download & download_type %in% download_alias$alias
+    download_type[invalid_download_bool] <- download_alias$db_name[match(download_type[invalid_download_bool], download_alias$alias)]
+    return(download_type)
 }

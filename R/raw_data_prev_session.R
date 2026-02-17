@@ -71,3 +71,25 @@ get_raw_data_prev_session <- function(logger_serial_nos = c(), zip_filename = pa
     zip::zip(zipfile = zip_filename, files = c(csv_path, list.dirs(temp_dir, recursive = FALSE, full.names = TRUE)), mode = "cherry-pick")
     unlink(temp_dir, recursive = TRUE)
 }
+
+#' Get raw data from previous sessions from an excel sheet
+#'
+#' This function gets any sessions occuring before the latest session of a seatrack GLS logger and
+#' collects the associated raw data files into a zip file. The zip file also contains a CSV
+#' with metadata about the previous sessions.
+#' This history is useful when a manufacturer is attempting to recover data from a nonresponsive logger.
+#'
+#' @param sheet_path The path to the excel sheet containing logger serial numbers.
+#' @param zip_filename The name of the output zip file. Defaults to "raw_data
+#' <current_date>.zip".
+#' @param search_path The path to search for raw data files. If NULL, defaults to the "ALL" folder in the SeaTrack database imports directory.
+#' @return None, but exports a zip file containing the raw data files and a metadata CSV.
+#' @export
+#' @concept nonresponsive
+get_raw_data_prev_session_excel <- function(sheet_path, zip_filename = NULL, search_path = NULL) {
+    excel_sheet <- load_nonresponsive_sheet(sheet_path)
+    excel_data <- excel_sheet$data[[1]]
+    excel_data_filtered <- excel_data[!is.na(excel_data$sent), ]
+
+    get_raw_data_prev_session(excel_data_filtered$logger_serial_no, zip_filename, search_path)
+}

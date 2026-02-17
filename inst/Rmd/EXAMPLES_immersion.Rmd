@@ -1,0 +1,58 @@
+### Immersion data
+
+#### Prepare workspace & load data
+```{r, fake_imm_setup, echo=TRUE, eval = FALSE, message=FALSE}
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+library(lubridate) # for some enhanced date functionality
+library(ggplot2) # for plotting
+
+# point R to the folder where the data is, e.g.
+data_dir <- "path/where/you/unzipped/files/data"
+```
+
+```{r, imm_setup, echo=FALSE, message=FALSE}
+# THE ABOVE BLOCK IS FAKE TO SHOW HOW TO SET THE PATH
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+library(lubridate) # for some enhanced date functionality
+library(ggplot2) # for plotting
+```
+
+```{r, generate_imm_path, echo = FALSE, message = FALSE}
+load_chunk <- knitr::knit_expand(text = c(
+    "```{r, load_imm_files}",
+    'immersion <- read_parquet(file.path(data_dir, "{{imm_path}}"))',
+    "```"))
+
+```
+
+`r knitr::knit(text=load_chunk)`
+
+#### Explore data
+
+Some examples on how to quickly explore your immersion data.
+
+```{r, imm_explore, echo = TRUE, message = TRUE}
+immersion %>%
+    dplyr::mutate(year = year(date_time)) %>%
+    dplyr::group_by(year) %>%
+    dplyr::summarise(n_birds_tracked = n_distinct(individ_id))
+```
+
+#### Make a plot
+
+An example of plotting immersion data.
+```{r, plot_imm, echo = TRUE, message = TRUE}
+one_individ <- immersion[immersion$individ_id %in% unique(immersion$individ_id)[1], ]
+one_year <- one_individ[year(one_individ$date_time) %in% unique(year(one_individ$date_time))[1], ]
+one_year$doy <- strftime(one_year$date_time, format = "%j")
+one_year <- aggregate(std_conductivity ~ doy, one_year, mean)
+plot(one_year$doy, one_year$std_conductivity,
+    type = "l", col = "lightblue", lwd = 2,
+    xlab = "day of the year", ylab = "mean daily immersion (0-1)", main = unique(immersion$individ_id)[1]
+)
+``` 
+

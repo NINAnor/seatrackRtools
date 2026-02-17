@@ -1,0 +1,42 @@
+### Individual data
+
+#### Prepare workspace & load data
+```{r, fake_ind_setup, echo=TRUE, eval = FALSE, message=FALSE}
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+
+# point R to the folder where the data is, e.g.
+data_dir <- "path/where/you/unzipped/files/data"
+```
+
+```{r, ind_setup, echo=FALSE, message=FALSE}
+# THE ABOVE BLOCK IS FAKE TO SHOW HOW TO SET THE PATH
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+```
+
+
+```{r, generate_ind_path, echo = FALSE, message = FALSE}
+load_chunk <- knitr::knit_expand(text = c(
+    "```{r, load_ind_files}",
+    'individs <- read_parquet(file.path(data_dir, "{{indiv_path}}"))',
+    "```"))
+
+```
+
+`r knitr::knit(text=load_chunk)`
+
+
+#### Explore data
+
+Some examples on how to quickly explore your data about individual birds
+
+```{r, ind_explore, echo=TRUE, message=TRUE}
+mylocs %>%
+    dplyr::group_by(colony, year_tracked, age_deployment) %>%
+    dplyr::summarise(n_birds_tracked = n_distinct(individ_id))
+```
+
+

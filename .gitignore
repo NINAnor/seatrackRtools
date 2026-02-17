@@ -17,3 +17,5 @@ app.log
 *.Rproj
 *.Rhistory
 *.Rproj
+/seatrackRtools_logs/
+/requested_data_packages/

@@ -4,10 +4,10 @@
 \alias{add_loggers_from_startup}
 \title{Attempt to add logger from startup sheets}
 \usage{
-add_loggers_from_startup(master_startup, partner_metadata)
+add_loggers_from_startup(master_import, new_metadata)
 }
 \arguments{
-\item{master_startup}{A data frame containing the master startup and shutdown information.}
+\item{master_import}{Loaded Master startup file.}
 
 \item{partner_metadata}{Dataframe of loggers handled by partners}
 }

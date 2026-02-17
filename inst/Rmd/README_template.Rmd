@@ -1,0 +1,194 @@
+---
+output: 
+  html_document:
+      toc: true
+      toc_depth: 3
+      toc_float: true
+params:
+  request_name: "myrequest2025"
+  file_list: !r c("locations.parquet")
+  species: !r c("seagull")
+  colonies: !r c("big cliff by the sea")
+  times: !r as.Date(c("2020-01-01","2020-02-02"))
+  data_responsible: !r data.frame()
+  creation_date: !r Sys.Date()
+  data_dir: ""
+  notes: ""
+  additional_files: !r list()
+title: "`r paste(params$request_name, 'README', params$creation_date)`"
+---
+
+```{r, setup , echo = FALSE, message = FALSE, warning = FALSE}
+data_dir <- file.path(params$data_dir, "data") # to use in the rest of the examples
+
+md_list <- function(values) {
+  if (is.null(values)) {
+    return("")
+  }
+  md_items <- sapply(values, function(value) {
+    knitr::knit_expand(text = "| - *{{value}}*")
+  })
+  return(paste(md_items, collapse = "\n"))
+}
+
+render_schema <- function(dataset_key, dict) {
+  dataset <- dict$datasets[[dataset_key]]
+  title <- gsub("_", " ", tools::toTitleCase(dataset_key))
+  header <- knitr::knit_expand(text = "### {{title}} \n\n {{dataset$description}}")
+
+  bullets <- sapply(dataset$columns, function(col) {
+    knitr::knit_expand(text = "- **{{col$name}}** *(type: {{col$type}})* \n  {{col$description}} ")
+  })
+  all_desc <- paste(c(header, bullets), collapse = "\n\n")
+  return(all_desc)
+}
+
+description_list <- sapply(params$file_list, function(file_item) file_item$description)
+description_string <- paste(paste(description_list[1:(length(description_list) - 1)], collapse = ", "), description_list[length(description_list)], sep = " and ")
+
+file_list <- c()
+
+if (length(params$additional_files) > 0) {
+  for (additional_file in params$additional_files) {
+    filename <- basename(additional_file$path)
+    file_list <- c(file_list, '| -- {{additional_file$description}} (<span style="color: #ABB2B9;">{{filename}}</span>)')
+  }
+}
+file_list <- c(file_list, "| -- data")
+
+included_data <- c()
+for (i in seq_along(params$file_list)) {
+  included_data <- c(included_data, names(params$file_list)[i])
+  file_list <- c(file_list, knitr::knit_expand(text = '| &nbsp;&nbsp;&nbsp;&nbsp;|-- {{params$file_list[[i]]$description}} (<span style="color: #ABB2B9;">{{params$file_list[[i]]$path}}</span>)'))
+}
+
+file_list <- paste(knitr::knit_expand(text = file_list), collapse = "\n")
+
+species_list <- md_list(unique(params$species))
+colony_list <- md_list(unique(params$colonies))
+time_span <- knitr::knit_expand(text = "| - *{{params$times[1]}}* - *{{params$times[2]}}*")
+additional_notes <- knitr::knit_expand(text = "| {{params$notes}}")
+
+has_pop <- any(grepl("Abundance_model", included_data))
+has_pos <- "GLS_positional_data" %in% included_data
+has_irma_pos <- "IRMA_positional_data" %in% included_data
+if (has_pop) {
+  # To pull the generic overview from the YAML
+  included_data <- c(included_data, "population_maps")
+}
+
+# Load schema
+schema_dict <- seatrackR::schema_dict
+
+included_schema <- names(schema_dict$datasets)[names(schema_dict$datasets) %in% included_data]
+
+schema_md <- paste(sapply(included_schema, render_schema, dict = schema_dict), collapse = "\n\n")
+
+image_path <- system.file("img", "SEATRACK_logo_landscape.jpg", package = "seatrackR")
+
+
+```
+
+```{r include-package-image, echo=FALSE}
+knitr::include_graphics(image_path)
+```
+
+## Description
+| ___________________________________________________________________________________________________
+| This readme contains an overview of the files contained within this data package and instructions on how to use them in R. The data package contains `r description_string`.
+`r knitr::knit(text = additional_notes)`
+|
+| *For more information about the project, please visit [SEATRACK's website](https://seatrack.net/)*
+| *contact re. General data queries: julian.evans@nina.no & Svenja.Neumann@npolar.no*
+| *contact re. For general queries about the contents and creation of this data package: julian.evans@nina.no*
+|
+`r if(has_pos) {"| *For more information about the processing of GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2735757)*"}`
+`r if(has_pos) {"| *contact re. GLS data processing: vegard.brathen@nina.no*"}`
+`r if(has_pop) {"| *For more information about the creation of population maps, please see this [paper](https://www.int-res.com/articles/meps_oa/m676p255.pdf)*"}`
+`r if(has_pop) {"| *contact re. Population maps: arnaud.tarroux@nina.no*"}`
+`r if(has_irma_pos) {"| *For more information about the use of IRMA to fill in gaps in the GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2595504)*"}`
+`r if(has_irma_pos) {"| *contact re. IRMA: arnaud.tarroux@nina.no*"}`
+| ___________________________________________________________________________________________________
+## Package overview
+| __________________________________________________________________________________________________
+| **The dataset consists of:**
+| **Files**:
+| -- This readme (<span style="color: #ABB2B9;">`r paste0("README_", params$request_name, "_", params$creation_date, ".html")`</span>)
+`r knitr::knit(text = file_list)`
+|
+| **Time range**
+`r knitr::knit(text = time_span)`
+|
+| **Species**: 
+`r knitr::knit(text = species_list)`
+| 
+| **Colonies**: 
+`r knitr::knit(text = colony_list)`
+|
+| **Data responsible**:
+`r knitr::kable(params$data_responsible, col.names = c("Species", "Colony", "Responsible persons"))`
+| ___________________________________________________________________________________________________
+## Disclaimer
+| ___________________________________________________________________________________________________
+| Data is shared under the [Agreement of Understanding](https://seatrack.net/wp-content/uploads/2024/11/SEATRACK_Agreement-of-understanding_2024.pdf).
+| Depending on the intended use of the data, include the SEATRACK program group and data responsible individuals early in the process. 
+| Follow the guidelines in the [Agreement of Understanding](https://seatrack.net/wp-content/uploads/2024/11/SEATRACK_Agreement-of-understanding_2024.pdf).
+| ___________________________________________________________________________________________________
+## Examples of use
+
+```{r, show_examples, echo=FALSE, results='asis'}
+if (has_pos) {
+  pos_path <- params$file_list[["GLS_positional_data"]]$path
+  res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_locations.Rmd", package = "seatrackRtools"),
+    quiet = TRUE, envir = environment()
+  )
+  cat(res, sep = "\n")
+}
+
+if (has_irma_pos) {
+  IRMA_pos_path <- params$file_list[["IRMA_positional_data"]]$path
+  res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_IRMA_locations.Rmd", package = "seatrackRtools"),
+    quiet = TRUE, envir = environment()
+  )
+  cat(res, sep = "\n")
+}
+
+if ("individual_data" %in% included_data) {
+  indiv_path <- params$file_list[["individual_data"]]$path
+  res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_individuals.Rmd", package = "seatrackRtools"),
+    quiet = TRUE, envir = environment()
+  )
+  cat(res, sep = "\n")
+}
+
+if ("light_data" %in% included_data) {
+  light_path <- params$file_list[["light_data"]]$path
+  res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_light.Rmd", package = "seatrackRtools"),
+    quiet = TRUE, envir = environment()
+  )
+  cat(res, sep = "\n")
+}
+
+if ("immersion_data" %in% included_data) {
+  imm_path <- params$file_list[["immersion_data"]]$path
+  res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_immersion.Rmd", package = "seatrackRtools"),
+    quiet = TRUE, envir = environment()
+  )
+  cat(res, sep = "\n")
+}
+
+if (has_pop) {
+  pop_map_paths <- sapply(params$file_list[grepl("Abundance_model", names(params$file_list))], function(x) {
+    x$path
+  })
+  res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_popmap.Rmd", package = "seatrackRtools"),
+    quiet = TRUE, envir = environment()
+  )
+  cat(res, sep = "\n")
+}
+```
+
+## Detailed file description
+
+`r knitr::knit(text = schema_md)`
+

@@ -79,16 +79,13 @@ folder_selector_server <- function(id, busy, all_locations) {
                     log_names <- getShinyOption("app_log_names")
                     log_path <- getShinyOption("logging_path")
                     future <- future_promise({
-                        print(log_names)
-                        print(log_path)
-                        print(setup_app_logs)
-                        setup_app_logs(silent = TRUE, log_path = log_path, log_names = log_names)
+                        setup_app_logs(silent = FALSE, log_path = log_path, log_names = log_names)
+                        print("FOLDER")
                         set_sea_track_folder(new_path, save_path = FALSE)
 
 
                         all_files <- load_all_master_import(
-                            combine = FALSE, skip = c("Blomstrand", "Keysite Vestland", "Lowestoft", "Iceland_processed_metadata", "not_processed", distinct = FALSE, use_stored = !clear)
-                        )
+                            combine = FALSE, skip = c("Blomstrand", "Keysite Vestland", "Lowestoft", "Iceland_processed_metadata", "not_processed", "no_location_not_processed"), distinct = FALSE, use_stored = !clear)
                         return(all_files)
                     }) |>
                         then(\(x) all_locations(x)) |>

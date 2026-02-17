@@ -1,0 +1,57 @@
+### Light data
+
+#### Prepare workspace & load data
+```{r, fake_light_setup, echo=TRUE, eval = FALSE, message=FALSE}
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+library(lubridate) # for some enhanced date functionality
+library(ggplot2) # for plotting
+
+# point R to the folder where the data is, e.g.
+data_dir <- "path/where/you/unzipped/files/data"
+```
+
+```{r, light_setup, echo=FALSE, message=FALSE}
+# THE ABOVE BLOCK IS FAKE TO SHOW HOW TO SET THE PATH
+# Load libraries
+library(arrow) # for loading parquet files
+library(dplyr) # for easily working with data
+library(lubridate) # for some enhanced date functionality
+library(ggplot2) # for plotting
+```
+
+
+```{r, generate_light_path, echo = FALSE, message = FALSE}
+load_chunk <- knitr::knit_expand(text = c(
+    "```{r, load_light_files}",
+    'light <- read_parquet(file.path(data_dir, "{{light_path}}"))',
+    "```"))
+
+```
+
+`r knitr::knit(text=load_chunk)`
+
+
+#### Explore data
+
+Some examples on how to quickly explore your light data.
+
+```{r, explore_light, echo = TRUE, message = TRUE}
+light %>%
+    dplyr::mutate(year = year(date_time)) %>%
+    dplyr::group_by(year) %>%
+    dplyr::summarise(n_birds_tracked = n_distinct(individ_id))
+```
+
+#### Make a plot
+
+An example of plotting light data.
+```{r, plot_light, echo = TRUE, message = TRUE}
+one_individ <- light[light$individ_id %in% unique(light$individ_id)[1], ]
+one_year <- one_individ[year(one_individ$date_time) %in% unique(year(one_individ$date_time))[], ]
+one_year$doy <- strftime(one_year$date_time, format = "%j")
+one_year <- aggregate(raw_light ~ doy, one_year, sum)
+plot(one_year$doy, one_year$raw_light, type = "l", col = "lightblue", lwd = 2, xlab = "day of the year", ylab = "sum daily light", main = unique(light$individ_id)[1])
+``` 
+

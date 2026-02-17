@@ -2,13 +2,13 @@
 #'
 #' Uses hard coded file paths to call gls_calibrate_species_colony for all species/colony combinations found in seatrack database for loggers in import folder.
 #' @param no_pos_only Logical indicating whether to include only loggers without position data in the database. Default is TRUE.
-#' @param rerun_existing Logical indicating whether to rerun calibration for loggers that already have calibration data. Default is TRUE.
+#' @param rerun_existing Logical indicating whether to rerun calibration for loggers that already have calibration data. Default is FALSE.
 #' @param include_existing Logical indicating whether to include existing calibration data in the final output. Default is TRUE.
 #' @param filter_plots Logical indicating whether to export filter plots. Default is FALSE.
 #' @return None. The function saves the prepared calibration data to the specified output directory.
 #' @concept gls_helper
 #' @export
-gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = TRUE, include_existing = TRUE, filter_plots = FALSE) {
+gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = FALSE, include_existing = TRUE, filter_plots = FALSE) {
     progressr::handlers(global = FALSE)
     progressr::handlers("progress")
     future::plan(future::multisession)
@@ -17,6 +17,9 @@ gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = TRUE, include
     import_directory <- file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL")
     log_info("Get all species/colony combinations from ", import_directory)
     all_metadata <- gls_metadata(import_directory, no_pos_only = no_pos_only)
+    if (nrow(all_metadata) == 0) {
+        stop("No metadata avaiable for files.")
+    }
     species_colony <- all_metadata[, c("species", "colony")]
     species_colony <- species_colony[stats::complete.cases(species_colony), ]
     species_colony <- dplyr::distinct(species_colony)
@@ -72,6 +75,10 @@ gls_calibrate_species_colony <- function(
 #' @concept gls_helper
 gls_prepare_calibration <- function(import_directory, output_directory, species = NULL, colony = NULL, no_pos_only = TRUE, existing_calibration_dir = NULL, rerun_existing = TRUE, include_existing = TRUE, filter_plots = FALSE, rerun_existing_plots = FALSE) {
     metadata <- gls_metadata(import_directory, colony, species, time_windows = TRUE, no_pos_only = no_pos_only)
+    if (nrow(metadata) == 0) {
+        log_warn(glue::glue("No metadata returned for {species} - {colony}. No position only = {no_pos_only}."))
+        return()
+    }
     calibration_output_dir <- file.path(output_directory)
     calibration_filename <- paste(species, colony, "calibration.xlsx", sep = "_")
     dir.create(calibration_output_dir, showWarnings = FALSE, recursive = TRUE)
@@ -213,6 +220,9 @@ gls_process_positions <- function() {
     output_directory <- file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Output_GLSpositions")
     log_info("Get all species/colony combinations from ", import_directory)
     all_metadata <- gls_metadata(import_directory, no_pos_only = no_pos_only)
+    if (nrow(all_metadata) == 0) {
+        stop("No metadata available for these files")
+    }
     species_colony <- all_metadata[, c("species", "colony")]
     species_colony <- species_colony[stats::complete.cases(species_colony), ]
     species_colony <- dplyr::distinct(species_colony)

@@ -1,0 +1,139 @@
+### Population maps
+
+#### Prepare workspace & load data
+```{r, fake_imm_setup, echo=TRUE, eval = FALSE, message=FALSE}
+# Load libraries
+library(ncdf4) # For working with netCDF files
+library(terra) # For working with rasters
+
+
+# point R to the folder where the data is, e.g.
+data_dir <- "path/where/you/unzipped/files/data"
+```
+
+```{r, imm_setup, echo=FALSE, message=FALSE}
+# THE ABOVE BLOCK IS FAKE TO SHOW HOW TO SET THE PATH
+# Load libraries
+library(ncdf4)
+library(terra)
+```
+
+```{r, generate_popmap_path, echo = FALSE, message = FALSE}
+load_chunk <- knitr::knit_expand(text = c(
+    "```{r, load_popmap_files}",
+    'loaded_netcdf <- nc_open(file.path(data_dir, "{{pop_map_paths[[1]]}}"))',
+    "```"))
+
+```
+
+`r knitr::knit(text=load_chunk)`
+
+#### Explore data
+
+The population map netCDF consists of several variables. These are both standard variables and *dimension* variables. 
+Standard variables include data about colonies and multidimensional rasters of population estimates. 
+The dimensions of these multidimensional rasters correspond to *dimensional* variables. 
+This includes latitude and longitude, but the month of the year and which colony these estimates derived from are also dimension variables.
+The population estimate variable (and corresponding confidence interval estimates) are therefore four dimensional matrices where each pixel contains population estimates (birds per pixel).
+
+This is a brief tutorial about how to explore and extract data.
+
+Show ALL file metadata. This will list both variables and dimensions. The output is not shown here due to length. 
+Note that each variable lists its corresponding dimensions in square brackets, e.g. `PredictedAbundanceMean[lon,lat,month,colonyCode]`
+
+```{r, explore_popmap, eval = FALSE}
+print(loaded_netcdf)
+```
+
+Net CDF Global attributes correspond to the whole file. This includes the data source, citation and the CRS code of the included rasters. 
+Values of these can be obtained using `ncatt_get`
+```{r, all att}
+ncatt_get(loaded_netcdf, varid = 0)
+```
+
+Check CRS code.
+```{r, crs}
+ncatt_get(loaded_netcdf, varid = 0)$CRS
+```
+
+Show colonies in a dataframe by extracting variables by name using `ncvar_get`
+```{r, explore_popmap2}
+# Define vector variable names we want to extract
+varnames <- c("colonyCode", "colonyName", "colonyLatitude", "colonyLongitude", "colonyRegion", "colonyNpairs", "SmcolName")
+# For each value of varnames, extract from the netcdf file
+variable_list <- lapply(varnames, function(name) {
+    ncvar_get(loaded_netcdf, name)
+})
+#assign varnames as the column names
+names(variable_list) <- varnames
+#convert to a data frame
+colonies <- as.data.frame(variable_list)
+#show the first rows
+head(colonies)
+```
+
+Select a specific colony based on colony name.
+```{r, get}
+# get the first name in this data
+selname <- ncvar_get(loaded_netcdf, "colonyName")[1]
+print(selname)
+# Get the colony 
+colcode <- ncvar_get(loaded_netcdf, "colonyCode")[ncvar_get(loaded_netcdf, "colonyName") == selname]
+length(colcode) # See how many sub-colonies correspond to this name
+```
+
+In order to work with the population estimates, specific slices must be extracted from the multidimensional matrix. 
+These slices will be two dimensional matrices that will be easier to visualise.
+
+To get a single slice first get the data using `ncvar_get` and then index it using standard matrix indexing.
+Leave the first two dimensions blank, in order to obtain all values of Latiude and Longitude. 
+The last two dimensions should contain a single index corresponding to month and colony.
+For example, to get the estimates fro January for the fist colony in these data.
+```{r singleslice}
+month_colony_slice <- ncvar_get(loaded_netcdf, "PredictedAbundanceMean")[, , 1, 1]
+```
+
+To select a colony by name, similar notation to above can be used.
+
+```{r slicebyname, eval = FALSE}
+# Boolean of which colony name equals our desired name.
+name_bool <- ncvar_get(loaded_netcdf, "colonyName") == selname
+# Use this boolean to slice the matrix, taking the first month still.
+month_colony_slice <- ncvar_get(loaded_netcdf, "PredictedAbundanceMean")[, , 1, name_bool]
+```
+
+Note that depending on the number of subcolonies, this might result in more than one slice (a three dimensional matrix).
+
+#### Plot
+
+Using our single slice of the multidimensional matrix, we can convert it to a raster and make a simple map. 
+We will first transpose the matrix as you may have noted that Longitude is on the X axis in the NetCDF, and Latitude on the Y axis.
+
+```{r, getslice, out.width="100%", out.height="600px"}
+#transpose the matrix
+month_colony_slice_transposed <- t(month_colony_slice)
+# convert it to a raster
+slice_raster <- rast(month_colony_slice_transposed)
+#simple plot
+terra::plot(slice_raster, main = paste("January", selname, "Colony code: ",colcode[1]))
+```
+
+The Terra spatial raster class supports multiple layers. We can use this to work with a three dimensional raster
+
+Here all 12 months for a single colony are converted to a SpatRaster by leaving the third dimension (month) blank.
+
+```{r, get3dslice, out.width="100%", out.height="800px"}
+
+allmonth_colony_slice <- ncvar_get(loaded_netcdf, "PredictedAbundanceMean")[, , , 1]
+
+# This results in an array (of matrix slices)
+# Convert first to raster 
+
+allmonth_colony_raster <- rast(allmonth_colony_slice)
+#Transpose it so the map is the right way up
+allmonth_colony_raster <- terra::t(allmonth_colony_raster)
+# Plot with colony code and month of the year
+terra::plot(allmonth_colony_raster, main = paste("Colony code: ",colcode[1], c(1:12)), mar = c (0.5,1,0.5,4))
+
+```
+

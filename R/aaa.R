@@ -16,8 +16,7 @@
 #' }
 #' @export
 #' @concept setup
-start_logging <- function(log_dir = "logs", log_file = paste0("seatrackRtools_log_", Sys.Date(), ".txt"), silent = FALSE, log_namespace = "global", log_index = 1, log_level = logger::INFO, file_safe = FALSE) {
-    
+start_logging <- function(log_dir = "logs", log_file = paste0("seatrackRtools_log_", Sys.Date(), ".log"), silent = FALSE, log_index = 1, log_level = logger::INFO, file_safe = FALSE) {
     appender_file_safe <- function(file) {
         force(file)
         function(line) {
@@ -40,7 +39,7 @@ start_logging <- function(log_dir = "logs", log_file = paste0("seatrackRtools_lo
     }
 
     if (!dir.exists(log_dir)) {
-            dir.create(log_dir, recursive = TRUE)
+        dir.create(log_dir, recursive = TRUE)
     }
     log_path <- file.path(log_dir, log_file)
 
@@ -49,13 +48,25 @@ start_logging <- function(log_dir = "logs", log_file = paste0("seatrackRtools_lo
     } else {
         log_appender_func <- appender_tee
     }
-    log_appender(log_appender_func(log_path), namespace = log_namespace, index = log_index)
-    log_threshold(log_level, namespace = log_namespace, index = log_index)
+    log_appender(log_appender_func(log_path), index = log_index)
+    log_threshold(log_level, index = log_index)
 
     if (!silent) {
         log_info("Logging started. Log file: ", log_path)
     }
+}
 
+log_info_all <- function(message, threshold = logger::INFO) {
+    original_levels <- lapply(seq_len(log_indices()), function(x) {
+        logger::log_threshold(index = x)
+    })
+    for (x in seq_len(log_indices())) {
+        logger::log_threshold(threshold, index = x)
+    }
+    logger::log_info(message)
+    for (x in seq_len(log_indices())) {
+        logger::log_threshold(original_levels[[x]], index = x)
+    }
 }
 
 

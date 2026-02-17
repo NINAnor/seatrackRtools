@@ -88,9 +88,9 @@ LoadedWBCollection <- R6::R6Class(
             names(self$sheets_list)
         },
         #' @field modified sheets_list
-        modified = function(){
+        modified = function() {
             modified_sheets <- sapply(self$sheets_list, function(x) {
-                if(x$modified){
+                if (x$modified) {
                     return(x)
                 }
             })
@@ -117,7 +117,7 @@ SessionBatch <- R6::R6Class(
         },
         #' @field sessions Tibble containing session information from master import startup_shutdown.
         sessions = tibble(),
-        #' @field type The type of import that needs to occur. Must be either "close_only", "open_only" or "open_and_close". 
+        #' @field type The type of import that needs to occur. Must be either "close_only", "open_only" or "open_and_close".
         type = character(),
         #' @description
         #' Print method for SessionBatch
@@ -125,9 +125,9 @@ SessionBatch <- R6::R6Class(
         print = function() {
             cat("Sessions:\n")
             print(self$sessions)
-            cat(paste0("Sessions will be ", gsub("_"," ", self$type),"\n"))
+            cat(paste0("Sessions will be ", gsub("_", " ", self$type), "\n"))
             invisible(self)
-        }       
+        }
     )
 )
 
@@ -144,10 +144,10 @@ DBImportCollection <- R6::R6Class(
         #' @param retrievals A tibble containing retrievals events information from master import metadata
         #' @param deployments A tibble containing deployments events information from master import metadata
         #' @return A new DBImportCollection object
-        initialize = function(sessions = SessionBatch$new(), retrievals = tibble(), deployments = tibble()){
-            self$sessions = sessions
-            self$retrievals = retrievals
-            self$deployments = deployments
+        initialize = function(sessions = SessionBatch$new(), retrievals = tibble(), deployments = tibble()) {
+            self$sessions <- sessions
+            self$retrievals <- retrievals
+            self$deployments <- deployments
         },
         #' @field sessions SessionBatch containing session information from master import startup_shutdown.
         sessions = SessionBatch$new(),
@@ -157,16 +157,16 @@ DBImportCollection <- R6::R6Class(
         deployments = tibble(),
         #' @description
         #' Print method for DBImportCollection
-        #' @return The DBImportCollection object invisibly        
+        #' @return The DBImportCollection object invisibly
         print = function() {
             cat("$sessions:\n")
             print(self$sessions)
             cat("$retrievals:\n")
             print(self$retrievals)
             cat("$deployments:\n")
-            print(self$deployments)            
+            print(self$deployments)
             invisible(self)
-        }       
+        }
     ),
     active = list(
         #' @field type The type of import that needs to occur.

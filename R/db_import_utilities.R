@@ -31,6 +31,9 @@ check_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_co
 }
 
 get_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_names = NULL, additional_db_col_names = c()) {
+    if (nrow(metadata_df) == 0) {
+        stop("No data to check!")
+    }
     metadata_df <- tibble(metadata_df)
     if (is.null(col_names)) {
         col_names <- names(metadata_df)
@@ -88,6 +91,55 @@ get_db_metadata_import <- function(metadata_df, table, col_names = NULL, db_col_
     return(existing_rows)
 }
 
+#' Check existing active sessions in database
+#'
+#' Function to check which startups from the master import sheet correspond to active sessions in the database.
+#' It constructs a dataframe of session IDs and uses the `check_db_metadata_import` function
+#' to determine which startups are associated with active sessions.
+#' @param startup_shutdown A tibble containing session information from master import startup_shutdown.
+#' @param filter_startups A logical indicating whether to filter out startups associated with active sessions. Default is TRUE.
+#' @return If filter_startups is TRUE, a tibble of startups that are associated with active sessions in the database. Otherwise
+#' @concept db_import_utility
+#' @export
+check_startups_active_db <- function(startup_shutdown, filter_startups = FALSE) {
+    if (nrow(startup_shutdown) == 0) {
+        return(startup_shutdown)
+    }
+
+    # Get database logger IDs
+    all_ids <- startup_shutdown$logger_serial_no
+
+    db_logger_ids <- get_db_metadata_import(data.frame(
+        logger_serial_no = all_ids
+    ), table = "loggers.logger_info", additional_db_col_names = "logger_id")
+
+    all_ids_db <- db_logger_ids$logger_id[match(all_ids, db_logger_ids$logger_serial_no)]
+
+    # Check for an active session
+    db_startup_df_active <- tibble(logger_id = all_ids_db[!is.na(all_ids_db)], active = TRUE)
+    active_session_bool <- check_db_metadata_import(db_startup_df_active, "loggers.logging_session")
+
+    # Log the removal of active sessions
+
+    active_session_bool_all_ids <- active_session_bool[match(all_ids_db, all_ids_db[!is.na(all_ids_db)])]
+    active_session_bool_all_ids[is.na(active_session_bool_all_ids)] <- TRUE
+
+    active_summary <- startup_shutdown[!active_session_bool_all_ids, c("logger_serial_no", "starttime_gmt")]
+    if (nrow(active_summary) > 0) {
+        log_warn(nrow(active_summary), " startups for loggers already in active sessions in database.")
+        if (filter_startups) {
+            log_warn("Sessions being removed:")
+        }
+        log_warn("Sesssions :\n", paste(capture.output(print(active_summary, n = nrow(active_summary)))[c(-1, -3)], collapse = "\n"))
+    }
+    if (filter_startups) {
+        startup_shutdown <- startup_shutdown[active_session_bool_all_ids, ]
+    } 
+            
+    return(startup_shutdown)
+
+}
+
 #' Check existing startups in database
 #'
 #' Function to check which startups from the master import sheet are not already present in the database.
@@ -101,6 +153,7 @@ check_startups_db <- function(startup_shutdown) {
     if (nrow(startup_shutdown) == 0) {
         return(startup_shutdown)
     }
+
     db_startup_df <- data.frame(
         session_id = paste(startup_shutdown$logger_serial_no, as.Date(startup_shutdown$starttime_gmt), sep = "_"),
         starttime_gmt = startup_shutdown$starttime_gmt
@@ -125,16 +178,43 @@ check_shutdown_db <- function(startup_shutdown) {
         return(startup_shutdown)
     }
     shutdown <- startup_shutdown[!is.na(startup_shutdown$download_date) | !is.na(startup_shutdown$shutdown_date), ]
+    if (nrow(shutdown) == 0) {
+        return(shutdown)
+    }
+# # First check for an active session
+# db_shutdown_df <-
+#     data.frame(
+#         session_id = paste(shutdown$logger_serial_no, as.Date(shutdown$starttime_gmt), sep = "_"), active = TRUE
+#     )
+# closed_session_bool <- check_db_metadata_import(db_shutdown_df, "loggers.logging_session")
+
+# get_db_metadata_import(db_shutdown_df, "loggers.logging_session")
+
+    # shutdown_new <- shutdown[!closed_session_bool, ]
+    shutdown_new <- shutdown
     db_shutdown_df <-
         data.frame(
-            session_id = paste(shutdown$logger_serial_no, as.Date(shutdown$starttime_gmt), sep = "_"),
-            download_date = shutdown$download_date
+            session_id = paste(shutdown_new$logger_serial_no, as.Date(shutdown_new$starttime_gmt), sep = "_"),
+            download_date = shutdown_new$download_date
         )
 
-    db_shutdown_df$download_date[is.na(db_shutdown_df$download_date)] <- shutdown$shutdown_date[is.na(db_shutdown_df$download_date)]
+    db_shutdown_df$download_date[is.na(db_shutdown_df$download_date)] <- shutdown_new$shutdown_date[is.na(db_shutdown_df$download_date)]
 
     sessions_to_shutdown_bool <- check_db_metadata_import(db_shutdown_df, "loggers.shutdown")
-    shutdown_new <- shutdown[sessions_to_shutdown_bool, ]
+    shutdown_new <- shutdown_new[sessions_to_shutdown_bool, ]
+    # Check also the shutdown date, as the download date can differ from the database entry
+    db_shutdown_df <-
+        data.frame(
+            session_id = paste(shutdown_new$logger_serial_no, as.Date(shutdown_new$starttime_gmt), sep = "_"),
+            shutdown_date = shutdown_new$shutdown_date
+        )
+    db_shutdown_df <- db_shutdown_df[!is.na(db_shutdown_df$shutdown_date), ]
+    sessions_to_shutdown_bool <- rep(TRUE, nrow(shutdown_new))
+
+    check_result <- check_db_metadata_import(db_shutdown_df, "loggers.shutdown")
+    sessions_to_shutdown_bool[!is.na(shutdown_new$shutdown_date)] <- check_result
+    shutdown_new <- shutdown_new[sessions_to_shutdown_bool, ]
+
     return(shutdown_new)
 }
 

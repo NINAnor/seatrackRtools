@@ -28,7 +28,8 @@ main_ui <- function(id) {
       ),
       card(
         card_header("Details:"),
-        textInput(ns("user_full_name"), "Your name")
+        textInput(ns("user_full_name"), "Your name"),
+        connect_db_ui(ns("connect_db"))
       ),
       col_widths = c(2, 4, 3, 3),
       min_height = "20%"
@@ -43,20 +44,27 @@ main_ui <- function(id) {
         "Manage metadata",
         manage_metadata_ui(ns("manage_metadata"))
       ),
+      nav_panel(
+        "Database upload",
+        manage_db_upload_ui(ns("manage_db_upload"))
+      ),
       full_screen = TRUE
     ),
     add_busy_spinner(spin = "fading-circle", position = "bottom-left"),
     use_busy_spinner(spin = "fading-circle", position = "bottom-left", spin_id = ns("main_spinner"), color = "red"),
-    card(logger_ui(ns("logger"))),
+    card(logger_ui(ns("logger")),
+      full_screen = TRUE,
+      id = ns("logger_card")
+    ),
     theme = theme,
     tags$head(tags$style(
-    HTML(
-      "
+      HTML(
+        "
         .bslib-full-screen-enter {
           bottom: var(--bslib-full-screen-enter-bottom);
         }
       "
-    )
-  ))
+      )
+    ))
   )
 }

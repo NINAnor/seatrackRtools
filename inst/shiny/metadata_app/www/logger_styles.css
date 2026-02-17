@@ -1,0 +1,30 @@
+.log-info {
+    color: #2c7be5;
+}
+
+.log-success {
+    color: #00a65a;
+}
+
+.log-warn {
+    color: #f39c12;
+}
+
+.log-error {
+    color: #dd4b39;
+    font-weight: bold;
+}
+
+.log-default {
+    color: #9ca3af;
+}
+
+.log-container {
+    background: #111827;
+    padding: 6px 8px;
+    border-radius: 4px;
+    overflow-y: auto;
+    font-family: Consolas, Menlo, Monaco, monospace;
+    font-size: 11px;
+    line-height: 1.05;
+}

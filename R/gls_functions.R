@@ -152,9 +152,14 @@ gls_metadata <- function(import_directory, colony = NULL, species = NULL, time_w
     })
     file_info <- do.call(rbind, file_info_list)
     file_info <- data.frame(filename = all_files, file_info)
-    db_info <- seatrackR::getSessionInfo(posdata_filename = file_info$id_year, has_pos_data = !no_pos_only, logger_download_type = "Successfully downloaded", colony_names = colony, species_names = species)
+    if (!no_pos_only) {
+        has_pos_data <- NULL
+    } else {
+        has_pos_data <- FALSE
+    }
+    db_info <- seatrackR::getSessionInfo(posdata_filename = file_info$id_year, has_pos_data = has_pos_data, logger_download_type = c("Successfully downloaded", "Reconstructed"), colony_names = colony, species_names = species)
     if (nrow(db_info) == 0) {
-        stop("No metadata found in database.")
+        return(data.frame())
     }
     # logger_id, logger_model, species, date_deployed, date_retrieved, colony
     metadata <- dplyr::select(

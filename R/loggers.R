@@ -48,12 +48,14 @@ get_logger_from_metadata <- function(logger_id, all_master_import_list = NULL) {
 get_unfinished_session <- function(master_startup, logger_id, logger_download_stop_date) {
     # Find session in master_startup
     # Get logger ID unfinished sessions
+
     unfinished_bool <- is.na(master_startup$shutdown_date) & is.na(master_startup$download_date) & master_startup$logger_serial_no == logger_id
     unfinished_indices <- which(unfinished_bool)
     master_startup_unfinished <- master_startup[unfinished_indices, ]
     if (nrow(master_startup_unfinished) == 0) {
         log_warn(paste0("No unfinished session found for logger ID: ", logger_id, "."))
-        return(NULL)
+        logger_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
+        return(list(index = NULL, session = logger_sessions[order(logger_sessions$download_date), ][nrow(logger_sessions), ]))
     } else if (nrow(master_startup_unfinished) >= 1) {
         if (nrow(master_startup_unfinished) > 1) {
             log_trace(paste0("Multiple unfinished sessions without end dates found for logger ID: ", logger_id, ". Trying to use closest startup date."))
@@ -78,24 +80,28 @@ get_unfinished_session <- function(master_startup, logger_id, logger_download_st
 
                 logger_sessions_finished <- which(!(is.na(logger_sessions$shutdown_date) | is.na(logger_sessions$download_date)))
 
-                time_diffs[time_diffs < 0] <- NA # Ignore future dates
+                time_diffs[time_diffs <= 0] <- NA # Ignore future dates and start dates
                 if (length(logger_sessions_finished) > 0) {
                     time_diffs[1:max(logger_sessions_finished)] <- NA # ignore finished sessions and unfinished sessions falling before a finished session
+                    last_finished_idx <- which(!is.na(logger_sessions$download_date) & logger_sessions$download_date == max(logger_sessions$download_date, na.rm = TRUE))[1]
+                } else {
+                    last_finished_idx <- nrow(logger_sessions)
                 }
+
 
                 closest_index <- which(time_diffs == min(time_diffs, na.rm = TRUE) & !is.na(time_diffs))
                 if (length(closest_index) == 0) {
-                    log_warn(paste("No suitable unfinished session found for:", logger_id))
-                    return(NULL)
+                    log_warn(paste("No suitable unfinished session found for:", logger_id, logger_download_stop_date))
+                    return(list(index = NULL, session = logger_sessions[last_finished_idx, ]))
                 } else if (length(closest_index) > 1) {
-                    log_warn(paste("Cannot resolve multiple unfinished sessions for:", logger_id))
-                    return(NULL)
+                    log_warn(paste("Cannot resolve multiple unfinished sessions for:", logger_id, logger_download_stop_date))
+                    return(list(index = NULL, session = logger_sessions[last_finished_idx, ]))
                 }
                 unfinished_indices <- logger_session_indices[closest_index]
                 master_startup_unfinished <- master_startup[unfinished_indices, ]
             } else if (nrow(master_startup_unfinished) > 1) {
                 log_warn(paste0("No download date available for logger ID:", logger_id, ". Cannot resolve multiple unfinished sessions."))
-                return(NULL)
+                return(list(index = NULL, session = logger_sessions[nrow(logger_sessions), ]))
             }
         } else {
             log_trace(paste0("No sessions with start times fround for ", logger_id))
@@ -104,7 +110,7 @@ get_unfinished_session <- function(master_startup, logger_id, logger_download_st
             logger_sessions_unfinished <- which((is.na(logger_sessions$shutdown_date) | is.na(logger_sessions$download_date)))
             if (length(logger_sessions_unfinished) > 1) {
                 log_warn(paste("Cannot resolve multiple unfinished sessions for:", logger_id, "due to lack of start dates."))
-                return(NULL)
+                return(list(index = NULL, session = NULL))
             }
             unfinished_indices <- logger_session_indices[logger_sessions_unfinished]
             master_startup_unfinished <- master_startup[unfinished_indices, ]
@@ -244,7 +250,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
     }
 
     log_trace("Check returned loggers")
-    valid_status <- logger_returns$status != "No download attemted"
+    valid_status <- logger_returns$status != "No download attemted" & !is.na(logger_returns$status)
     unhandled_loggers <- tibble()
     if (any(valid_status)) {
         all_updated_session_summary <- tibble()
@@ -252,16 +258,31 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
         for (i in logger_indexes) {
             logger_id <- logger_returns$logger_id[i]
             logger_status <- logger_returns$status[i]
+            logger_status <- translate_logger_status(logger_status)
+
             logger_download_stop_date <- logger_returns$`download / stop_date`[i]
 
             unfinished_session_result <- get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
-            if (is.null(unfinished_session_result)) {
-                log_warn(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
-                unhandled_loggers <- rbind(unhandled_loggers, logger_returns[i, ])
+            if (is.null(unfinished_session_result) || is.null(unfinished_session_result$index)) {
+                log_info(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
+                last_master_session <- data.frame(last_status = as.character(NA), last_download = as.Date(NA))
+                if (!is.null(unfinished_session_result$session) && nrow(unfinished_session_result$session) > 0) {
+                    last_master_session <- unfinished_session_result$session[, c("download_type", "download_date")]
+                    names(last_master_session) <- c("last_status", "last_download")
+                }
+                new_unhandled <- tibble(logger_returns[i, ], last_master_session)
+
+                unhandled_loggers <- rbind(unhandled_loggers, new_unhandled)
                 next
             }
             unfinished_index <- unfinished_session_result$index
             unfinished_session <- unfinished_session_result$session
+
+            if (logger_status == "Not used" && is.na(logger_download_stop_date) && !logger_id %in% restart_times$logger_id) {
+                logger_download_stop_date <- Sys.Date()
+            } else if (logger_status == "Not used" && is.na(logger_download_stop_date) && logger_id %in% restart_times$logger_id) {
+                logger_download_stop_date <- as.Date(restart_times$startdate_GMT[restart_times$logger_id == logger_id])
+            }
 
             master_startup <- set_master_startup_value(master_startup, unfinished_index, "download_type", logger_status)
             master_startup <- set_master_startup_value(master_startup, unfinished_index, "download_date", logger_download_stop_date)
@@ -276,7 +297,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
         log_success("Updated sessions:\n", paste(capture.output(print(all_updated_session_summary, n = nrow(all_updated_session_summary)))[c(-1, -3)], collapse = "\n"))
 
         if (nrow(unhandled_loggers) > 0) {
-            unhandled_loggers_summary <- unhandled_loggers[, c("logger_id", "status", "download / stop_date")]
+            unhandled_loggers_summary <- unhandled_loggers[, c("logger_id", "status", "download / stop_date", "last_status", "last_download")]
             log_warn(nrow(unhandled_loggers_summary), " returns were not processed.")
             log_warn("Unhandled returns:\n", paste(capture.output(print(unhandled_loggers_summary, n = nrow(unhandled_loggers_summary)))[c(-1, -3)], collapse = "\n"))
         }
@@ -284,24 +305,32 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
 
     # Handle restarts
     log_trace("Handle restarts")
-    restart_indexes <- which(logger_returns$`stored or sent to?` == "redeployed")
-    if (length(restart_indexes) > 0) {
+    if (nrow(restart_times) > 0) {
         added_sessions <- tibble()
-        for (i in restart_indexes) {
-            return_restart <- logger_returns[i, ]
-            logger_id <- return_restart$logger_id
-            downloader <- return_restart$`downloaded by`
-            restart_info <- restart_times[restart_times$logger_id == logger_id, ]
-            if (nrow(restart_info) == 0) {
-                log_error(paste("Logger ID:", logger_id, "not present in restart times sheet, but present in logger returns. Cannot continue."))
+        for (i in seq_len(nrow(restart_times))) {
+            restart_info <- restart_times[i, ]
+
+            logger_id <- restart_info$logger_id
+            return_restart <- logger_returns[logger_returns$logger_id == logger_id, ]
+            if (nrow(return_restart) == 0) {
+                log_warn(paste("Logger ID:", logger_id, "not present in logger returns. Cannot get full info for restart."))
                 next
             }
+            downloader <- return_restart$`downloaded by`
+
             logger_restart_datetime <- paste(restart_info$startdate_GMT, format(restart_info$starttime_GMT, "%H:%M:%S"))
+            logger_restart_datetime <- strptime(logger_restart_datetime, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
 
             # Get full logger info from existing sheet
             previous_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
             if (nrow(previous_sessions) == 0) {
                 log_error(paste("Logger ID:", logger_id, "not present in master startup sheet. Cannot get full info for restart."))
+                next
+            }
+            # Check this restart doesn't already exist in previous sessions
+            previous_session_logger_dates <- paste(previous_sessions$logger_serial_no, as.character(previous_sessions$starttime_gmt))
+            if (paste(logger_id, as.character(logger_restart_datetime)) %in% previous_session_logger_dates) {
+                log_info(paste("Logger ID:", logger_id, "session starting at", logger_restart_datetime, " already in master sheet."))
                 next
             }
             # generate new row
@@ -332,8 +361,11 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
             added_sessions <- rbind(added_sessions, new_session)
         }
         log_success("Adding ", nrow(added_sessions), " new sessions from restarts.")
-        added_sessions_summary <- added_sessions[, c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "intended_location")]
-        log_success("New sessions:\n", paste(capture.output(print(added_sessions_summary, n = nrow(added_sessions_summary)))[c(-1, -3)], collapse = "\n"))
+        if (nrow(added_sessions) > 0) {
+            added_sessions_summary <- added_sessions[, c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "intended_location")]
+            log_success("New sessions:\n", paste(capture.output(print(added_sessions_summary, n = nrow(added_sessions_summary)))[c(-1, -3)], collapse = "\n"))
+        }
+
 
         master_startup <- rbind(master_startup, added_sessions)
     }

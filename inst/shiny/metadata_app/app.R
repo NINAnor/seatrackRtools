@@ -13,8 +13,9 @@ source("manage_loggers.R")
 source("log_display.R")
 source("manage_metadata.R")
 source("manage_partner_metadata.R")
-
+source("manage_db_upload.R")
 source("mod_dt_tabs.R")
+source("connect_db.R")
 
 plan(multisession)
 

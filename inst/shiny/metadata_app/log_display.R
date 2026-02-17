@@ -17,19 +17,59 @@ ReadLastLines <- function(x, n, ...) {
     out
 }
 
+color_log_lines <- function(lines) {
+    prev_class <- "log-info"
+    all_html <- c()
+
+    for (line in lines) {
+        cls <- dplyr::case_when(
+            grepl("\\bINFO\\b", line) ~ "log-info",
+            grepl("\\bSUCCESS\\b", line) ~ "log-success",
+            grepl("\\bWARN\\b", line) ~ "log-warn",
+            grepl("\\bERROR\\b", line) ~ "log-error",
+            TRUE ~ NA
+        )
+        if (is.na(cls)) {
+            cls <- prev_class
+        }
+        prev_class <- cls
+
+        all_html <- c(all_html, sprintf("<div class='%s'>%s</div>", cls, htmltools::htmlEscape(line)))
+    }
+    return(all_html)
+}
+
+logger_dependency <- function() {
+    htmltools::htmlDependency(
+        name = "logger",
+        version = "1.0.0",
+        src = c(file = "www"),
+        stylesheet = "logger_styles.css"
+    )
+}
+
 logger_ui <- function(id) {
     ns <- NS(id)
 
     tagList(
+        logger_dependency(),
         uiOutput(ns("logpath")),
-        verbatimTextOutput(ns("log"))
+        div(
+            class = "log-container",
+            uiOutput(ns("log"))
+        )
     )
 }
 
-logger_server <- function(id) {
+logger_server <- function(id, line_n = NULL, interval_millis = NULL) {
     moduleServer(id, function(input, output, session) {
-        # log_path <- paste0("seatrack_functions_log_", Sys.Date(), ".txt")
-        # start_logging(log_file = log_path)
+        if (is.null(line_n)) {
+            line_n <- reactiveVal(5)
+        }
+        if (is.null(interval_millis)) {
+            interval_millis <- reactiveVal(1000)
+        }
+
 
         log_dir <- getShinyOption("logging_path", "seatrackRtools_logs")
         log_names <- getShinyOption("app_log_names")
@@ -38,9 +78,10 @@ logger_server <- function(id) {
         log_file <- reactiveFileReader(
             session = session,
             filePath = log_path,
-            intervalMillis = 1000,
+            intervalMillis = interval_millis,
             readFunc = function(filepath) {
-                return(paste(ReadLastLines(filepath, 5), collapse = "\n"))
+                lines <- ReadLastLines(filepath, line_n())
+                HTML(paste(color_log_lines(lines), collapse = ""))
             }
         )
 
@@ -51,6 +92,6 @@ logger_server <- function(id) {
                 )
             )
         ))
-        output$log <- renderText(log_file())
+        output$log <- renderUI(log_file())
     })
 }
