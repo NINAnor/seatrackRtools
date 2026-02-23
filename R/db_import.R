@@ -138,7 +138,7 @@ push_deployments <- function(deployments, dry_run = FALSE) {
     if (nrow(deployments) > 0) {
         valid_cols <- DBI::dbListFields(con, DBI::Id(schema = "imports", table = "metadata_import"))
         # check if logger is registered as starting
-        logger_db <- data.frame(logger_serial_no = deployments$logger_id_deployed)
+        logger_db <- data.frame(logger_serial_no = deployments$logger_id_deployed, logger_model = deployments$logger_model_deployed)
 
         existing_loggers <- get_db_metadata_import(logger_db, "loggers.logger_info", additional_db_col_names = c("logger_id"))
         existing_loggers <- existing_loggers[match(logger_db$logger_serial_no, existing_loggers$logger_serial_no), ]
@@ -146,7 +146,8 @@ push_deployments <- function(deployments, dry_run = FALSE) {
         deploy_startup_df <- data.frame(
             logger_id = existing_loggers$logger_id,
             deployment_id = NA,
-            retrieval_id = NA
+            retrieval_id = NA,
+            active = TRUE
         )
 
         missing_startups <- check_db_metadata_import(deploy_startup_df, "loggers.logging_session")
@@ -155,11 +156,11 @@ push_deployments <- function(deployments, dry_run = FALSE) {
         n_missing_startups <- nrow(deployment_missing_startups)
 
         if (n_missing_startups > 0) {
-            log_warn(glue::glue("The following {n_missing_startups} loggers cannot be registered as being deployed as they have no session in the database."))
+            log_warn(glue::glue("The following {n_missing_startups} loggers cannot be registered as being deployed as they have no active session without a deployment in the database."))
             log_warn("Attempting to push them to the database would result in an error. These loggers will not be registered as deployed")
 
             for (i in seq_len(nrow(deployment_missing_startups))) {
-                deployment_summary <- deployment_missing_startups[i, c("date", "logger_id_deployed", "comment")]
+                deployment_summary <- deployment_missing_startups[i, c("date", "logger_id_deployed", "logger_model_deployed", "comment")]
                 log_warn(
                     deployment_summary$logger_id_deployed,
                     ":\n", paste(capture.output(print(deployment_summary, n = nrow(deployment_summary)))[c(-1, -3)], collapse = "\n")
@@ -246,15 +247,16 @@ push_retrievals <- function(retrievals, dry_run = FALSE) {
     if (nrow(retrievals) > 0) {
         valid_cols <- DBI::dbListFields(con, DBI::Id(schema = "imports", table = "metadata_import"))
 
-        logger_db <- data.frame(logger_serial_no = retrievals$logger_id_retrieved)
+        logger_db <- data.frame(logger_serial_no = retrievals$logger_id_retrieved, logger_model = retrievals$logger_model_retrieved)
 
         existing_loggers <- get_db_metadata_import(logger_db, "loggers.logger_info", additional_db_col_names = c("logger_id"))
-        existing_loggers <- existing_loggers[match(logger_db$logger_serial_no, existing_loggers$logger_serial_no), ]
+        existing_loggers <- existing_loggers[match(paste(logger_db$logger_serial_no, logger_db$logger_model), paste(existing_loggers$logger_serial_no, existing_loggers$logger_model)), ]
 
         retrieval_deploy_df <- data.frame(
             individ_id = paste(retrievals$euring_code, retrievals$ring_number, sep = "_"),
             logger_id = existing_loggers$logger_id,
-            retrieval_id = NA
+            retrieval_id = NA,
+            active = TRUE
         )
 
 
@@ -262,15 +264,30 @@ push_retrievals <- function(retrievals, dry_run = FALSE) {
         retrievals_missing_deployments <- retrievals[missing_deployments, ]
         n_missing_deployments <- nrow(retrievals_missing_deployments)
         if (n_missing_deployments > 0) {
-            log_warn(glue::glue("The following {n_missing_deployments} loggers cannot be registered as being retrieved as they have no deployment events in the database."))
+            log_warn(glue::glue("The following {n_missing_deployments} logger/ring combinations cannot be registered as being retrieved as they have no matching deployment events in the database."))
             log_warn("Attempting to push them to the database would result in an error. These loggers will not be registered as retrieved")
 
+            retrieval_deploy_df <- data.frame(
+                logger_id = retrievals_missing_deployments$logger_id_deployed,
+                retrieval_id = NA,
+                active = TRUE
+            )
+            logger_deployment_exists <- get_db_metadata_import(retrieval_deploy_df, "loggers.logging_session", additional_db_col_names = c("individ_id"))
+
             for (i in seq_len(nrow(retrievals_missing_deployments))) {
-                retrieval_summary <- retrievals_missing_deployments[i, c("date", "ring_number", "logger_id_retrieved", "comment")]
+                retrieval_summary <- retrievals_missing_deployments[i, c("date", "ring_number", "logger_id_retrieved", "logger_model_deployed", "comment")]
+                missing_logger_id <- retrieval_summary$logger_id_retrieved
                 log_warn(
-                    retrieval_summary$logger_id_retrieved,
+                    missing_logger_id,
                     ":\n", paste(capture.output(print(retrieval_summary, n = nrow(retrieval_summary)))[c(-1, -3)], collapse = "\n")
                 )
+                if (missing_logger_id %in% logger_deployment_exists$logger_id) {
+                    logger_db_deployment <- logger_deployment_exists[logger_deployment_exists$logger_id == missing_logger_id, ]
+                    log_warn(
+                        "There is a deployment in the database on an open session of this logger, but it does not match the ring number and euring code of the retrieval event. ",
+                        ":\n", paste(capture.output(print(logger_db_deployment, n = nrow(logger_db_deployment)))[c(-1, -3)], collapse = "\n")
+                    )
+                }
             }
 
             log_warn("- Check METADATA sheet for an appropriate deployment event.")
@@ -314,7 +331,9 @@ push_retrievals <- function(retrievals, dry_run = FALSE) {
 #' @export
 push_shutdowns <- function(shutdown, dry_run = FALSE) {
     # shutdown - check if shutdown already in database
-    shutdown <- check_shutdown_db(shutdown)
+    initial_shutdown <- shutdown
+    shutdown <- check_shutdown_db(shutdown, check_active = TRUE)
+
     shutdown$temp_idx <- seq_len(nrow(shutdown))
     # if a session is to be shut down and has a deployment, check for a retrieval
     shutdown_deployment_df <- data.frame(session_id = paste0(shutdown$logger_serial_no, "_", as.Date(shutdown$starttime_gmt)))
@@ -349,10 +368,10 @@ push_shutdowns <- function(shutdown, dry_run = FALSE) {
 
     no_deployments <- check_db_metadata_import(shutdown_deployment_df, "loggers.deployment")
     shutdown_without_deployments <- shutdown[no_deployments, ]
-    downloaded_missing_deployments <- shutdown_without_deployments[shutdown_without_deployments$download_type %in% c("Successfully downloaded", "Nonresponsive", "Reconstructed"), ]
+    downloaded_missing_deployments <- shutdown_without_deployments[shutdown_without_deployments$download_type %in% c("Successfully downloaded", "Nonresponsive", "Reconstructed", "Unsuccessful reconstruction"), ]
     missing_deployments <- nrow(downloaded_missing_deployments)
     if (missing_deployments > 0) {
-        log_warn(glue::glue("The following {missing_deployments} loggers cannot be registered as shutdown as they have no deployment events but are flagged as 'Succesfully downloaded', 'Nonresponsive' or 'Reconstructed' ."))
+        log_warn(glue::glue("The following {missing_deployments} loggers cannot be registered as shutdown as they have no deployment events but are flagged as 'Succesfully downloaded', 'Nonresponsive', 'Reconstructed' or 'Unsuccessful reconstruction' ."))
         log_warn("Attempting to push them to the database would result in an error. These sessions will not be shutdown.")
 
         for (i in seq_len(nrow(downloaded_missing_deployments))) {
