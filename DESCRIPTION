@@ -39,7 +39,11 @@ Imports:
     promises,
     progressr,
     arrow,
-    ncdf4
+    ncdf4,
+    shinydashboard,
+    shinyWidgets,
+    ggplot2,
+    viridis
 Suggests: 
     knitr,
     rmarkdown,

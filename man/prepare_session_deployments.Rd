@@ -4,12 +4,14 @@
 \alias{prepare_session_deployments}
 \title{Get session deployments}
 \usage{
-prepare_session_deployments(session_batch, metadata)
+prepare_session_deployments(sessions, metadata, filter_sessions = FALSE)
 }
 \arguments{
-\item{session_batch}{A SessionBatch object containing session information from master import startup_shutdown.}
+\item{sessions}{A tibble containing session information from master import startup_shutdown.}
 
 \item{metadata}{A dataframe containing metadata information for the sessions.}
+
+\item{filter_sessions}{Logical indicating whether to filter out sessions with no deployments.}
 }
 \value{
 A list containing a dataframe of deployments and a tibble of sessions.

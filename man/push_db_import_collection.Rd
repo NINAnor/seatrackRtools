@@ -4,10 +4,12 @@
 \alias{push_db_import_collection}
 \title{Push database import collection to database}
 \usage{
-push_db_import_collection(db_import_collection)
+push_db_import_collection(db_import_collection, dry_run = FALSE)
 }
 \arguments{
 \item{db_import_collection}{A DBImportCollection object containing session, deployment, and retrieval information.}
+
+\item{dry_run}{Logical indicating whether to perform a dry run (default is FALSE). If TRUE, no data will be written to the database.}
 }
 \description{
 Function to push a DBImportCollection object to the database. The function handles the import of startups, deployments, retrievals, and shutdowns associated with the sessions in the collection.

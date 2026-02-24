@@ -11,7 +11,9 @@ get_nofly <- function(nfArea = "None") {
 
 #' Add country name to colony locations based on nearest NaturalEarth feature
 #'
-#' @param coldf
+#' @param coldf Data frame with colony locations (must contain columns 'col_lon' and 'col_lat')
+#' @return Data frame with added 'sovereignty' and 'country' columns
+#' @keywords internal
 addCountryName <- function(coldf) {
     sf::sf_use_s2(FALSE)
     # download world map from NaturalEarth

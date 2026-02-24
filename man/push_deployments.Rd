@@ -4,10 +4,12 @@
 \alias{push_deployments}
 \title{Push deployments to database}
 \usage{
-push_deployments(deployments)
+push_deployments(deployments, dry_run = FALSE)
 }
 \arguments{
 \item{deployments}{A tibble containing deployment information from a DBImportCollection object.}
+
+\item{dry_run}{Logical indicating whether to perform a dry run (default is FALSE). If TRUE, no data will be written to the database.}
 }
 \description{
 Function to push deployments from a master import sheet to the database. It checks the database for existing deployments and only imports new deployments to avoid duplicates.

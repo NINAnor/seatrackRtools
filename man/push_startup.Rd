@@ -4,10 +4,12 @@
 \alias{push_startup}
 \title{Push startups to database}
 \usage{
-push_startup(startup)
+push_startup(startup, dry_run = FALSE)
 }
 \arguments{
 \item{startup}{A tibble containing session information from a DBImportCollection object.}
+
+\item{dry_run}{Logical indicating whether to perform a dry run (default is FALSE). If TRUE, no data will be written to the database.}
 }
 \description{
 Function to push startups from a master import sheet to the database. It checks the database for existing startups and only imports new startups to avoid duplicates.
