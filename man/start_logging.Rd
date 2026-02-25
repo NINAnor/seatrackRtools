@@ -6,7 +6,7 @@
 \usage{
 start_logging(
   log_dir = "logs",
-  log_file = paste0("seatrackRtools_log_", Sys.Date(), ".txt"),
+  log_file = paste0("seatrackRtools_log_", Sys.Date(), ".log"),
   silent = FALSE,
   log_index = 1,
   log_level = logger::INFO,

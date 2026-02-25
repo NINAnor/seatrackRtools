@@ -5,8 +5,9 @@
 \title{Export a data request package}
 \usage{
 export_data_package(
-  all_data,
-  request_name,
+  data_request_result = NULL,
+  all_data = NULL,
+  request_name = NULL,
   output_dir = NULL,
   species = NULL,
   colony = NULL,
@@ -17,6 +18,8 @@ export_data_package(
 )
 }
 \arguments{
+\item{data_request_result}{List containing the result of a data request, which will contain all the arguments needed for the export. If this is provided, other arguments are ignored.}
+
 \item{all_data}{A named list of lists containing \code{data}: a data.frame to be exported and \code{description}: A string description. Each name corresponds to a data type.}
 
 \item{request_name}{A string representing the name of the data request.}

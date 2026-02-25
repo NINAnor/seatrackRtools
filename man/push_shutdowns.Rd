@@ -4,10 +4,12 @@
 \alias{push_shutdowns}
 \title{Push shutdowns to database}
 \usage{
-push_shutdowns(shutdown)
+push_shutdowns(shutdown, dry_run = FALSE)
 }
 \arguments{
 \item{shutdown}{A tibble containing session information from a DBImportCollection object.}
+
+\item{dry_run}{Logical indicating whether to perform a dry run (default is FALSE). If TRUE, no data will be written to the database.}
 }
 \description{
 Function to push shutdowns from a master import sheet to the database. It checks the database for existing shutdowns and only imports new shutdowns to avoid duplicates.

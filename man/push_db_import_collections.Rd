@@ -4,7 +4,7 @@
 \alias{push_db_import_collections}
 \title{Push multiple database import collections to database}
 \usage{
-push_db_import_collections(db_import_collections)
+push_db_import_collections(db_import_collections, dry_run = FALSE)
 }
 \arguments{
 \item{db_import_collections}{A list of DBImportCollection objects.}

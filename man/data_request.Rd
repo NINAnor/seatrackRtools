@@ -8,7 +8,7 @@ data_request(
   request_name,
   data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data",
     "light", "temperature", "activity", "population_maps", "logger_info"),
-  start_year,
+  start_year = "2000",
   end_year = format(Sys.Date(), "\%Y"),
   species = NULL,
   colony = NULL,
