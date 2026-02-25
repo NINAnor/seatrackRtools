@@ -13,19 +13,23 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(viridis)
 library(scales)
-# library(png)
-# library(grid)
-# library(here)
+
 
 # ---- Placeholder datasets ----
+
+SEATRACK_shared_folder <- getShinyOption("SEATRACK_path", NULL)
+if(is.null(SEATRACK_shared_folder)){stop("...")}
+
 #Saturation curve data:
 
 # Find the path to the app directory inside the installed package
-app_path <- system.file("shiny", "App_Colony_Repr", package = "seatrackRtools")
+app_path <- file.path(SEATRACK_shared_folder,"Projects","Colony_representativeness_Lars_2025", "App_data")
+
+the$seatrack_path
 
 # Load data relative to that path
-tot_combined_areas <- readRDS(file.path(app_path, "app_data/tot_combined_areas2.rds"))
-spec_col_uncertainty <- readRDS(file.path(app_path, "app_data/spec_col_uncertainty.rds"))
+tot_combined_areas <- readRDS(file.path(app_path, "tot_combined_areas2.rds"))
+spec_col_uncertainty <- readRDS(file.path(app_path, "spec_col_uncertainty.rds"))
 # ... and so on for the others
 
 
@@ -33,11 +37,11 @@ spec_col_uncertainty <- readRDS(file.path(app_path, "app_data/spec_col_uncertain
 # spec_col_uncertainty <- readRDS('app_data/spec_col_uncertainty.rds')
 
 # # Spatial data:
-tot_contours <- readRDS(file.path(app_path, "app_data/tot_contours_un2.rds"))
+tot_contours <- readRDS(file.path(app_path, "tot_contours_un2.rds"))
 world <- ne_countries(scale = "medium", returnclass = "sf")
 world_un <- st_union(world)
 rm(world)
-Colony_locs <- readRDS(file.path(app_path, "app_data/Colony_locs.rds"))
+Colony_locs <- readRDS(file.path(app_path, "Colony_locs.rds"))
 
 # Kernel fill colors:
 Fills <- viridis(length(seq(from = 25, to = 95, by = 5)))

@@ -4,7 +4,7 @@
 \alias{run_ColonyRepr_app}
 \title{Run the ColonyRepr shiny app}
 \usage{
-run_ColonyRepr_app()
+run_ColonyRepr_app(SEATRACK_path = the$sea_track_folder)
 }
 \description{
 Run the ColonyRepr shiny app

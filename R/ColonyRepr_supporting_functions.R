@@ -239,24 +239,14 @@ run_ColonyRepr <- function(species,
 #' @concept ColonyRepr
 #'
 #'
-#'
-run_ColonyRepr_app <- function(log_path = file.path(getwd(), "ColonyRepr_logs"), test = FALSE) {
+#' @export
+run_ColonyRepr_app <- function(SEATRACK_path = the$sea_track_folder) {
+  if(is.null(SEATRACK_path)) {stop("SEATRACK_path must be set. Set it using set_sea_track_folder(). Then run the app again")}
+
   app_dir <- system.file("shiny/App_Colony_Repr", package = "seatrackRtools")
   if (app_dir == "") stop("Could not find app directory. Try re-installing `seatrackRtools`.", call. = FALSE)
 
-  shiny::shinyOptions(logging_path = log_path, test = test)
+  shiny::shinyOptions(SEATRACK_path = SEATRACK_path)
   shiny::runApp(app_dir, display.mode = "normal")
 }
 
-
-
-#' #' Run the Shiny App
-#' #'
-#' #' @export
-#' #' @concept shiny_app
-#' run_app <- function(log_path = file.path(getwd(), "seatrackRtools_logs"), test = FALSE) {
-#'   app_dir <- system.file("shiny/metadata_app", package = "seatrackRtools")
-#'   if (app_dir == "") stop("Could not find Shiny app directory.", call. = FALSE)
-#'   shiny::shinyOptions(logging_path = log_path, test = test)
-#'   shiny::runApp(app_dir)
-#' }
