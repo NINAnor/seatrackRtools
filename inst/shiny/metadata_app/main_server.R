@@ -82,15 +82,27 @@ main_server <- function(id) {
                     seen_paths <- c(seen_paths, x$path)
                 }
             }
+            unsaved_locations <- FALSE
             for (i in seq_along(unique_sheets_only)) {
                 x <- unique_sheets_only[[i]]
-                new_x <- save_master_sheet(x, modified_only = TRUE)
-                unique_sheets_only[[i]] <- new_x
-                log_success(paste0("Saved master import sheet: ", basename(new_x$path)))
-                locations <- modify_master_import_in_list(locations, new_x)
+                new_x <- tryCatch(
+                    {
+                        save_master_sheet(x, modified_only = TRUE)
+                    },
+                    ERROR = function(e) {
+                        log_error(paste0("Error saving master import sheet: ", basename(x$path), " - ", e$message))
+                        return(NULL)
+                    }
+                )
+                if (!is.null(new_x)) {
+                    unique_sheets_only[[i]] <- new_x
+                    locations <- modify_master_import_in_list(locations, new_x)
+                } else {
+                    unsaved_locations <- TRUE
+                }
             }
             all_locations(locations)
-            unsaved(FALSE)
+            unsaved(unsaved_locations)
             busy(FALSE)
         })
     })

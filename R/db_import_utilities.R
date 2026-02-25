@@ -134,10 +134,9 @@ check_startups_active_db <- function(startup_shutdown, filter_startups = FALSE) 
     }
     if (filter_startups) {
         startup_shutdown <- startup_shutdown[active_session_bool_all_ids, ]
-    } 
-            
-    return(startup_shutdown)
+    }
 
+    return(startup_shutdown)
 }
 
 #' Check existing startups in database
@@ -170,10 +169,11 @@ check_startups_db <- function(startup_shutdown) {
 #' It constructs a dataframe of session IDs and download dates, and uses the `check_db_metadata_import` function
 #' to determine which shutdowns are new and need to be added to the database.
 #' @param startup_shutdown A tibble containing session information from master import startup_shutdown.
+#' @param check_active A logical indicating whether to first check for active sessions and filter out associated startups. Default is FALSE.
 #' @return A tibble of shutdowns that are not already present in the database.
 #' @concept db_import_utility
 #' @export
-check_shutdown_db <- function(startup_shutdown) {
+check_shutdown_db <- function(startup_shutdown, check_active = FALSE) {
     if (nrow(startup_shutdown) == 0) {
         return(startup_shutdown)
     }
@@ -181,27 +181,60 @@ check_shutdown_db <- function(startup_shutdown) {
     if (nrow(shutdown) == 0) {
         return(shutdown)
     }
-# # First check for an active session
-# db_shutdown_df <-
-#     data.frame(
-#         session_id = paste(shutdown$logger_serial_no, as.Date(shutdown$starttime_gmt), sep = "_"), active = TRUE
-#     )
-# closed_session_bool <- check_db_metadata_import(db_shutdown_df, "loggers.logging_session")
 
-# get_db_metadata_import(db_shutdown_df, "loggers.logging_session")
 
-    # shutdown_new <- shutdown[!closed_session_bool, ]
-    shutdown_new <- shutdown
     db_shutdown_df <-
         data.frame(
-            session_id = paste(shutdown_new$logger_serial_no, as.Date(shutdown_new$starttime_gmt), sep = "_"),
-            download_date = shutdown_new$download_date
+            session_id = paste(shutdown$logger_serial_no, as.Date(shutdown$starttime_gmt), sep = "_"),
+            download_date = shutdown$download_date
         )
 
-    db_shutdown_df$download_date[is.na(db_shutdown_df$download_date)] <- shutdown_new$shutdown_date[is.na(db_shutdown_df$download_date)]
+    db_shutdown_df$download_date[is.na(db_shutdown_df$download_date)] <- shutdown$shutdown_date[is.na(db_shutdown_df$download_date)]
 
     sessions_to_shutdown_bool <- check_db_metadata_import(db_shutdown_df, "loggers.shutdown")
-    shutdown_new <- shutdown_new[sessions_to_shutdown_bool, ]
+    shutdown_new <- shutdown[sessions_to_shutdown_bool, ]
+
+    if (nrow(shutdown_new) == 0) {
+        return(shutdown_new)
+    }
+
+    if (check_active) {
+        # First check for an active session
+        db_shutdown_df <-
+            data.frame(
+                session_id = paste(shutdown_new$logger_serial_no, as.Date(shutdown_new$starttime_gmt), sep = "_"), active = TRUE
+            )
+
+        closed_session_bool <- check_db_metadata_import(db_shutdown_df, "loggers.logging_session")
+
+
+        removed_shutdowns <- shutdown_new[closed_session_bool, ]
+        shutdown_new <- shutdown_new[!closed_session_bool, ]
+
+
+        if (nrow(removed_shutdowns) > 0) {
+            log_warn(glue::glue("The following {nrow(removed_shutdowns)} shutdowns have been removed as they have no active sessions in the database."))
+            db_shutdown_df <-
+                data.frame(
+                    session_id = paste(removed_shutdowns$logger_serial_no, as.Date(removed_shutdowns$starttime_gmt), sep = "_")
+                )
+            closed_sessions <- get_db_metadata_import(db_shutdown_df, "loggers.shutdown", additional_db_col_names = c("download_date"))
+
+            for (i in seq_len(nrow(removed_shutdowns))) {
+                session_summary <- removed_shutdowns[i, c("logger_serial_no", "starttime_gmt", "download_type", "download_date", "shutdown_date")]
+                log_warn(
+                    paste0(session_summary$logger_serial_no, "_", as.Date(session_summary$starttime_gmt)),
+                    ":\n", paste(capture.output(print(session_summary, n = nrow(session_summary)))[c(-1, -3)], collapse = "\n")
+                )
+                if (paste(session_summary$logger_serial_no, as.Date(session_summary$starttime_gmt), sep = "_") %in% closed_sessions$session_id) {
+                    current_closed_session <- closed_sessions[closed_sessions$session_id == paste(session_summary$logger_serial_no, as.Date(session_summary$starttime_gmt), sep = "_"), ]
+                    log_warn(paste("This session was closed with a download date of ", as.Date(current_closed_session$download_date)))
+                } else {
+                    log_warn("This session does not exist.")
+                }
+            }
+        }
+    }
     # Check also the shutdown date, as the download date can differ from the database entry
     db_shutdown_df <-
         data.frame(

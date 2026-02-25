@@ -32,6 +32,49 @@
       "Repository": "CRAN",
       "Encoding": "UTF-8"
     },
+    "ColonyRepr": {
+      "Package": "ColonyRepr",
+      "Version": "0.1.0",
+      "Source": "GitHub",
+      "Type": "Package",
+      "Title": "Functions to assist in calculating colony representativeness of tracked colonies within the SEATRACK database",
+      "Authors@R": "c( person( \"Lars\", \"Ursem\", email = \"lars.ursem@live.nl\", role = c(\"aut\", \"cre\") ) )",
+      "Description": "More about what it does (maybe more than one line). Continuation lines should be indented.",
+      "URL": "https://larsursem.github.io/ColonyRepr/",
+      "License": "GPL (>= 3)",
+      "Encoding": "UTF-8",
+      "LazyData": "true",
+      "Imports": [
+        "stats",
+        "dplyr",
+        "magrittr",
+        "sf",
+        "sp",
+        "adehabitatHR",
+        "slider"
+      ],
+      "RoxygenNote": "7.3.3",
+      "Suggests": [
+        "knitr",
+        "rmarkdown",
+        "units",
+        "rlang",
+        "ggridges",
+        "tidyverse"
+      ],
+      "VignetteBuilder": "knitr",
+      "Depends": [
+        "R (>= 3.5)"
+      ],
+      "Author": "Lars Ursem [aut, cre]",
+      "Maintainer": "Lars Ursem <lars.ursem@live.nl>",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "LarsUrsem",
+      "RemoteRepo": "ColonyRepr",
+      "RemoteRef": "main",
+      "RemoteSha": "68a277f9b650b10bad74a9df730a056733a45a1f"
+    },
     "DBI": {
       "Package": "DBI",
       "Version": "1.2.3",
@@ -686,6 +729,160 @@
       "Author": "Object-Oriented Programming Working Group [cph], Davis Vaughan [aut], Jim Hester [aut] (<https://orcid.org/0000-0002-2739-7082>), Tomasz Kalinowski [aut], Will Landau [aut], Michael Lawrence [aut], Martin Maechler [aut] (<https://orcid.org/0000-0002-8685-9910>), Luke Tierney [aut], Hadley Wickham [aut, cre] (<https://orcid.org/0000-0003-4757-117X>)",
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
       "Repository": "CRAN"
+    },
+    "ade4": {
+      "Package": "ade4",
+      "Version": "1.7-23",
+      "Source": "Repository",
+      "Title": "Analysis of Ecological Data: Exploratory and Euclidean Methods in Environmental Sciences",
+      "Authors@R": "c( person(\"Stéphane\", \"Dray\", email = \"stephane.dray@univ-lyon1.fr\", role = \"aut\", comment = c(ORCID = \"0000-0003-0153-1105\")), person(\"Anne-Béatrice\", \"Dufour\", email = \"anne-beatrice.dufour@univ-lyon1.fr\", role = \"aut\", comment = c(ORCID = \"0000-0002-9339-4293\")), person(\"Jean\", \"Thioulouse\", email = \"jean.thioulouse@univ-lyon1.fr\", role = \"aut\", comment = c(ORCID = \"0000-0001-7664-0598\")), person(\"Daniel\", \"Chessel\", role = \"ant\"), person(\"Thibaut\", \"Jombart\", role = \"ctb\"), person(\"Sandrine\", \"Pavoine\",role = \"ctb\"), person(\"Jean R.\", \"Lobry\", role = \"ctb\"), person(\"Sébastien\", \"Ollier\", role = \"ctb\"), person(\"Daniel\", \"Borcard\", role = \"ctb\"), person(\"Pierre\", \"Legendre\", role = \"ctb\"), person(\"Stéphanie\", \"Bougeard\", role = \"ctb\"), person(\"Aurélie\", \"Siberchicot\", role = c(\"ctb\", \"cre\"), email = \"aurelie.siberchicot@univ-lyon1.fr\", comment = c(ORCID = \"0000-0002-7638-8318\")) )",
+      "Depends": [
+        "R (>= 3.5.0)"
+      ],
+      "Imports": [
+        "graphics",
+        "grDevices",
+        "methods",
+        "stats",
+        "utils",
+        "MASS",
+        "pixmap",
+        "sp",
+        "Rcpp"
+      ],
+      "LinkingTo": [
+        "Rcpp",
+        "RcppArmadillo"
+      ],
+      "Suggests": [
+        "ade4TkGUI",
+        "adegraphics",
+        "adephylo",
+        "adespatial",
+        "ape",
+        "CircStats",
+        "deldir",
+        "lattice",
+        "spdep",
+        "splancs",
+        "waveslim",
+        "progress",
+        "foreach",
+        "parallel",
+        "doParallel",
+        "iterators",
+        "knitr",
+        "rmarkdown"
+      ],
+      "VignetteBuilder": "knitr",
+      "Description": "Tools for multivariate data analysis. Several methods are provided for the analysis (i.e., ordination) of one-table (e.g., principal component analysis, correspondence analysis), two-table (e.g., coinertia analysis, redundancy analysis), three-table (e.g., RLQ analysis) and K-table (e.g., STATIS, multiple coinertia analysis). The philosophy of the package is described in Dray and Dufour (2007) <doi:10.18637/jss.v022.i04>.",
+      "License": "GPL (>= 2)",
+      "URL": "https://adeverse.github.io/ade4/, http://pbil.univ-lyon1.fr/ADE-4/",
+      "BugReports": "https://github.com/adeverse/ade4/issues",
+      "Encoding": "UTF-8",
+      "NeedsCompilation": "yes",
+      "Author": "Stéphane Dray [aut] (<https://orcid.org/0000-0003-0153-1105>), Anne-Béatrice Dufour [aut] (<https://orcid.org/0000-0002-9339-4293>), Jean Thioulouse [aut] (<https://orcid.org/0000-0001-7664-0598>), Daniel Chessel [ant], Thibaut Jombart [ctb], Sandrine Pavoine [ctb], Jean R. Lobry [ctb], Sébastien Ollier [ctb], Daniel Borcard [ctb], Pierre Legendre [ctb], Stéphanie Bougeard [ctb], Aurélie Siberchicot [ctb, cre] (<https://orcid.org/0000-0002-7638-8318>)",
+      "Maintainer": "Aurélie Siberchicot <aurelie.siberchicot@univ-lyon1.fr>",
+      "Repository": "CRAN"
+    },
+    "adehabitatHR": {
+      "Package": "adehabitatHR",
+      "Version": "0.4.22",
+      "Source": "Repository",
+      "Date": "2024-09-06",
+      "Depends": [
+        "R (>= 3.0.1)",
+        "sp",
+        "methods",
+        "ade4",
+        "adehabitatMA",
+        "adehabitatLT"
+      ],
+      "Suggests": [
+        "tkrplot",
+        "MASS",
+        "sf",
+        "deldir"
+      ],
+      "Imports": [
+        "graphics",
+        "grDevices",
+        "stats"
+      ],
+      "Title": "Home Range Estimation",
+      "Authors@R": "c(person(given = \"Clement\", family = \"Calenge\", role = c(\"aut\", \"cre\"), email = \"clement.calenge@ofb.gouv.fr\"), person(given = \"Scott\", family = \"Fortmann-Roe\", role = \"ctb\"))",
+      "Author": "Clement Calenge [aut, cre], Scott Fortmann-Roe [ctb]",
+      "Maintainer": "Clement Calenge <clement.calenge@ofb.gouv.fr>",
+      "Description": "A collection of tools for the estimation of animals home range.",
+      "VignetteBuilder": "utils",
+      "License": "GPL (>= 2)",
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
+    },
+    "adehabitatLT": {
+      "Package": "adehabitatLT",
+      "Version": "0.3.29",
+      "Source": "Repository",
+      "Date": "2025-06-17",
+      "Depends": [
+        "R (>= 2.10.0)",
+        "sp",
+        "methods",
+        "ade4",
+        "adehabitatMA",
+        "stats"
+      ],
+      "Suggests": [
+        "tkrplot",
+        "MASS"
+      ],
+      "Imports": [
+        "graphics",
+        "grDevices",
+        "utils"
+      ],
+      "Title": "Analysis of Animal Movements",
+      "Authors@R": "c(person(given = \"Clement\", family = \"Calenge\", role = c(\"aut\", \"cre\"), email = \"clement.calenge@ofb.gouv.fr\"), person(given = \"Stephane\", family = \"Dray\", role = \"ctb\"), person(given = \"Manuela\", family = \"Royer\", role = \"ctb\"))",
+      "Author": "Clement Calenge [aut, cre], Stephane Dray [ctb], Manuela Royer [ctb]",
+      "Maintainer": "Clement Calenge <clement.calenge@ofb.gouv.fr>",
+      "Description": "A collection of tools for the analysis of animal movements.",
+      "VignetteBuilder": "utils",
+      "License": "GPL (>= 2)",
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
+    },
+    "adehabitatMA": {
+      "Package": "adehabitatMA",
+      "Version": "0.3.17",
+      "Source": "Repository",
+      "Date": "2024-09-05",
+      "Depends": [
+        "R (>= 2.10.0)",
+        "sp",
+        "methods"
+      ],
+      "Suggests": [
+        "tkrplot",
+        "MASS"
+      ],
+      "Imports": [
+        "utils",
+        "graphics",
+        "grDevices",
+        "stats"
+      ],
+      "Title": "Tools to Deal with Raster Maps",
+      "Authors@R": "c(person(given = \"Clement\", family = \"Calenge\", role = c(\"aut\", \"cre\"), email = \"clement.calenge@ofb.gouv.fr\"), person(given = \"Mathieu\", family = \"Basille\", role = \"ctb\"))",
+      "Author": "Clement Calenge [aut, cre], Mathieu Basille [ctb]",
+      "Maintainer": "Clement Calenge <clement.calenge@ofb.gouv.fr>",
+      "Description": "A collection of tools to deal with raster maps.",
+      "VignetteBuilder": "utils",
+      "License": "GPL (>= 2)",
+      "NeedsCompilation": "yes",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
     },
     "argosfilter": {
       "Package": "argosfilter",
@@ -5281,6 +5478,27 @@
       "Maintainer": "Kirill Müller <kirill@cynkra.com>",
       "Repository": "RSPM"
     },
+    "pixmap": {
+      "Package": "pixmap",
+      "Version": "0.4-14",
+      "Source": "Repository",
+      "Date": "2025-07-25",
+      "Title": "Bitmap Images / Pixel Maps",
+      "Imports": [
+        "methods",
+        "graphics",
+        "grDevices"
+      ],
+      "Authors@R": "c(person(\"Roger\", \"Bivand\", role = \"aut\", comment = c(ORCID = \"0000-0003-2392-6140\")), person(\"Friedrich\", \"Leisch\", role = \"aut\", comment = c(ORCID = \"0000-0001-7278-1983\", \"maintainer 2001-2024\")), person(\"Martin\", \"Maechler\", role = \"aut\", comment = c(ORCID = \"0000-0002-8685-9910\")), person(\"Achim\", \"Zeileis\", role = \"cre\", email = \"Achim.Zeileis@R-project.org\", comment = c(ORCID = \"0000-0003-0918-3766\")))",
+      "Description": "Functions for import, export, visualization and other manipulations of bitmapped images.",
+      "License": "GPL-2",
+      "LazyLoad": "yes",
+      "NeedsCompilation": "no",
+      "Author": "Roger Bivand [aut] (ORCID: <https://orcid.org/0000-0003-2392-6140>), Friedrich Leisch [aut] (ORCID: <https://orcid.org/0000-0001-7278-1983>, maintainer 2001-2024), Martin Maechler [aut] (ORCID: <https://orcid.org/0000-0002-8685-9910>), Achim Zeileis [cre] (ORCID: <https://orcid.org/0000-0003-0918-3766>)",
+      "Maintainer": "Achim Zeileis <Achim.Zeileis@R-project.org>",
+      "Repository": "CRAN",
+      "Encoding": "UTF-8"
+    },
     "pkgbuild": {
       "Package": "pkgbuild",
       "Version": "1.4.8",
@@ -6901,10 +7119,10 @@
       "Maintainer": "Julian Evans <julian.evans@nina.no>",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteUsername": "NINAnor",
+      "RemoteUsername": "ninanor",
       "RemoteRepo": "seatrackR",
       "RemoteRef": "main",
-      "RemoteSha": "d1a90872554f06f07ee592a46c5d307be5d994e5",
+      "RemoteSha": "f291ae85c527475e102b19e17ed0fbf584dba742",
       "Remotes": "seatrackR=github::NINAnor/NinaR"
     },
     "seatrackRgls": {
@@ -6913,7 +7131,7 @@
       "Source": "GitHub",
       "Type": "Package",
       "Title": "An automated procedure used in the SEATRACK project to obtain positions from light-level geolocators in large- scale tracking of seabirds",
-      "Authors@R": "c( person(\"Vegard Sandøy\", \"Bråthen\", email = \"vegard.brathen@nina.no\", role = c(\"cre\",\"aut\"),comment = c(ORCID = \"0000-0002-7357-6727\", note=\"Original creator, GLS expert\")), person(\"Julian\", \"Evans\", email = \"julian.evans@nina.nl\", role = \"aut\", comment = c(note=\"Code assistance\")) )",
+      "Authors@R": "c( person(\"Vegard Sandøy\", \"Bråthen\", email = \"vegard.brathen@nina.no\", role = c(\"cre\",\"aut\"),comment = c(ORCID = \"0000-0002-7357-6727\", note=\"Original creator, GLS expert\")), person(\"Julian\", \"Evans\", email = \"julian.evans@nina.no\", role = \"aut\", comment = c(note=\"Code assistance\")) )",
       "Description": "estimate up to two positions a day from light-level data from geolocators  (Lotek, BAS, Biotrack, Migrate Technology) using a threshold method.  It automatically edits twilight events used for calculating positions and filter positions based on  flight speed, distribution, distance, and midnight sun periods.  If allowed, the package saves plots to your local computer the aid a subjective calibration of sun elevation angles,  which is crucial for producing realistic latitudes. The script should be run twice.  First with a \"best-guess\" sun angle, then with the calibrated sun angle.",
       "Depends": [
         "R (>= 3.5)"
@@ -6962,7 +7180,7 @@
       "RemoteUsername": "NINAnor",
       "RemoteRepo": "seatrackRgls",
       "RemoteRef": "main",
-      "RemoteSha": "af2c669e168eac6be54150c40469daec4672d764",
+      "RemoteSha": "f94417bc667c73d243b7ca83f213d7d41990b06b",
       "Remotes": "SLisovski/GeoLight, distancetocoast=github::mdsumner/distancetocoast, GeoLocTools=github::bluegreen-labs/geoloctools"
     },
     "sessioninfo": {
@@ -7233,32 +7451,6 @@
       "Maintainer": "Victor Perrier <victor.perrier@dreamrs.fr>",
       "Repository": "CRAN"
     },
-    "shinydashboard": {
-      "Package": "shinydashboard",
-      "Version": "0.7.3",
-      "Source": "Repository",
-      "Title": "Create Dashboards with 'Shiny'",
-      "Authors@R": "c( person(\"Winston\", \"Chang\", , \"winston@posit.co\", role = c(\"aut\", \"cre\")), person(\"Barbara\", \"Borges Ribeiro\", role = \"aut\"), person(, \"Posit Software, PBC\", role = \"cph\"), person(, \"Almasaeed Studio\", role = c(\"ctb\", \"cph\"), comment = \"AdminLTE theme for Bootstrap\"), person(, \"Adobe Systems Incorporated\", role = c(\"ctb\", \"cph\"), comment = \"Source Sans Pro font\") )",
-      "Description": "Create dashboards with 'Shiny'. This package provides a theme on top of 'Shiny', making it easy to create attractive dashboards.",
-      "License": "MIT + file LICENSE",
-      "URL": "https://rstudio.github.io/shinydashboard/, https://github.com/rstudio/shinydashboard",
-      "BugReports": "https://github.com/rstudio/shinydashboard/issues",
-      "Depends": [
-        "R (>= 3.0)"
-      ],
-      "Imports": [
-        "htmltools (>= 0.2.6)",
-        "promises",
-        "shiny (>= 1.0.0)",
-        "utils"
-      ],
-      "Encoding": "UTF-8",
-      "RoxygenNote": "7.3.2",
-      "NeedsCompilation": "no",
-      "Author": "Winston Chang [aut, cre], Barbara Borges Ribeiro [aut], Posit Software, PBC [cph], Almasaeed Studio [ctb, cph] (AdminLTE theme for Bootstrap), Adobe Systems Incorporated [ctb, cph] (Source Sans Pro font)",
-      "Maintainer": "Winston Chang <winston@posit.co>",
-      "Repository": "CRAN"
-    },
     "shinyjs": {
       "Package": "shinyjs",
       "Version": "2.1.0",
@@ -7291,6 +7483,49 @@
       "NeedsCompilation": "no",
       "Author": "Dean Attali [aut, cre] (<https://orcid.org/0000-0002-5645-3493>)",
       "Maintainer": "Dean Attali <daattali@gmail.com>",
+      "Repository": "CRAN"
+    },
+    "slider": {
+      "Package": "slider",
+      "Version": "0.3.3",
+      "Source": "Repository",
+      "Title": "Sliding Window Functions",
+      "Authors@R": "c( person(\"Davis\", \"Vaughan\", , \"davis@posit.co\", role = c(\"aut\", \"cre\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
+      "Description": "Provides type-stable rolling window functions over any R data type. Cumulative and expanding windows are also supported. For more advanced usage, an index can be used as a secondary vector that defines how sliding windows are to be created.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://github.com/r-lib/slider, https://slider.r-lib.org",
+      "BugReports": "https://github.com/r-lib/slider/issues",
+      "Depends": [
+        "R (>= 4.0.0)"
+      ],
+      "Imports": [
+        "cli (>= 3.6.1)",
+        "rlang (>= 1.1.1)",
+        "vctrs (>= 0.6.3)",
+        "warp"
+      ],
+      "Suggests": [
+        "covr",
+        "dplyr (>= 1.0.0)",
+        "knitr",
+        "lubridate",
+        "rmarkdown",
+        "testthat (>= 3.0.0)"
+      ],
+      "LinkingTo": [
+        "vctrs (>= 0.6.3)"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/build/compilation-database": "true",
+      "Config/Needs/website": "tidyverse/tidytemplate",
+      "Config/testthat/edition": "3",
+      "Config/usethis/last-upkeep": "2025-11-13",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.3",
+      "Collate": "'arithmetic.R' 'block.R' 'conditions.R' 'hop-common.R' 'hop-index-common.R' 'hop-index.R' 'hop-index2.R' 'hop.R' 'hop2.R' 'phop-index.R' 'phop.R' 'slide-index2.R' 'pslide-index.R' 'slide-period2.R' 'pslide-period.R' 'slide2.R' 'pslide.R' 'segment-tree.R' 'slide-common.R' 'slide-index-common.R' 'slide-index.R' 'slide-period-common.R' 'slide-period.R' 'slide.R' 'slider-package.R' 'summary-index.R' 'summary-slide.R' 'utils.R' 'zzz.R'",
+      "NeedsCompilation": "yes",
+      "Author": "Davis Vaughan [aut, cre], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+      "Maintainer": "Davis Vaughan <davis@posit.co>",
       "Repository": "CRAN"
     },
     "sourcetools": {
@@ -8398,6 +8633,37 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut, cre], Posit Software, PBC [cph, fnd]",
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "CRAN"
+    },
+    "warp": {
+      "Package": "warp",
+      "Version": "0.2.3",
+      "Source": "Repository",
+      "Title": "Group Dates",
+      "Authors@R": "c( person(\"Davis\", \"Vaughan\", , \"davis@posit.co\", role = c(\"aut\", \"cre\")), person(\"Posit Software, PBC\", role = c(\"cph\", \"fnd\"), comment = c(ROR = \"03wc8by49\")) )",
+      "Description": "Tooling to group dates by a variety of periods including: yearly, monthly, by second, by week of the month, and more.  The groups are defined in such a way that they also represent the distance between dates in terms of the period. This extracts valuable information that can be used in further calculations that rely on a specific temporal spacing between observations.",
+      "License": "MIT + file LICENSE",
+      "URL": "https://github.com/DavisVaughan/warp, https://davisvaughan.github.io/warp/",
+      "BugReports": "https://github.com/DavisVaughan/warp/issues",
+      "Depends": [
+        "R (>= 4.0.0)"
+      ],
+      "Suggests": [
+        "covr",
+        "knitr",
+        "rmarkdown",
+        "testthat (>= 3.0.0)"
+      ],
+      "VignetteBuilder": "knitr",
+      "Config/build/compilation-database": "true",
+      "Config/Needs/website": "tidyverse/tidytemplate",
+      "Config/testthat/edition": "3",
+      "Config/usethis/last-upkeep": "2025-11-13",
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.3",
+      "NeedsCompilation": "yes",
+      "Author": "Davis Vaughan [aut, cre], Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>)",
+      "Maintainer": "Davis Vaughan <davis@posit.co>",
       "Repository": "CRAN"
     },
     "whisker": {

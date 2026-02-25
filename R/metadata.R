@@ -515,12 +515,15 @@ save_master_sheet <- function(new_master_sheets, filepath = NULL, modified_only 
         dims_mat_header <- openxlsx2::wb_dims(rows = 1, cols = col_dims)
         new_master_sheets$wb$add_fill(sheet, dims_mat_header, openxlsx2::wb_color(hex = "#ACB9CA"))
 
+        logger_dims <- openxlsx2::wb_dims(x = new_master_sheets$data[[sheet]], cols = which(colnames(new_master_sheets$data[[sheet]]) %in% c("ring_number", "logger_id_deployed", "logger_id_retrieved", "logger_serial_no")), select = "data")
+        new_master_sheets$wb$add_font(sheet, logger_dims, name = "Consolas")
 
         if (sheet == "STARTUP_SHUTDOWN") {
             col_dims <- openxlsx2::wb_dims(
                 x = new_master_sheets$data[[sheet]],
                 cols = c("download_date", "shutdown_date"), select = "col_names"
             )
+
 
             col_letters <- sapply(strsplit(col_dims, ","), function(x) gsub("[[:digit:]]+", "", x))
 
@@ -565,5 +568,6 @@ save_master_sheet <- function(new_master_sheets, filepath = NULL, modified_only 
 
     new_master_sheets$wb$save(filepath)
     new_master_sheets$modified <- FALSE
+    log_success(paste("Saved master import sheet to", filepath))
     return(new_master_sheets)
 }

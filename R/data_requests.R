@@ -91,11 +91,11 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
     tmp_dir <- tempfile(pattern = paste0(request_name, "_"))
     dir.create(tmp_dir, showWarnings = FALSE, recursive = TRUE)
     dir.create(file.path(tmp_dir, "data"), recursive = TRUE)
-    print(paste0("Creating data package in temporary directory: ", tmp_dir))
+    log_info(paste0("Creating data package in temporary directory: ", tmp_dir))
     file_list <- list()
 
     for (type in names(all_data)) {
-        print(paste0("Writing data type: ", type))
+        log_info(paste0("Writing data type: ", type))
         file_name <- paste0(request_name, "_", type, "_", creation_date, ".gz.parquet")
         file_list[[type]] <- list(path = file_name, description = all_data[[type]]$description)
         arrow::write_parquet(all_data[[type]]$data, file.path(tmp_dir, "data", file_name), compression = "gzip")
@@ -141,7 +141,7 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
                 warning(paste0("Additional file not found, skipping: ", additional_file$path))
                 next
             }
-            print(paste0("Adding additional data file to data package: ", additional_file$path))
+            log_info(paste0("Adding additional data file to data package: ", additional_file$path))
             current_path <- additional_file$path
             current_description <- additional_file$description
             new_path <- file.path(tmp_dir, "data", basename(current_path))
@@ -189,7 +189,7 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
                 warning(paste0("Additional file not found, skipping: ", additional_file$path))
                 next
             }
-            print(paste0("Adding additional file to data package: ", additional_file$path))
+            log_info(paste0("Adding additional file to data package: ", additional_file$path))
             current_path <- additional_file$path
             new_path <- file.path(tmp_dir, basename(current_path))
             file.copy(current_path, new_path)
@@ -215,7 +215,7 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
         output_dir <- file.path("requested_data_packages", format(creation_date, "%Y"))
     }
     dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
-    print(paste0("Creating zip file in output directory: ", output_dir))
+    log_info(paste0("Creating zip file in output directory: ", output_dir))
     zipfile <- file.path(output_dir, paste0(request_name, "_", creation_date, ".zip"))
     zip::zipr(
         zipfile = zipfile,
@@ -223,9 +223,9 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
         include_directories = TRUE,
         recurse = TRUE
     )
-    print(paste0("Data package created: ", zipfile))
+    log_info(paste0("Data package created: ", zipfile))
     unlink(tmp_dir)
-    print("Temporary files cleaned up.")
+    log_info("Temporary files cleaned up.")
 }
 
 #' Create SEATRACK documentation README
@@ -297,7 +297,7 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' @concept data_requests
 data_request <- function(
     request_name,
-    data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info"),
+    data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
     start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL, export = TRUE, output_dir = NULL,
     additional_notes = "", additional_data_files = list(), additional_files = list()) {
     start_date <- as.Date(paste0(start_year, "-01-01"))
@@ -307,6 +307,7 @@ data_request <- function(
         data_types <- c(data_types)
     }
     data_types <- match.arg(data_types, several.ok = TRUE)
+    data_types[data_types == "immersion"] <- "activity"
 
     # check colonies
     if (!is.null(colony)) {
@@ -318,10 +319,10 @@ data_request <- function(
         }
     }
 
-    print(paste("Starting data request, datatypes are", paste(data_types, collapse = " ")))
+    log_info(paste("Starting data request, datatypes are", paste(data_types, collapse = " ")))
 
     if ("GLS_positional_data" %in% data_types) {
-        print("Fetching GLS position data...")
+        log_info("Fetching GLS position data...")
         all_pos <- seatrackR::getPositions(species = species, colony = colony)
         all_data$GLS_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
@@ -330,7 +331,7 @@ data_request <- function(
     }
 
     if ("IRMA_positional_data" %in% data_types) {
-        print("Fetching IRMA position data...")
+        log_info("Fetching IRMA position data...")
         irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = colony)
         all_data$IRMA_positional_data <- list(
             data = irma_pos[irma_pos$date_time >= start_date & irma_pos$date_time < end_date, ],
@@ -340,7 +341,7 @@ data_request <- function(
 
 
     if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% data_types)) {
-        print("Fetching individual data...")
+        log_info("Fetching individual data...")
         individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL)
         if (!is.null(species)) {
             individuals <- individuals[individuals$species %in% species, ]
@@ -358,7 +359,7 @@ data_request <- function(
         }
     }
     if ("logger_info" %in% data_types) {
-        print("Fetching logger data...")
+        log_info("Fetching logger data...")
         logger_info <- seatrackR::getLoggerInfo()
         logger_info <- logger_info[logger_info$deployment_date >= start_date & logger_info$retrieval_date < end_date, ]
         if (!is.null(colony)) {
@@ -376,12 +377,10 @@ data_request <- function(
     types <- data_types[data_types %in% c("light", "temperature", "activity")]
     if (length(types) > 0) {
         activity_light_temp <- lapply(types, function(type) {
-            print(paste0("Fetching ", type, " data..."))
-            all_indivs <- lapply(individuals$individ_id, function(indiv_id) {
-                recordings <- seatrackR::getRecordings(type = type, individId = indiv_id)
-                recordings <- recordings[recordings$date_time >= start_date & recordings$date_time < end_date, ]
-            })
-            return(list(data = do.call(rbind, all_indivs), description = descriptions[type]))
+            log_info(paste0("Fetching ", type, " data..."))
+            recordings <- seatrackR::getRecordings(type = type, individId = unique(individuals$individ_id))
+            recordings <- recordings[recordings$date_time >= start_date & recordings$date_time < end_date, ]
+            return(list(data = recordings, description = descriptions[type]))
         })
         names(activity_light_temp) <- types
         names(activity_light_temp)[names(activity_light_temp) == "activity"] <- "immersion"
@@ -427,7 +426,7 @@ data_request <- function(
     )
 
     if (export) {
-        print("Exporting data package...")
+        log_info("Exporting data package...")
         export_data_package(
             data_request_result <- data_request_result
         )

@@ -192,7 +192,7 @@ manage_db_upload_server <- function(id, busy, all_locations, unsaved) {
                 busy(TRUE)
                 for (i in current_choices()) {
                     tryCatch(
-                        push_master_import_file_to_db(master_sheets = all_locations()[i], dry_run = FALSE),
+                        push_master_import_file_to_db(master_sheets = all_locations()[[i]], dry_run = FALSE),
                         error = function(e) {
                             log_error(paste("ERROR", e), namespace = "error")
                             return(NULL)

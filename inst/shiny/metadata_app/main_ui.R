@@ -9,9 +9,9 @@ main_ui <- function(id) {
     shinyjs::useShinyjs(),
     layout_columns(
 
-      titlePanel("SeaTrack Metadata Utility"),
+      titlePanel("SEATRACK Metadata Utility"),
       card(
-        card_header("Seatrack folder:"),
+        card_header("SEATRACK folder:"),
         folder_selector_ui(ns("folder"))
       ),
       card(

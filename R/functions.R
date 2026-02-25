@@ -44,7 +44,7 @@ load_sheets_as_list <- function(
             sheet = sheet,
             start_row = skip_rows + 1,
             skip_empty_rows = TRUE,
-            cols = col_range, na.strings = c("", "End", "end", "none", "-", "N/A", "NA")
+            cols = col_range, na.strings = c("", "End", "end", "none", "-", "N/A", "NA", " ")
         )
         if (!is.null(sheet_col_types)) {
             arg_list$types <- sheet_col_types

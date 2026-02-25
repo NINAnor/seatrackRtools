@@ -61,7 +61,6 @@ manage_metadata_server <- function(id, busy, all_locations, unsaved) {
             if (input$select_location != "") {
                 current_location_idx(as.numeric(input$select_location))
                 current_location_name(names(all_locations())[current_location_idx()])
-
             }
         })
 
@@ -88,23 +87,31 @@ manage_metadata_server <- function(id, busy, all_locations, unsaved) {
         )
 
         observeEvent(input$revert_master_btn, {
-            busy(TRUE)
-            path <- all_locations()[[current_location_idx()]]$path
-            loaded_master_import <- load_master_import(file_path = path)
-            locations <- all_locations()
-            new_locations <- modify_master_import_in_list(locations, loaded_master_import)
-            modified_locations <- c()
-            seen_paths <- c()
-            for (i in seq_along(new_locations)) {
-                x <- new_locations[[i]]
-                if (!x$path %in% seen_paths) {
-                    modified_locations <- c(modified_locations, x$modified)
+            tryCatch(
+                {
+                    busy(TRUE)
+                    path <- all_locations()[[current_location_idx()]]$path
+                    loaded_master_import <- load_master_import(file_path = path)
+                    locations <- all_locations()
+                    new_locations <- modify_master_import_in_list(locations, loaded_master_import)
+                    modified_locations <- c()
+                    seen_paths <- c()
+                    for (i in seq_along(new_locations)) {
+                        x <- new_locations[[i]]
+                        if (!x$path %in% seen_paths) {
+                            modified_locations <- c(modified_locations, x$modified)
+                        }
+                    }
+                    all_locations(new_locations)
+                    unsaved(any(modified_locations))
+                    refresh_tables()
+                    busy(FALSE)
+                },
+                ERROR = function(e) {
+                    log_error(paste0("Error reloading master import sheet: ", basename(all_locations()[[current_location_idx()]]$path), " - ", e$message))
+                    busy(FALSE)
                 }
-            }
-            all_locations(new_locations)
-            unsaved(any(modified_locations))
-            refresh_tables()
-            busy(FALSE)
+            )
         })
 
         mod_dt_tabs_server("viewer", metadata_tables)
