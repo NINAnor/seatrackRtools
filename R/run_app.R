@@ -3,6 +3,8 @@
 #' @export
 #' @concept shiny_app
 run_app <- function(log_path = file.path(getwd(), "seatrackRtools_logs"), test = FALSE) {
+# settings_path
+
     app_dir <- system.file("shiny/metadata_app", package = "seatrackRtools")
     if (app_dir == "") stop("Could not find Shiny app directory.", call. = FALSE)
     shiny::shinyOptions(logging_path = log_path, test = test)

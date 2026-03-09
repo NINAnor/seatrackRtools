@@ -281,6 +281,7 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' @param end_year An integer representing the end year for the data request. Defaults to the current year.
 #' @param species An optional string specifying the species to filter the data. If NULL, data for all species will be retrieved.
 #' @param colony An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.
+#' @param age_deployment An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".
 #' @param export A boolean indicating whether to export the data package as a zip file. If FALSE, the function will return the data as a list instead.
 #' @param output_dir An optional string specifying the directory where the exported zip file will be saved.
 #' @param additional_notes An optional string containing additional notes to be included in the README file in the export.
@@ -298,7 +299,8 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 data_request <- function(
     request_name,
     data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
-    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL, export = TRUE, output_dir = NULL,
+    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL, 
+    age_deployment = "A", export = TRUE, output_dir = NULL,
     additional_notes = "", additional_data_files = list(), additional_files = list()) {
     start_date <- as.Date(paste0(start_year, "-01-01"))
     end_date <- as.Date(paste0(end_year, "-12-31")) + 1
@@ -323,7 +325,7 @@ data_request <- function(
 
     if ("GLS_positional_data" %in% data_types) {
         log_info("Fetching GLS position data...")
-        all_pos <- seatrackR::getPositions(species = species, colony = colony)
+        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment = age_deployment)
         all_data$GLS_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
             description = "GLS Positional data"

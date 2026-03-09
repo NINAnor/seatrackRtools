@@ -203,9 +203,11 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
             deployment_date <- master_metadata$date[master_metadata$logger_id_deployed == logger_id]
             deployment_date <- deployment_date[length(deployment_date)]
         }
+        retrieval_date <- logger_partner_logger_data$date[!logger_partner_logger_data$deployed]
+
 
         # Check for existing sessions first
-        if (nrow(startup_rows) == 0||all(is.na(startup_rows$starttime_gmt))) {
+        if (nrow(startup_rows) == 0 || all(is.na(startup_rows$starttime_gmt))) {
             critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
             if (!critical) {
                 next
@@ -312,14 +314,18 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
 
 
         # Check if the start time is sensible
-        if (!(logger_model %in% gps_models) && any(!is.na(startup_rows$starttime_gmt)) && !length(deployment_date) == 0 && !is.na(deployment_date)) {
+        if (any(!is.na(startup_rows$starttime_gmt)) && ((!is.na(deployment_date) && !length(deployment_date) == 0) || (!is.na(retrieval_date) && !length(retrieval_date) == 0))) {
             if (any(!is.na(startup_rows$programmed_gmt_time))) {
                 start_time <- startup_rows$programmed_gmt_time
             } else {
                 start_time <- startup_rows$starttime_gmt
             }
+            if (!is.na(deployment_date)) {
+                startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & as.Date(start_time) >= (deployment_date - (6 * 30)) & !is.na(start_time), ]
+            } else if (!is.na(retrieval_date)) {
+                startup_rows <- startup_rows[as.Date(start_time) < retrieval_date & !is.na(start_time), ]
+            }
 
-            startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & as.Date(start_time) >= (deployment_date - (6 * 30)) & !is.na(start_time), ]
             if (nrow(startup_rows) == 0) {
                 critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
                 if (critical) {

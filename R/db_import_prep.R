@@ -116,8 +116,8 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     metadata$hatching_success <- as.logical(metadata$hatching_success)
     metadata$breeding_success <- as.logical(metadata$breeding_success)
 
-    metadata$chicks <- as.numeric(gsub("[^0-9.]", "", metadata$chicks))
-    metadata$eggs <- as.numeric(gsub("[^0-9.]", "", metadata$eggs))
+    metadata$chicks <- fix_num_col(metadata$chicks)
+    metadata$eggs <- fix_num_col(metadata$eggs)
 
     lat_lon_cols <- c("colony_latitude", "colony_longitude", "nest_latitude", "nest_longitude")
     for (col in lat_lon_cols) {
@@ -140,6 +140,20 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         metadata <- metadata[!invalid_breeding_bool, ]
     }
 
+    # check morph
+    fix_num_col <- function(num_col) {
+        if (!is.numeric(num_col)) {
+            num_col <- gsub(",", ".", fixed = TRUE)
+            num_col <- gsub("[^0-9.]", "", num_col)
+            morph_column <- as.numeric(num_col)
+        }
+        return(num_col)
+    }
+    metadata$tarsus <- fix_num_col(metadata$tarsus)
+    metadata$scull <- fix_num_col(metadata$scull)
+    metadata$weight <- fix_num_col(metadata$weight)
+    metadata$wing <- fix_num_col(metadata$weight)
+
     # check back_on_nest
     back_on_nest <- metadata$back_on_nest
     back_on_nest[back_on_nest == "yes"] <- TRUE
@@ -147,7 +161,7 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     metadata$back_on_nest <- as.logical(back_on_nest)
 
     # check eggs
-    metadata$eggs <- as.numeric(metadata$eggs)
+    metadata$eggs <- fix_num_col(metadata$eggs)
 
     # Check colony
     db_colonies <- seatrackR::getColonies()$colony_int_name
@@ -160,6 +174,8 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     }
 
     # Check mounting types
+metadata$logger_mount_method[!is.na(metadata$logger_mount_method)] <- tolower(metadata$logger_mount_method[!is.na(metadata$logger_mount_method)])
+
     db_mounting_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "mounting_types"))
     valid_mountings <- dplyr::pull(db_mounting_table, "logger_mount_method")
     invalid_mounting_bool <- !is.na(metadata$logger_mount_method) & !metadata$logger_mount_method %in% valid_mountings
