@@ -4,7 +4,7 @@ connect_db_ui <- function(id) {
   actionButton(ns("login"), "Login to database")
 }
 
-connect_db_server <- function(id, busy, test = FALSE) {
+connect_db_server <- function(id, busy, test = FALSE, app_settings) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
     observeEvent(busy(), {
@@ -15,11 +15,15 @@ connect_db_server <- function(id, busy, test = FALSE) {
       }
     })
 
+    # app_settings_list <- app_settings()
+    # input$username <- ifelse(!is.null(app_settings_list$db_username), app_settings_list$db_username, "")
 
     observe({
+      app_settings_list <- app_settings()
+      loaded_username <- ifelse(!is.null(app_settings_list$db_username), app_settings_list$db_username, "")
       showModal(
         modalDialog(
-          textInput(paste("main", ns("username"), sep = "-"), "Username:"),
+          textInput(paste("main", ns("username"), sep = "-"), "Username:", value = loaded_username),
           passwordInput(paste("main", ns("password"), sep = "-"), "Password:"),
           br(),
           layout_columns(
@@ -43,6 +47,9 @@ connect_db_server <- function(id, busy, test = FALSE) {
     observe({
       tryCatch(
         {
+          app_settings_list <- app_settings()
+          app_settings_list$db_username <- input$username
+          app_settings(app_settings_list)
           if (!test) {
             seatrackR::connectSeatrack(input$username, input$password)
           } else {

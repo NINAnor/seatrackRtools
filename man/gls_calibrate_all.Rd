@@ -6,7 +6,7 @@
 \usage{
 gls_calibrate_all(
   no_pos_only = TRUE,
-  rerun_existing = TRUE,
+  rerun_existing = FALSE,
   include_existing = TRUE,
   filter_plots = FALSE
 )
@@ -14,7 +14,7 @@ gls_calibrate_all(
 \arguments{
 \item{no_pos_only}{Logical indicating whether to include only loggers without position data in the database. Default is TRUE.}
 
-\item{rerun_existing}{Logical indicating whether to rerun calibration for loggers that already have calibration data. Default is TRUE.}
+\item{rerun_existing}{Logical indicating whether to rerun calibration for loggers that already have calibration data. Default is FALSE.}
 
 \item{include_existing}{Logical indicating whether to include existing calibration data in the final output. Default is TRUE.}
 

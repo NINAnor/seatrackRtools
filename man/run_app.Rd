@@ -4,7 +4,11 @@
 \alias{run_app}
 \title{Run the Shiny App}
 \usage{
-run_app(log_path = file.path(getwd(), "seatrackRtools_logs"))
+run_app(
+  settings_path = file.path(getwd(), "seatrackRtools_app"),
+  log_path = file.path(getwd(), "seatrackRtools_app", "logs"),
+  test = FALSE
+)
 }
 \description{
 Run the Shiny App

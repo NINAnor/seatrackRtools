@@ -2,19 +2,16 @@
 % Please edit documentation in R/db_import.R
 \name{push_retrievals}
 \alias{push_retrievals}
-\title{Push retrievals to database
-
-Function to push retrievals from a master import sheet to the database. It checks the database for existing retrievals and only imports new retrievals to avoid duplicates.
-It also checks that the loggers being retrieved have an associated deployment in the database.}
+\title{Push retrievals to database}
 \usage{
-push_retrievals(retrievals)
+push_retrievals(retrievals, dry_run = FALSE)
 }
 \arguments{
 \item{retrievals}{A tibble containing retrieval information from a DBImportCollection object.}
+
+\item{dry_run}{Logical indicating whether to perform a dry run (default is FALSE). If TRUE, no data will be written to the database.}
 }
 \description{
-Push retrievals to database
-
 Function to push retrievals from a master import sheet to the database. It checks the database for existing retrievals and only imports new retrievals to avoid duplicates.
 It also checks that the loggers being retrieved have an associated deployment in the database.
 }

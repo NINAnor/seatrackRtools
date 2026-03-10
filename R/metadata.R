@@ -25,6 +25,8 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
             return(full_colony_file_path)
         }
     }
+    print(names(the$master_sheet_paths))
+
     # Get the path to the master import folder
     master_import_folder <- file.path(the$sea_track_folder, "Database", "Imports_Metadata")
 
@@ -35,11 +37,11 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
     colony_names <- sapply(strsplit(files, "_"), `[`, 2)
 
     # Try a straight match
-    colony_bool <- colony == colony_names
+    colony_bool <- tolower(colony) == tolower(colony_names)
 
     if (!any(colony_bool)) {
         # Try a within string match
-        colony_bool <- grepl(colony, colony_names)
+        colony_bool <- grepl(colony, colony_names, ignore.case = TRUE)
     }
 
     if (!any(colony_bool)) {
@@ -84,6 +86,29 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
     log_info("Master import file for colony '", colony, "' found at: ", full_colony_file_path)
     the$master_sheet_paths[[colony]] <- full_colony_file_path
     return(full_colony_file_path)
+}
+
+#' Set master import paths
+#'
+#' This function allows setting the master import paths directly, for example if they have been discovered through other means. This will overwrite any previously stored paths.
+#' @param location_paths A named list of paths, where the names are colony names and the values are file paths to the master import sheets for those colonies.
+#' @export
+#' @concept metadata
+set_master_import_paths <- function(location_paths = NULL) {
+    if (!is.null(location_paths)) {
+        log_info("Setting master sheet paths")
+        the$master_sheet_paths <- location_paths
+    }
+}
+
+#' Get master import paths
+#'
+#' This function retrieves the currently stored master import paths.
+#' @return A named list of paths, where the names are colony names and the values are file paths to the master import sheets for those colonies.
+#' @export
+#' @concept metadata
+get_master_import_paths <- function() {
+    return(the$master_sheet_paths)
 }
 
 #' Load master import file for a given colony
@@ -182,23 +207,27 @@ load_all_master_import <- function(combine = TRUE, skip = c(), distinct = TRUE, 
         log_warn("Import files for the following locations could not be found: \n", paste(capture.output(print(missing_import_files)), collapse = "\n"))
     }
 
-
     null_path_idx <- which(!sapply(all_paths, is.null))
 
     all_paths <- all_paths[null_path_idx]
     all_colony <- all_colony[null_path_idx]
 
+    distinct_idx <- which(!duplicated(all_paths))
+    all_colony_distinct <- all_colony[distinct_idx]
+    all_paths_distinct <- all_paths[distinct_idx]
 
-    if (distinct) {
-        distinct_idx <- which(!duplicated(all_paths))
-        all_colony <- all_colony[distinct_idx]
-        all_paths <- all_paths[distinct_idx]
+    all_sheets <- lapply(all_colony_distinct, load_master_import)
+
+
+    if (!distinct) {
+        all_sheets <- lapply(all_paths, function(current_path) {
+            return(all_sheets[[which(all_paths_distinct == current_path)]])
+        })
+        names(all_sheets) <- all_colony
+        
+    } else {
+        names(all_sheets) <- all_colony_distinct
     }
-
-
-    all_sheets <- lapply(all_colony, load_master_import)
-
-    names(all_sheets) <- all_colony
 
     if (!combine) {
         # If not combining, return the lists
@@ -206,10 +235,9 @@ load_all_master_import <- function(combine = TRUE, skip = c(), distinct = TRUE, 
     }
 
     return(combine_all_metadata(all_sheets, all_paths))
-
 }
 
-combine_all_metadata <- function(all_sheets, all_paths){
+combine_all_metadata <- function(all_sheets, all_paths) {
     all_data <- lapply(all_sheets, function(x) x$data)
     # combine metadata
     all_metadata <- lapply(all_data, function(x) x$METADATA)
@@ -300,7 +328,6 @@ get_location_unprocessed <- function(location) {
         return(NULL)
     }
     return(unprocessed_files)
-
 }
 
 #' Add partner provided metadata to the master import file

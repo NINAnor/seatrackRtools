@@ -7,11 +7,12 @@
 data_request(
   request_name,
   data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data",
-    "light", "temperature", "activity", "population_maps", "logger_info"),
-  start_year,
+    "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
+  start_year = "2000",
   end_year = format(Sys.Date(), "\%Y"),
   species = NULL,
   colony = NULL,
+  age_deployment = "A",
   export = TRUE,
   output_dir = NULL,
   additional_notes = "",
@@ -31,6 +32,8 @@ data_request(
 \item{species}{An optional string specifying the species to filter the data. If NULL, data for all species will be retrieved.}
 
 \item{colony}{An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.}
+
+\item{age_deployment}{An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".}
 
 \item{export}{A boolean indicating whether to export the data package as a zip file. If FALSE, the function will return the data as a list instead.}
 

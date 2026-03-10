@@ -47,7 +47,7 @@ manage_logger_ui <- function(id) {
     )
 }
 
-manage_logger_server <- function(id, busy, all_locations, unsaved) {
+manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_name) {
     moduleServer(id, function(input, output, session) {
         search_results <- reactiveVal(list())
         ns <- NS(id)
@@ -161,7 +161,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved) {
                                     all_result <- search_results()
                                     locations <- all_locations()
                                     open_result <- all_result[sapply(all_result, function(x) x$open)][[1]]
-                                    end_session_result <- end_logger_session(open_result$data$logger_serial_no, x$btn_type, comment = input$logger_close_comment, master_sheet = locations[[open_result$list_index]])
+                                    end_session_result <- end_logger_session(open_result$data$logger_serial_no, x$btn_type, downloaded_by = user_full_name(), comment = input$logger_close_comment, master_sheet = locations[[open_result$list_index]])
 
                                     new_locations <- modify_master_import_in_list(locations, end_session_result$master_sheet)
 

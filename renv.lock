@@ -7127,8 +7127,8 @@
     },
     "seatrackRgls": {
       "Package": "seatrackRgls",
-      "Version": "0.3",
-      "Source": "GitHub",
+      "Version": "0.3.1",
+      "Source": "Cellar",
       "Type": "Package",
       "Title": "An automated procedure used in the SEATRACK project to obtain positions from light-level geolocators in large- scale tracking of seabirds",
       "Authors@R": "c( person(\"Vegard Sandøy\", \"Bråthen\", email = \"vegard.brathen@nina.no\", role = c(\"cre\",\"aut\"),comment = c(ORCID = \"0000-0002-7357-6727\", note=\"Original creator, GLS expert\")), person(\"Julian\", \"Evans\", email = \"julian.evans@nina.no\", role = \"aut\", comment = c(note=\"Code assistance\")) )",
@@ -7173,15 +7173,9 @@
       "RoxygenNote": "7.3.3",
       "Roxygen": "list(markdown = TRUE)",
       "URL": "https://ninanor.github.io/seatrackRgls/",
+      "NeedsCompilation": "no",
       "Author": "Vegard Sandøy Bråthen [cre, aut] (<https://orcid.org/0000-0002-7357-6727>, Original creator, GLS expert), Julian Evans [aut] (Code assistance)",
-      "Maintainer": "Vegard Sandøy Bråthen <vegard.brathen@nina.no>",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteUsername": "NINAnor",
-      "RemoteRepo": "seatrackRgls",
-      "RemoteRef": "main",
-      "RemoteSha": "f94417bc667c73d243b7ca83f213d7d41990b06b",
-      "Remotes": "SLisovski/GeoLight, distancetocoast=github::mdsumner/distancetocoast, GeoLocTools=github::bluegreen-labs/geoloctools"
+      "Maintainer": "Vegard Sandøy Bråthen <vegard.brathen@nina.no>"
     },
     "sessioninfo": {
       "Package": "sessioninfo",

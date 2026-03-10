@@ -76,8 +76,7 @@ handle_immersion_migrate <- function(filepath) {
     }
 
     file_final <- data.frame(
-        date_time = lubridate::as_datetime(file$V1),
-        conductivity <- as.numeric(file$V2)
+        date_time = lubridate::as_datetime(file$V1), conductivity = as.numeric(file$V2)
     )
 
     if (max(file_final$conductivity) == 480) {

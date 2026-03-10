@@ -4,10 +4,12 @@
 \alias{check_shutdown_db}
 \title{Check existing shutdowns in database}
 \usage{
-check_shutdown_db(startup_shutdown)
+check_shutdown_db(startup_shutdown, check_active = FALSE)
 }
 \arguments{
 \item{startup_shutdown}{A tibble containing session information from master import startup_shutdown.}
+
+\item{check_active}{A logical indicating whether to first check for active sessions and filter out associated startups. Default is FALSE.}
 }
 \value{
 A tibble of shutdowns that are not already present in the database.

@@ -4,12 +4,24 @@
 \alias{prepare_session_retrievals}
 \title{Get session retrievals}
 \usage{
-prepare_session_retrievals(session_batch, metadata)
+prepare_session_retrievals(
+  sessions,
+  metadata,
+  filter_sessions = FALSE,
+  report_missing = FALSE,
+  duplicate_warnings = TRUE
+)
 }
 \arguments{
-\item{session_batch}{A SessionBatch object containing session information from master import startup_shutdown.}
+\item{sessions}{A tibble containing session information from master import startup_shutdown.}
 
 \item{metadata}{A dataframe containing metadata information for the sessions.}
+
+\item{filter_sessions}{Logical indicating whether to filter out sessions with no retrievals.}
+
+\item{report_missing}{Logical indicating whether to report retrievals that are not associated with any sessions.}
+
+\item{duplicate_warnings}{Logical indicating whether to report duplicate retrievals}
 }
 \value{
 A list containing a dataframe of retrievals and a tibble of sessions.

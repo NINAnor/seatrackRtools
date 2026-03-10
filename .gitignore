@@ -1,6 +1,7 @@
 /test_data
 *log*.txt
 /*.xlsx
+/*.csv
 .Rproj.user
 inst/doc
 test_script.R
@@ -18,4 +19,5 @@ app.log
 *.Rhistory
 *.Rproj
 /seatrackRtools_logs/
+/seatrackRtools_app/
 /requested_data_packages/
