@@ -429,9 +429,7 @@ data_request <- function(
 
     if (export) {
         log_info("Exporting data package...")
-        export_data_package(
-            data_request_result <- data_request_result
-        )
+        export_data_package(data_request_result = data_request_result)
     } else {
         return(
             data_request_result

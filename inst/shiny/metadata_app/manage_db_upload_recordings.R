@@ -8,6 +8,7 @@ db_upload_recording_ui <- function(id) {
 db_recordings_server <- function(id, busy, all_locations, unsaved) {
     ns <- NS(id)
     moduleServer(id, function(input, output, session) {
+
         observeEvent(busy(), {
             if (busy()) {
                 shinyjs::disable("data_upload_all")
@@ -24,8 +25,8 @@ db_recordings_server <- function(id, busy, all_locations, unsaved) {
                     "This will push recording data to the database! Are you sure?",
                     br(),
                     layout_columns(
-                        actionButton(paste("main", ns("confirm_upload_all"), sep = "-"), "Do it."),
-                        actionButton(paste("main", ns("cancel_upload"), sep = "-"), "Don't do it")
+                        actionButton(paste("main","manage_db_upload", ns("confirm_upload_all"), sep = "-"), "Do it."),
+                        actionButton(paste("main","manage_db_upload", ns("cancel_upload"), sep = "-"), "Don't do it")
                     ),
                     title = "Confirm upload ALL ?",
                     easyClose = TRUE,

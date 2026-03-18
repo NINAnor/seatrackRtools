@@ -14,6 +14,15 @@ check_startup_rows <- function(startup_shutdown) {
 #' @export
 #' @concept db_import_prep
 prepare_master_sheet_for_db <- function(master_sheets) {
+    # check morph
+    fix_num_col <- function(num_col) {
+        if (!is.numeric(num_col)) {
+            num_col <- gsub(",", ".", num_col, fixed = TRUE)
+            num_col <- gsub("[^0-9.]", "", num_col)
+            num_col <- as.numeric(num_col)
+        }
+        return(num_col)
+    }
     log_info_all(paste("Prepare", master_sheets$path, "for database upload"))
     metadata <- master_sheets$data$METADATA
     metadata <- metadata[order(metadata$date), ]
@@ -140,15 +149,7 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         metadata <- metadata[!invalid_breeding_bool, ]
     }
 
-    # check morph
-    fix_num_col <- function(num_col) {
-        if (!is.numeric(num_col)) {
-            num_col <- gsub(",", ".", fixed = TRUE)
-            num_col <- gsub("[^0-9.]", "", num_col)
-            morph_column <- as.numeric(num_col)
-        }
-        return(num_col)
-    }
+
     metadata$tarsus <- fix_num_col(metadata$tarsus)
     metadata$scull <- fix_num_col(metadata$scull)
     metadata$weight <- fix_num_col(metadata$weight)
@@ -173,8 +174,17 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         metadata <- metadata[!problem_colony_bool, ]
     }
 
+    db_locs <- seatrackR::getColonies(allLocations = TRUE)$location_name
+    problem_colony_bool <- !metadata$colony %in% db_locs
+    if (sum(problem_colony_bool) > 0) {
+        log_warn(paste("Removed ", sum(problem_colony_bool), " rows with invalid location names."))
+        row_summary <- metadata[problem_colony_bool, c("date", "ring_number", "colony", "logger_id_deployed", "logger_id_retrieved")]
+        log_warn("The following rows have invalid location value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
+        metadata <- metadata[!problem_colony_bool, ]
+    }
+
     # Check mounting types
-metadata$logger_mount_method[!is.na(metadata$logger_mount_method)] <- tolower(metadata$logger_mount_method[!is.na(metadata$logger_mount_method)])
+    metadata$logger_mount_method[!is.na(metadata$logger_mount_method)] <- tolower(metadata$logger_mount_method[!is.na(metadata$logger_mount_method)])
 
     db_mounting_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "mounting_types"))
     valid_mountings <- dplyr::pull(db_mounting_table, "logger_mount_method")
@@ -289,7 +299,7 @@ metadata$logger_mount_method[!is.na(metadata$logger_mount_method)] <- tolower(me
     if (n_problem_logger_models > 0) {
         id_problem_startups <- startup_shutdown$logger_model %in% problem_logger_models
         missing_model_summary <- startup_shutdown[id_problem_startups, c("logger_serial_no", "logger_model", "starttime_gmt")]
-        log_warn(glue::glue("{n_problem_logger_models} logging sessions have logger models not present in database."), "\n", paste(capture.output(print(missing_model_summary, n = nrow(missing_model_summary)))[c(-1, -3)], collapse = "\n"))
+        log_warn(glue::glue("{nrow(missing_model_summary)} logging sessions have logger models not present in database."), "\n", paste(capture.output(print(missing_model_summary, n = nrow(missing_model_summary)))[c(-1, -3)], collapse = "\n"))
         startup_shutdown <- startup_shutdown[!id_problem_startups, ]
     }
 

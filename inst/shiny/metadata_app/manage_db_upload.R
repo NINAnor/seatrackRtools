@@ -6,7 +6,7 @@ manage_db_upload_ui <- function(id) {
             id = ns("tabs"),
             nav_panel(
                 title = "Metadata",
-                db_upload_metadata_ui(ns("db_metadta"))
+                db_upload_metadata_ui(ns("db_metadata"))
             ),
             nav_panel(
                 title = "Recordings",
@@ -19,6 +19,7 @@ manage_db_upload_ui <- function(id) {
 manage_db_upload_server <- function(id, busy, all_locations, unsaved) {
     ns <- NS(id)
     moduleServer(id, function(input, output, session) {
+
         db_metadata_server <- db_upload_metadata_server("db_metadata", busy, all_locations, unsaved)
         db_recordings_server <- db_recordings_server("db_recordings", busy, all_locations, unsaved)
     })

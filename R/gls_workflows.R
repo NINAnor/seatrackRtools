@@ -23,7 +23,7 @@ gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = FALSE, includ
     species_colony <- all_metadata[, c("species", "colony")]
     species_colony <- species_colony[stats::complete.cases(species_colony), ]
     species_colony <- dplyr::distinct(species_colony)
-    p <- progressr::progressor(along = seq_len(nrow(species_colony)))
+    # p <- progressr::progressor(along = seq_len(nrow(species_colony)))
     foreach::foreach(i = seq_len(nrow(species_colony)), .errorhandling = "pass") %dofuture% {
         seatrackR::connectSeatrack()
         species <- species_colony$species[i]
@@ -31,6 +31,7 @@ gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = FALSE, includ
         gls_calibrate_species_colony(import_directory, species, colony, no_pos_only, rerun_existing, include_existing, filter_plots)
         # p(sprintf("i=%g", i))
     }
+
 }
 
 #' Prepare a seatrack species/colony combination for calibration
@@ -53,9 +54,44 @@ gls_calibrate_species_colony <- function(
     output_directory <- file.path(the$sea_track_folder, "Database", "Imports_Logger data", "Callibration_GLSpositions", species, colony)
     existing_calibration_dir <- file.path(the$sea_track_folder, "Locations")
 
-    gls_prepare_calibration(import_directory, output_directory, species, colony, no_pos_only, existing_calibration_dir, rerun_existing, include_existing, filter_plots)
+    gls_prepare_calibration(
+        import_directory = import_directory,
+        output_directory = output_directory,
+        species = species,
+        colony = colony,
+        no_pos_only = no_pos_only,
+        existing_calibration_dir = existing_calibration_dir,
+        rerun_existing = rerun_existing,
+        include_existing = include_existing,
+        filter_plots = filter_plots
+    )
 }
 
+#' Prepare GLS files for calibration
+#'
+#' Uses hard coded file paths to call gls_prepare_calibration. Filters metadata passed to gls_prepare_calibration by file names.
+#' @param id_year_model Character string in the format "loggerID_year_loggermodel" to filter for a specific logger, year and model.
+#' @param no_pos_only Logical indicating whether to include only loggers without position data in the database. Default is TRUE.
+#' @param rerun_existing Logical indicating whether to rerun calibration for loggers that already have calibration data. Default is TRUE.
+#' @param include_existing Logical indicating whether to include existing calibration data in the final output. Default is TRUE.
+#' @param filter_plots Logical indicating whether to export filter plots. Default is FALSE.
+#' @return None. The function saves the prepared calibration data to the specified output directory.
+#' @export
+#' @concept gls_helper
+gls_calibrate_file <- function(id_year_model, no_pos_only = TRUE, rerun_existing = TRUE, include_existing = TRUE, filter_plots = TRUE) {
+    import_directory <- file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL")
+    existing_calibration_dir <- file.path(the$sea_track_folder, "Locations")
+
+    gls_prepare_calibration(
+        import_directory = import_directory,
+        id_year_model = id_year_model,
+        no_pos_only = no_pos_only,
+        existing_calibration_dir = existing_calibration_dir,
+        rerun_existing = rerun_existing,
+        include_existing = include_existing,
+        filter_plots = filter_plots
+    )
+}
 
 
 #' Prepare GLS calibration data using seatrack database
@@ -65,6 +101,7 @@ gls_calibrate_species_colony <- function(
 #' @param output_directory Path to the directory where the prepared calibration data will be saved.
 #' @param species Species name to filter metadata. Default is NULL (no filtering).
 #' @param colony Colony name to filter metadata. Default is NULL (no filtering).
+#' @param id_year_model Character string in the format "loggerID_year_loggermodel" to filter for a specific logger, year and model. Default is NULL (no filtering).
 #' @param no_pos_only Logical indicating whether to include only loggers without position data in the database. Default is TRUE.
 #' @param existing_calibration_dir Directory containing existing calibration data. Default is NULL. If provided, calibration data from this directory will be merged.
 #' @param rerun_existing Logical indicating whether to rerun calibration for loggers that already have calibration data. Default is TRUE.
@@ -73,180 +110,210 @@ gls_calibrate_species_colony <- function(
 #' @return None. The function saves the prepared calibration data to the specified output directory.
 #' @export
 #' @concept gls_helper
-gls_prepare_calibration <- function(import_directory, output_directory, species = NULL, colony = NULL, no_pos_only = TRUE, existing_calibration_dir = NULL, rerun_existing = TRUE, include_existing = TRUE, filter_plots = FALSE, rerun_existing_plots = FALSE) {
+gls_prepare_calibration <- function(import_directory, output_directory = NULL, species = NULL, colony = NULL, id_year_model = NULL, no_pos_only = TRUE, existing_calibration_dir = NULL, rerun_existing = TRUE, include_existing = TRUE, filter_plots = FALSE, rerun_existing_plots = FALSE) {
     # Get metadata
-    metadata <- gls_metadata(import_directory, colony, species, time_windows = TRUE, no_pos_only = no_pos_only)
+    metadata <- gls_metadata(import_directory = import_directory, colony = colony, species = species, id_year_model = id_year_model, time_windows = TRUE, no_pos_only = no_pos_only)
     if (nrow(metadata) == 0) {
-        log_warn(glue::glue("No metadata returned for {species} - {colony}. No position only = {no_pos_only}."))
+        # Get string of non null parameters for log message
+        if (!is.null(species) && !is.null(colony) && !is.null(id_year_model)) {
+            filter_string <- paste("species =", species, ", colony =", colony, ", id_year_model =", id_year_model)
+        } else if (!is.null(species) && !is.null(colony)) {
+            filter_string <- paste("species =", species, ", colony =", colony)
+        } else if (!is.null(species) && !is.null(id_year_model)) {
+            filter_string <- paste("species =", species, ", id_year =", id_year_model)
+        } else if (!is.null(colony) && !is.null(id_year_model)) {
+            filter_string <- paste("colony =", colony, ", id_year =", id_year_model)
+        } else if (!is.null(species)) {
+            filter_string <- paste("species =", species)
+        } else if (!is.null(colony)) {
+            filter_string <- paste("colony =", colony)
+        } else if (!is.null(id_year_model)) {
+            filter_string <- paste("id_year_model =", id_year_model)
+        } else {
+            filter_string <- "no filters"
+        }
+        log_warn(glue::glue("No metadata returned for {filter_string}. No position only = {no_pos_only}."))
         return()
     }
-    # Set up the output file names
-    calibration_output_dir <- file.path(output_directory)
-    calibration_filename <- paste(species, colony, "calibration.xlsx", sep = "_")
-    # Create the dir
-    dir.create(calibration_output_dir, showWarnings = FALSE, recursive = TRUE)
-    # Check if settings already exist
-    settings_path <- file.path(calibration_output_dir, "filter_settings.xlsx")
-    if (!file.exists(settings_path)) {
-        seatrackRgls::create_filter_settings_file(settings_path, species)
+    if (is.null(species)) {
+        species <- unique(metadata$species)
+    }
+    if (is.null(colony)) {
+        colony <- unique(metadata$colony)
     }
 
-    # Load to get year splits
-    filter_setings_list <- seatrackRgls::read_filter_file(settings_path)
-    species_filter_settings <- filter_setings_list$get_settings_from_list(species = species)
-
-    # Load older calibration data
-    existing_calibration_data <- data.frame(logger_id = character(), total_years_tracked = character())
-    if (!is.null(existing_calibration_dir)) {
-        # Load existing calibration data if available and merge
-        existing_calibration_file <- gls_get_existing_calibration(existing_calibration_dir, species_filter_settings$split_years)
-        existing_calibration_data <- existing_calibration_file$calibration_data
-        if (!is.null(species)) {
-            existing_calibration_data <- existing_calibration_data[existing_calibration_data$species %in% species, ]
-        }
-        if (!is.null(colony)) {
-            existing_calibration_data <- existing_calibration_data[existing_calibration_data$colony %in% colony, ]
-        }
-    }
-
-
-
-    # check for current calibration data in export dir and merge it with the older calibration data
-    if (file.exists(file.path(calibration_output_dir, calibration_filename))) {
-        existing_export_data <- openxlsx2::read_xlsx(file.path(calibration_output_dir, calibration_filename))
-
-        # if any columns are incompatible, coerce to character
-        common_cols <- intersect(names(existing_calibration_data), names(existing_export_data))
-        for (col in common_cols) {
-            if (any(class(existing_calibration_data[[col]]) != class(existing_export_data[[col]]))) {
-                existing_calibration_data[[col]] <- as.character(existing_calibration_data[[col]])
-                existing_export_data[[col]] <- as.character(existing_export_data[[col]])
+    for (current_species in species) {
+        for (current_colony in colony) {
+            if (is.null(output_directory)) {
+                output_directory <- file.path(the$sea_track_folder, "Database", "Imports_Logger data", "Callibration_GLSpositions", species, colony)
             }
-        }
-
-        # Keep latest
-        existing_calibration_data <- existing_calibration_data[!paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked) %in% paste(existing_export_data$logger_id, existing_export_data$total_years_tracked), ]
-        # Combined pre-calibrated data
-        existing_calibration_data <- dplyr::bind_rows(existing_calibration_data, existing_export_data)
-    }
-
-    metadata_id_year <- paste(metadata$logger_id, metadata$total_years_tracked)
-    existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked)
-
-    # Remove cases from existing calibration data where files do not exist
-    existing_calibration_data <- existing_calibration_data[existing_id_year %in% metadata_id_year, ]
-
-    existing_plot_data <- data.frame(logger_id = character(), year_tracked = character())
-    # check if these already have plots
-    if (!rerun_existing_plots && file.exists(file.path(calibration_output_dir, "sun_calib"))) {
-        # Get plot files
-        existing_plots_files <- list.files(file.path(calibration_output_dir, "sun_calib"), pattern = "*.tiff")
-        if (length(existing_plots_files) > 0) {
-            existing_plots_ids <- data.frame(t(sapply(strsplit(existing_plots_files, "_"), function(x) x[1:3])))
-            names(existing_plots_ids) <- c("logger_id", "year1", "year2")
-            existing_plots_ids <- unique(paste(existing_plots_ids[, "logger_id"],
-                paste(existing_plots_ids[, "year1"],
-                    existing_plots_ids[, "year2"],
-                    sep = "_"
-                ),
-                sep = "_"
-            ))
-
-            existing_plot_data <- existing_calibration_data[paste(existing_calibration_data$logger_id, existing_calibration_data$year_tracked, sep = "_") %in% existing_plots_ids, ]
-            # Remove existing plot rows from existing calibration data
-            existing_calibration_data <- existing_calibration_data[!paste(existing_calibration_data$logger_id, existing_calibration_data$year_tracked, sep = "_") %in% paste(existing_plot_data$logger_id, existing_plot_data$year_tracked, sep = "_"), ]
-
-            # Remove existing plot data from metadata
-            metadata <- metadata[!paste(metadata$logger_id, metadata$year_tracked, sep = "_") %in% paste(existing_plot_data$logger_id, existing_plot_data$year_tracked, sep = "_"), ]
-        }
-    }
-
-    if (nrow(existing_calibration_data) > 0) {
-
-        metadata_id_year <- paste(metadata$logger_id, metadata$total_years_tracked)
-        existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked)
-        # Get only unique id_year combos
-        existing_calibration_data <- existing_calibration_data[!duplicated(existing_id_year) & !is.na(existing_calibration_data$sun_angle_start), ]
-        existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked)
-
-        # Remove existing calibration rows from metadata
-        metadata <- metadata[!metadata_id_year %in% existing_id_year, ]
-        if (!rerun_existing && nrow(metadata) == 0) {
-            log_info("All files already have calibration data.")
-            return()
-        }
-    }
-
-    # Metadata should now only have rows for which we want to generate plots/rows.
-
-    if (rerun_existing && nrow(existing_calibration_data) > 0) {
-        common_cols <- intersect(names(existing_calibration_data), names(metadata))
-        for (col in common_cols) {
-            if (any(class(existing_calibration_data[[col]]) != class(metadata[[col]]))) {
-                existing_calibration_data[[col]] <- as.character(existing_calibration_data[[col]])
-                metadata[[col]] <- as.character(metadata[[col]])
+            # Set up the output file names
+            calibration_output_dir <- file.path(output_directory)
+            calibration_filename <- paste(current_species, current_colony, "calibration.xlsx", sep = "_")
+            # Create the dir
+            dir.create(calibration_output_dir, showWarnings = FALSE, recursive = TRUE)
+            # Check if settings already exist
+            settings_path <- file.path(calibration_output_dir, "filter_settings.xlsx")
+            if (!file.exists(settings_path)) {
+                seatrackRgls::create_filter_settings_file(settings_path, current_species)
             }
-        }
-        metadata <- dplyr::bind_rows(existing_calibration_data, metadata)
-    }
+
+            # Load to get year splits
+            filter_setings_list <- seatrackRgls::read_filter_file(settings_path)
+            species_filter_settings <- filter_setings_list$get_settings_from_list(species = current_species)
 
 
-    if (nrow(metadata) == 0 && nrow(existing_calibration_data) == 0 && nrow(existing_plot_data) == 0) {
-        log_warn("No metadata or previous calibration data found for", species, colony)
-        return()
-    }
+            # Load older calibration data
+            existing_calibration_data <- data.frame(logger_id = character(), total_years_tracked = character())
+            if (!is.null(existing_calibration_dir)) {
+                # Load existing calibration data if available and merge
+                existing_calibration_file <- gls_get_existing_calibration(existing_calibration_dir, species_filter_settings$split_years)
+                existing_calibration_data <- existing_calibration_file$calibration_data
+                existing_calibration_data <- existing_calibration_data[existing_calibration_data$species %in% current_species & existing_calibration_data$colony %in% current_colony, ]
+                if (!is.null(id_year_model)) {
+                    existing_calibration_id_year <- sapply(strsplit(tools::file_path_sans_ext(existing_calibration_data$file_name), "_"), function(x) paste(c(x[1], x[2], x[3:length(x)]), collapse = "_"))
 
-    metadata$start_datetime <- as.Date(metadata$start_datetime)
-    metadata$end_datetime <- as.Date(metadata$end_datetime)
-
-    if (nrow(metadata) > 0) {
-        all_colony_info <- gls_seatrack_colony_info()
-        calibration_template <- seatrackRgls::prepare_calibration(
-            import_directory,
-            data.frame(metadata),
-            all_colony_info,
-            output_directory,
-            export_calibration_template = FALSE,
-            show_filter_plots = filter_plots,
-            filter_setting_list = settings_path
-        )
-    } else {
-        log_info("No new metadata to process, only existing calibration data.")
-        calibration_template <- data.frame(logger_id = character(), year_tracked = character())
-    }
-
-    calibration_template_id_year <- paste(calibration_template$logger_id, calibration_template$year_tracked)
-    existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$year_tracked)
-    existing_plot_id_year <- paste(existing_plot_data$logger_id, existing_plot_data$year_tracked)
-
-    if (include_existing) {
-        existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$year_tracked)
-        match_idx <- match(existing_id_year, calibration_template_id_year)
-        calibration_template[match_idx[!is.na(match_idx)], c("sun_angle_start", "sun_angle_end", "light_threshold")] <- existing_calibration_data[!is.na(match_idx), c("sun_angle_start", "sun_angle_end", "light_threshold")]
-    } else {
-        calibration_template <- calibration_template[!calibration_template_id_year %in% existing_id_year, ]
-    }
-
-    # reattach rows skipped due to existing plots
-    if (include_existing && !rerun_existing_plots) {
-        common_cols <- intersect(names(existing_plot_data), names(calibration_template))
-        for (col in common_cols) {
-            if (any(class(existing_plot_data[[col]]) != class(calibration_template[[col]]))) {
-                existing_plot_data[[col]] <- as.character(existing_plot_data[[col]])
-                calibration_template[[col]] <- as.character(calibration_template[[col]])
+                    existing_calibration_data <- existing_calibration_data[existing_calibration_id_year == id_year_model]
+                }
             }
+
+            # check for current calibration data in export dir and merge it with the older calibration data
+            if (file.exists(file.path(calibration_output_dir, calibration_filename))) {
+                existing_export_data <- openxlsx2::read_xlsx(file.path(calibration_output_dir, calibration_filename))
+
+                # if any columns are incompatible, coerce to character
+                common_cols <- intersect(names(existing_calibration_data), names(existing_export_data))
+                for (col in common_cols) {
+                    if (any(class(existing_calibration_data[[col]]) != class(existing_export_data[[col]]))) {
+                        existing_calibration_data[[col]] <- as.character(existing_calibration_data[[col]])
+                        existing_export_data[[col]] <- as.character(existing_export_data[[col]])
+                    }
+                }
+
+                # Keep latest
+                existing_calibration_data <- existing_calibration_data[!paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked) %in% paste(existing_export_data$logger_id, existing_export_data$total_years_tracked), ]
+                # Combined pre-calibrated data
+                existing_calibration_data <- dplyr::bind_rows(existing_calibration_data, existing_export_data)
+            }
+
+            metadata_id_year <- paste(metadata$logger_id, metadata$total_years_tracked)
+            existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked)
+
+            # # Remove cases from existing calibration data where files do not exist
+            # existing_calibration_data <- existing_calibration_data[existing_id_year %in% metadata_id_year, ]
+
+            existing_plot_data <- data.frame(logger_id = character(), year_tracked = character())
+            # check if these already have plots
+            if (!rerun_existing_plots && file.exists(file.path(calibration_output_dir, "sun_calib"))) {
+                # Get plot files
+                existing_plots_files <- list.files(file.path(calibration_output_dir, "sun_calib"), pattern = "*.tiff")
+                if (length(existing_plots_files) > 0) {
+                    existing_plots_ids <- data.frame(t(sapply(strsplit(existing_plots_files, "_"), function(x) x[1:3])))
+                    names(existing_plots_ids) <- c("logger_id", "year1", "year2")
+                    existing_plots_ids <- unique(paste(existing_plots_ids[, "logger_id"],
+                        paste(existing_plots_ids[, "year1"],
+                            existing_plots_ids[, "year2"],
+                            sep = "_"
+                        ),
+                        sep = "_"
+                    ))
+
+                    existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$year_tracked, sep = "_")
+                    existing_plot_data <- existing_calibration_data[existing_id_year %in% existing_plots_ids, ]
+                    # Remove existing plot rows from existing calibration data
+                    existing_calibration_data <- existing_calibration_data[!existing_id_year %in% paste(existing_plot_data$logger_id, existing_plot_data$year_tracked, sep = "_"), ]
+
+                    # Remove existing plot data from metadata
+                    metadata <- metadata[!paste(metadata$logger_id, metadata$year_tracked, sep = "_") %in% paste(existing_plot_data$logger_id, existing_plot_data$year_tracked, sep = "_"), ]
+                }
+            }
+
+            if (nrow(existing_calibration_data) > 0) {
+                metadata_id_year <- paste(metadata$logger_id, metadata$total_years_tracked)
+                existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked)
+                # Get only unique id_year combos
+                existing_calibration_data <- existing_calibration_data[!duplicated(existing_id_year) & !is.na(existing_calibration_data$sun_angle_start), ]
+                existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$total_years_tracked)
+
+                # Remove existing calibration rows from metadata
+                metadata <- metadata[!metadata_id_year %in% existing_id_year, ]
+                if (!rerun_existing && nrow(metadata) == 0) {
+                    log_info("All files already have calibration data.")
+                    return()
+                }
+            }
+
+            # Metadata should now only have rows for which we want to generate plots/rows.
+
+            if (rerun_existing && nrow(existing_calibration_data) > 0) {
+                common_cols <- intersect(names(existing_calibration_data), names(metadata))
+                for (col in common_cols) {
+                    if (any(class(existing_calibration_data[[col]]) != class(metadata[[col]]))) {
+                        existing_calibration_data[[col]] <- as.character(existing_calibration_data[[col]])
+                        metadata[[col]] <- as.character(metadata[[col]])
+                    }
+                }
+                metadata <- dplyr::bind_rows(existing_calibration_data, metadata)
+            }
+
+
+            if (nrow(metadata) == 0 && nrow(existing_calibration_data) == 0 && nrow(existing_plot_data) == 0) {
+                log_warn("No metadata or previous calibration data found for", species, colony)
+                return()
+            }
+
+            metadata$start_datetime <- as.Date(metadata$start_datetime)
+            metadata$end_datetime <- as.Date(metadata$end_datetime)
+
+            if (nrow(metadata) > 0) {
+                all_colony_info <- gls_seatrack_colony_info()
+                calibration_template <- seatrackRgls::prepare_calibration(
+                    import_directory,
+                    data.frame(metadata),
+                    all_colony_info,
+                    output_directory,
+                    export_calibration_template = FALSE,
+                    show_filter_plots = filter_plots,
+                    filter_setting_list = settings_path
+                )
+            } else {
+                log_info("No new metadata to process, only existing calibration data.")
+                calibration_template <- data.frame(logger_id = character(), year_tracked = character())
+            }
+
+            calibration_template_id_year <- paste(calibration_template$logger_id, calibration_template$year_tracked)
+            existing_id_year <- paste(existing_calibration_data$logger_id, existing_calibration_data$year_tracked)
+            existing_plot_id_year <- paste(existing_plot_data$logger_id, existing_plot_data$year_tracked)
+
+            if (include_existing) {
+                match_idx <- match(existing_id_year, calibration_template_id_year)
+                calibration_template[match_idx[!is.na(match_idx)], c("sun_angle_start", "sun_angle_end", "light_threshold")] <- existing_calibration_data[!is.na(match_idx), c("sun_angle_start", "sun_angle_end", "light_threshold")]
+            } else {
+                calibration_template <- calibration_template[!calibration_template_id_year %in% existing_id_year, ]
+            }
+
+            # reattach rows skipped due to existing plots
+            if (include_existing && !rerun_existing_plots) {
+                common_cols <- intersect(names(existing_plot_data), names(calibration_template))
+                for (col in common_cols) {
+                    if (any(class(existing_plot_data[[col]]) != class(calibration_template[[col]]))) {
+                        existing_plot_data[[col]] <- as.character(existing_plot_data[[col]])
+                        calibration_template[[col]] <- as.character(calibration_template[[col]])
+                    }
+                }
+                calibration_template <- dplyr::bind_rows(existing_plot_data, calibration_template)
+            }
+
+            calibration_template$start_datetime <- as.Date(calibration_template$start_datetime)
+            calibration_template$end_datetime <- as.Date(calibration_template$end_datetime)
+
+            seatrackRgls::calibration_to_wb(
+                calibration_template,
+                calibration_output_dir,
+                calibration_filename = calibration_filename
+            )
         }
-        calibration_template <- dplyr::bind_rows(existing_plot_data, calibration_template)
     }
-
-    calibration_template$start_datetime <- as.Date(calibration_template$start_datetime)
-    calibration_template$end_datetime <- as.Date(calibration_template$end_datetime)
-
-    seatrackRgls::calibration_to_wb(
-        calibration_template,
-        calibration_output_dir,
-        calibration_filename = calibration_filename
-    )
 }
 
 #' Process GLS position data using seatrackRgls

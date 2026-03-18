@@ -31,6 +31,7 @@ manage_metadata_ui <- function(id) {
 
 manage_metadata_server <- function(id, busy, all_locations, unsaved) {
     moduleServer(id, function(input, output, session) {
+
         current_location_idx <- reactiveVal(NA)
         current_location_name <- reactiveVal(NA)
         metadata_tables <- reactiveVal(list())

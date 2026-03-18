@@ -140,8 +140,8 @@ db_upload_metadata_server <- function(id, busy, all_locations, unsaved) {
                     "This will push data to the database! Are you sure?",
                     br(),
                     layout_columns(
-                        actionButton(paste("main", ns("confirm_upload"), sep = "-"), "Do it."),
-                        actionButton(paste("main", ns("cancel_upload"), sep = "-"), "Don't do it")
+                        actionButton(paste("main", "manage_db_upload", ns("confirm_upload"), sep = "-"), "Do it."),
+                        actionButton(paste("main", "manage_db_upload", ns("cancel_upload"), sep = "-"), "Don't do it")
                     ),
                     title = "Confirm upload?",
                     easyClose = TRUE,
@@ -157,8 +157,8 @@ db_upload_metadata_server <- function(id, busy, all_locations, unsaved) {
                     "This will try to push ALL data to the database! This might be quite hard to follow. Are you sure?",
                     br(),
                     layout_columns(
-                        actionButton(paste("main", ns("confirm_upload_all"), sep = "-"), "Do it."),
-                        actionButton(paste("main", ns("cancel_upload"), sep = "-"), "Don't do it")
+                        actionButton(paste("main", "manage_db_upload", ns("confirm_upload_all"), sep = "-"), "Do it."),
+                        actionButton(paste("main", "manage_db_upload", ns("cancel_upload"), sep = "-"), "Don't do it")
                     ),
                     title = "Confirm upload ALL ?",
                     easyClose = TRUE,

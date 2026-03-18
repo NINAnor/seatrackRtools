@@ -344,7 +344,7 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
         if (any(partner_metadata$colony %in% startup_rows$intended_location)) {
             startup_rows <- startup_rows[startup_rows$intended_location %in% partner_metadata$colony, ]
         } else {
-            log_warn(paste("Could not resolve multiple startups for logger ID:", logger_id, "using intended location"))
+            log_info(paste("Could not resolve multiple startups for logger ID:", logger_id, "using intended location"))
         }
 
         if (nrow(startup_rows) == 1) {
@@ -366,9 +366,13 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
 
             next
         }
-
+        if (any(!is.na(startup_rows$programmed_gmt_time))) {
+            start_time <- startup_rows$programmed_gmt_time
+        } else {
+            start_time <- startup_rows$starttime_gmt
+        }
         # make sure we only consider dates in the past
-        startup_rows <- startup_rows[as.Date(startup_rows$starttime_gmt) <= deployment_date & !is.na(as.Date(startup_rows$starttime_gmt)), ]
+        startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & !is.na(as.Date(start_time)), ]
 
         if (nrow(startup_rows) == 1) {
             new_loggers <- rbind(new_loggers, startup_rows)
@@ -376,15 +380,19 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
         } else if (nrow(startup_rows) == 0) {
             critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
             if (critical) {
-                log_warn(paste("No time found for logger ID:", logger_id, "deployed on", deployment_date))
+                log_warn(paste("Could not resolve multiple startups for logger ID:", logger_id, ", no start times found before deployment date of", deployment_date))
             }
             next
         }
 
-
+        if (any(!is.na(startup_rows$programmed_gmt_time))) {
+            start_time <- startup_rows$programmed_gmt_time
+        } else {
+            start_time <- startup_rows$starttime_gmt
+        }
 
         # For each startup row, calculate the difference in the deployment date and the startup time
-        time_diffs <- difftime(deployment_date, startup_rows$starttime_gmt, units = "days")
+        time_diffs <- difftime(deployment_date, start_time, units = "days")
         startup_row <- startup_rows[which(time_diffs == min(time_diffs))[1], ]
         new_loggers <- rbind(new_loggers, startup_row)
     }

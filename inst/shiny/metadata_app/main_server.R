@@ -8,7 +8,7 @@ main_server <- function(id) {
         unsaved <- reactiveVal(FALSE)
         # Can load from settings
         app_settings_list <- app_load_settings()
-        print(app_settings_list)
+
         app_settings <- reactiveVal(app_settings_list)
 
         loaded_user_name <- ifelse(!is.null(app_settings_list$user_full_name), app_settings_list$user_full_name, "")
@@ -21,7 +21,6 @@ main_server <- function(id) {
             app_settings_list <- app_settings()
             app_settings_list$user_full_name <- user_full_name()
             app_settings(app_settings_list)
-            print(app_settings())
         })
 
         all_locations <- reactiveVal(list())
@@ -52,20 +51,14 @@ main_server <- function(id) {
             }
         })
 
-        # sea_track_path <- reactiveVal()
-        # Folder selector
-        folder_select <- folder_selector_server("folder", busy, all_locations, app_settings)
-        # observeEvent(folder_select, {
-        #     sea_track_path(folder_select$folder)
-        # })
         manager_loggers <- manage_logger_server("manage_loggers", busy, all_locations, unsaved, user_full_name)
         manage_metadata <- manage_metadata_server("manage_metadata", busy, all_locations, unsaved)
         manage_db_upload <- manage_db_upload_server("manage_db_upload", busy, all_locations, unsaved)
         connect_db <- connect_db_server("connect_db", busy, getShinyOption("test", FALSE), app_settings)
-        # Export nonresponsive
-        # Mastersheet viewer
-        # Import partner metadata
-        # Upload to database
+        # sea_track_path <- reactiveVal()
+        # Folder selector
+        folder_select <- folder_selector_server("folder", busy, all_locations, app_settings)
+
 
         observeEvent(busy(), {
             if (busy()) {
@@ -152,12 +145,11 @@ app_load_settings <- function() {
         log_info("No app_settings object found in settings file, using defaults")
         return(list())
     }
-    # print(temp_env$app_settings)
+
     return(temp_env$app_settings)
 }
 
 app_save_settings <- function(app_settings) {
-    print(app_settings)
     settings_path <- getShinyOption("settings_path")
     full_settings_path <- file.path(settings_path, "settings")
     log_info("Saving settings to: ", full_settings_path)

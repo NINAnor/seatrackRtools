@@ -137,27 +137,42 @@ gls_get_existing_calibration <- function(existing_calibration_dir = file.path(th
 #' @param import_directory Path to the directory containing GLS files.
 #' @param colony Colony name to filter metadata. Default is NULL (no filtering).
 #' @param species Species name to filter metadata. Default is NULL (no filtering).
+#' @param id_year_model Character string in the format "loggerID_year_model" to filter for a specific logger, year and model. Default is NULL (no filtering).
 #' @param time_windows Logical indicating whether to split metadata into time windows based on deployment/retrieval dates. Default is TRUE.
 #' @param split_years Character string indicating the month and day to split years for calibration (e.g., "06-01" for June 1st). Default is "06-01".
 #' @param no_pos_only Logical indicating whether to include only loggers without position data in the database. Default is TRUE.
 #' @return A dataframe containing metadata for the GLS loggers found in the import directory.
 #' @export
 #' @concept gls_helper
-gls_metadata <- function(import_directory, colony = NULL, species = NULL, time_windows = TRUE, split_years = "06-01", no_pos_only = TRUE) {
+gls_metadata <- function(import_directory, colony = NULL, species = NULL, id_year_model = NULL, time_windows = TRUE, split_years = "06-01", no_pos_only = TRUE) {
     log_info("Scan import directory for files...")
     all_files <- list.files(import_directory, pattern = "*.lux|*.lig", recursive = TRUE, full.names = TRUE)
-    all_files_split <- strsplit(basename(all_files), "_")
+    all_files_split <- strsplit(tools::file_path_sans_ext(basename(all_files)), "_")
     file_info_list <- lapply(all_files_split, function(x) {
-        data.frame(logger_id = x[1], year_downloaded = x[2], id_year = paste(x[1], x[2], sep = "_"))
+        data.frame(logger_id = x[1], year_downloaded = x[2], id_year = paste(x[1], x[2], sep = "_"), id_year_model = paste(c(x[1], x[2], x[3:length(x)]), collapse = "_"))
     })
     file_info <- do.call(rbind, file_info_list)
     file_info <- data.frame(filename = all_files, file_info)
+    if (!is.null(id_year_model)) {
+        # Get only file info for the desired file
+        file_info <- file_info[file_info$id_year_model == id_year_model, ]
+        if (nrow(file_info) == 0) {
+            log_error(glue::glue("File {id_year_model} not found in import directory"))
+            return(data.frame())
+        }
+    }
+
     if (!no_pos_only) {
         has_pos_data <- NULL
     } else {
         has_pos_data <- FALSE
     }
-    db_info <- seatrackR::getSessionInfo(posdata_filename = file_info$id_year, has_pos_data = has_pos_data, logger_download_type = c("Successfully downloaded", "Reconstructed"), colony_names = colony, species_names = species)
+    db_info <- seatrackR::getSessionInfo(
+        posdata_filename = file_info$id_year_model,
+        has_pos_data = has_pos_data,
+        logger_download_type = c("Successfully downloaded", "Reconstructed"),
+        colony_names = colony, species_names = species
+    )
     if (nrow(db_info) == 0) {
         return(data.frame())
     }
@@ -171,7 +186,13 @@ gls_metadata <- function(import_directory, colony = NULL, species = NULL, time_w
         date_retrieved = retrieval_date,
         colony
     )
-    # report missing files
+# # report missing files
+# db_info$id_year_model <- paste(db_info$logger_serial_no, format(db_info$retrieval_date, "%Y"), db_info$logger_model, sep = "_")
+# missing_files <- file_info[!file_info$id_year_model %in% db_info$id_year_model, ]
+
+# if (nrow(missing_files) > 0) {
+#     log_warn(glue::glue("The following files were found in the import directory but have no corresponding metadata in the database:\n{paste(missing_files$filename, collapse = '\n')}"))
+# }
     if (time_windows) {
         # split by deployment/retrieval dates
         id_year <- paste(metadata$logger_id, metadata$date_deployed, metadata$date_retrieved)

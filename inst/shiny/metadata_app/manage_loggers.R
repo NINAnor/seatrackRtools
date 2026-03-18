@@ -129,11 +129,20 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
 
             if (length(logger_search_result) > 0) {
                 log_info(paste("Logger", input$logger_search, "found"))
-                logger_search_result <- lapply(logger_search_result, function(x) {
+                logger_search_result_distinct <- list()
+                seen_paths <- c()
+                for (result in logger_search_result) {
+                    if (!result$path %in% seen_paths) {
+                        logger_search_result_distinct <- c(logger_search_result_distinct, list(result))
+                        seen_paths <- c(seen_paths, result$path)
+                    }
+                }
+                print(logger_search_result_distinct)
+
+                logger_search_result <- lapply(logger_search_result_distinct, function(x) {
                     x$open <- is.na(x$data$download_date) & is.na(x$data$shutdown_date)
                     return(x)
                 })
-
 
                 search_results(logger_search_result)
             } else {

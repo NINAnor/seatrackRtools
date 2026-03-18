@@ -122,7 +122,7 @@ handle_activity <- function(file_info, recording_type) {
         {
             do.call(seatrackR::writeRecordings, clipped_data_list)
             log_success(glue::glue("{file_info$filename} - uploaded to database"))
-            return(TRUE)
+            TRUE
         },
         error = function(e) {
             log_error(glue::glue("{file_info$filename} - Error in pushing to database: {e$message}"))

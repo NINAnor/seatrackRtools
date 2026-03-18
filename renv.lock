@@ -7069,7 +7069,7 @@
     },
     "seatrackR": {
       "Package": "seatrackR",
-      "Version": "0.0.3.8",
+      "Version": "0.0.3.92",
       "Source": "GitHub",
       "Title": "Interface functions for the Seatrack database",
       "Authors@R": "c(person(given = \"Jens\",  family = \"Åström\",  email = \"jens.astrom@nina.no\",  role = c(\"aut\"), comment = c(ORCID = \"0000-0002-6114-0440\", note=\"Original creator\")), person(given = \"Julian\",  family = \"Evans\",  role = c(\"aut\", \"cre\"),  email = \"julian.evans@nina.no\"))",
@@ -7122,13 +7122,13 @@
       "RemoteUsername": "ninanor",
       "RemoteRepo": "seatrackR",
       "RemoteRef": "main",
-      "RemoteSha": "f291ae85c527475e102b19e17ed0fbf584dba742",
+      "RemoteSha": "9cc6494eb42a90bd362ce919b045fed1420b38da",
       "Remotes": "seatrackR=github::NINAnor/NinaR"
     },
     "seatrackRgls": {
       "Package": "seatrackRgls",
-      "Version": "0.3.1",
-      "Source": "Cellar",
+      "Version": "0.3.42",
+      "Source": "GitHub",
       "Type": "Package",
       "Title": "An automated procedure used in the SEATRACK project to obtain positions from light-level geolocators in large- scale tracking of seabirds",
       "Authors@R": "c( person(\"Vegard Sandøy\", \"Bråthen\", email = \"vegard.brathen@nina.no\", role = c(\"cre\",\"aut\"),comment = c(ORCID = \"0000-0002-7357-6727\", note=\"Original creator, GLS expert\")), person(\"Julian\", \"Evans\", email = \"julian.evans@nina.no\", role = \"aut\", comment = c(note=\"Code assistance\")) )",
@@ -7173,9 +7173,15 @@
       "RoxygenNote": "7.3.3",
       "Roxygen": "list(markdown = TRUE)",
       "URL": "https://ninanor.github.io/seatrackRgls/",
-      "NeedsCompilation": "no",
       "Author": "Vegard Sandøy Bråthen [cre, aut] (<https://orcid.org/0000-0002-7357-6727>, Original creator, GLS expert), Julian Evans [aut] (Code assistance)",
-      "Maintainer": "Vegard Sandøy Bråthen <vegard.brathen@nina.no>"
+      "Maintainer": "Vegard Sandøy Bråthen <vegard.brathen@nina.no>",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "ninanor",
+      "RemoteRepo": "seatrackRgls",
+      "RemoteRef": "main",
+      "RemoteSha": "c9dd47d771442d2b9878f1906a60a40b0acefe4e",
+      "Remotes": "SLisovski/GeoLight, distancetocoast=github::mdsumner/distancetocoast, GeoLocTools=github::bluegreen-labs/geoloctools"
     },
     "sessioninfo": {
       "Package": "sessioninfo",

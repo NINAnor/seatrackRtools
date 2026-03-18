@@ -21,3 +21,4 @@ app.log
 /seatrackRtools_logs/
 /seatrackRtools_app/
 /requested_data_packages/
+data_requests.R
