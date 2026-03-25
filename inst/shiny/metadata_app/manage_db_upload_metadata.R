@@ -36,7 +36,7 @@ db_upload_metadata_server <- function(id, busy, all_locations, unsaved) {
             shinyjs::enable("test_upload")
             shinyjs::enable("data_upload")
         }
-
+        print("db metadata upload server started")
         current_sheet_idx <- reactiveVal(NA)
         current_sheet <- reactiveVal(NA)
         current_choices <- reactiveVal(c())
@@ -60,6 +60,7 @@ db_upload_metadata_server <- function(id, busy, all_locations, unsaved) {
         })
 
         observeEvent(all_locations(), {
+            print("db metadata server observed locations change")
             locations <- all_locations()
             if (length(locations) == 0) {
                 return()

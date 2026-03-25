@@ -94,6 +94,7 @@ push_startup <- function(startup, dry_run = FALSE) {
             log_warn("Attempting to push them to the database would result in an error. These loggers will not be registered as started")
             for (i in seq_len(nrow(startup_same_year))) {
                 startup_summary <- startup_same_year[i, c("starttime_gmt", "logger_serial_no")]
+                # get db startup
                 log_warn(
                     startup_summary$logger_serial_no,
                     ":\n", paste(capture.output(print(startup_summary, n = nrow(startup_summary)))[c(-1, -3)], collapse = "\n")
@@ -160,11 +161,24 @@ push_deployments <- function(deployments, dry_run = FALSE) {
             log_warn("Attempting to push them to the database would result in an error. These loggers will not be registered as deployed")
 
             for (i in seq_len(nrow(deployment_missing_startups))) {
-                deployment_summary <- deployment_missing_startups[i, c("date", "logger_id_deployed", "logger_model_deployed", "comment")]
-                log_warn(
-                    deployment_summary$logger_id_deployed,
-                    ":\n", paste(capture.output(print(deployment_summary, n = nrow(deployment_summary)))[c(-1, -3)], collapse = "\n")
-                )
+                logger_id_deployed <- deployment_missing_startups$logger_id_deployed[i]
+                deployment_summary <- deployment_missing_startups[i, c("date", "ring_number", "euring_code")]
+
+                # get active from db
+                db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logging_session"))
+                db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
+                db_deployment_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
+                db_sessions <- dplyr::left_join(db_sessions, db_logger_info, by = "logger_id", suffix = c("", ".x"))
+                db_sessions <- dplyr::filter(db_sessions, logger_serial_no == logger_id_deployed)
+                db_sessions <- dplyr::left_join(db_sessions, db_deployment_info, by = "session_id", suffix = c("", ".x"))
+                db_summary <- dplyr::select(db_sessions, session_id, db_deployment_date = deployment_date, individ_id, active) %>% dplyr::collect()
+                if(nrow(db_summary) > 0){
+                    log_warn(
+                        logger_id_deployed,
+                        ":\n", paste(capture.output(print(deployment_summary, n = nrow(deployment_summary)))[c(-1, -3)], collapse = "\n"),
+                        logger_id_deployed, " \n existing database sessions", ":\n", paste(capture.output(print(db_summary, n = nrow(db_summary)))[c(-1, -3)], collapse = "\n")
+                    )
+                }
             }
 
             log_warn("- Check which session these deployments should occur in. Is there an error in the metadata sheet?")
@@ -190,7 +204,7 @@ push_deployments <- function(deployments, dry_run = FALSE) {
 
 
                 valid_loggers <- db_sessions$logger_serial_no[db_sessions$starttime_gmt >= db_sessions$deployment_years]
-                deployment_wrong_years <- deployments[!deployments$logger_id_deployed %in% valid_loggers, ]
+                deployment_wrong_years <- deployments[!deployments$logger_id_deployed %in% valid_loggers & !grepl("ignore_year", deployments$comment), ]
                 n_wrong_years <- nrow(deployment_wrong_years)
                 if (n_wrong_years > 0) {
                     log_warn(glue::glue("The following {n_wrong_years} loggers cannot be registered as being deployed as the open session present in the database does not start in the year the logger was deployed"))
@@ -206,7 +220,7 @@ push_deployments <- function(deployments, dry_run = FALSE) {
                     log_warn("- The startup of this session may not have been registered in the database")
                 }
 
-                deployments <- deployments[deployments$logger_id_deployed %in% valid_loggers, ]
+                deployments <- deployments[deployments$logger_id_deployed %in% valid_loggers | grepl("ignore_year", deployments$comment), ]
             }
         }
 
@@ -267,12 +281,16 @@ push_retrievals <- function(retrievals, dry_run = FALSE) {
             log_warn(glue::glue("The following {n_missing_deployments} logger/ring combinations cannot be registered as being retrieved as they have no matching deployment events in the database."))
             log_warn("Attempting to push them to the database would result in an error. These loggers will not be registered as retrieved")
 
-            retrieval_deploy_df <- data.frame(
-                logger_id = retrievals_missing_deployments$logger_id_deployed,
-                retrieval_id = NA,
-                active = TRUE
-            )
-            logger_deployment_exists <- get_db_metadata_import(retrieval_deploy_df, "loggers.logging_session", additional_db_col_names = c("individ_id"))
+            # get logger_deployment_exists
+            db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logging_session"))
+            db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
+            db_sessions <- dplyr::left_join(db_sessions, db_logger_info, by = "logger_id")
+            db_sessions <- dplyr::filter(db_sessions, logger_serial_no %in% retrievals_missing_deployments$logger_id_retrieved & active & !is.na(deployment_id))
+            db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_info"))
+            db_deployment <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
+            db_sessions <- dplyr::left_join(db_sessions, db_logger_info, by = "individ_id", suffix = c("", ".y"))
+            db_sessions <- dplyr::left_join(db_sessions, db_deployment, by = "individ_id", suffix = c("", ".y"))
+            logger_deployment_exists <- dplyr::select(db_sessions, logger_serial_no, db_date = deployment_date, db_ring_number = ring_number) %>% dplyr::collect()
 
             for (i in seq_len(nrow(retrievals_missing_deployments))) {
                 retrieval_summary <- retrievals_missing_deployments[i, c("date", "ring_number", "logger_id_retrieved", "logger_model_deployed", "comment")]
@@ -281,14 +299,16 @@ push_retrievals <- function(retrievals, dry_run = FALSE) {
                     missing_logger_id,
                     ":\n", paste(capture.output(print(retrieval_summary, n = nrow(retrieval_summary)))[c(-1, -3)], collapse = "\n")
                 )
-                if (missing_logger_id %in% logger_deployment_exists$logger_id) {
-                    logger_db_deployment <- logger_deployment_exists[logger_deployment_exists$logger_id == missing_logger_id, ]
+                if (missing_logger_id %in% logger_deployment_exists$logger_serial_no) {
+                    logger_db_deployment <- logger_deployment_exists[logger_deployment_exists$logger_serial_no == missing_logger_id, ]
                     log_warn(
                         "There is a deployment in the database on an open session of this logger, but it does not match the ring number and euring code of the retrieval event. ",
                         ":\n", paste(capture.output(print(logger_db_deployment, n = nrow(logger_db_deployment)))[c(-1, -3)], collapse = "\n")
                     )
                 }
             }
+
+            # Check if a retrieval already exists for this logger/ring combo - would indicate a date mismatch.
 
             log_warn("- Check METADATA sheet for an appropriate deployment event.")
             log_warn("- Check starttime_gmt of a session would contain the deployment event.")
@@ -338,7 +358,7 @@ push_shutdowns <- function(shutdown, dry_run = FALSE) {
     # if a session is to be shut down and has a deployment, check for a retrieval
     shutdown_deployment_df <- data.frame(session_id = paste0(shutdown$logger_serial_no, "_", as.Date(shutdown$starttime_gmt)))
     existing_deployments <- !check_db_metadata_import(shutdown_deployment_df, "loggers.deployment")
-    shutdowns_with_deployments <- shutdown[existing_deployments, ]
+    shutdowns_with_deployments <- shutdown[existing_deployments & !shutdown$download_type %in% c("Lost", "Failed", "Not used"), ]
     shutdown_retrieval_df <- data.frame(session_id = paste0(shutdowns_with_deployments$logger_serial_no, "_", as.Date(shutdowns_with_deployments$starttime_gmt)))
     missing_retrievals <- check_db_metadata_import(shutdown_retrieval_df, "loggers.retrieval")
     shutdowns_missing_retrievals <- shutdowns_with_deployments[missing_retrievals, ]

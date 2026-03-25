@@ -224,7 +224,7 @@ load_all_master_import <- function(combine = TRUE, skip = c(), distinct = TRUE, 
             return(all_sheets[[which(all_paths_distinct == current_path)]])
         })
         names(all_sheets) <- all_colony
-        
+
     } else {
         names(all_sheets) <- all_colony_distinct
     }

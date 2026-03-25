@@ -264,12 +264,31 @@ check_retrieval_db <- function(retrievals) {
     if (nrow(retrievals) == 0) {
         return(retrievals)
     }
-    db_retrievals_df <- tibble(
+    db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
+    db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
+    db_retrievals <- dplyr::left_join(db_retrievals, db_logger_info, by = "logger_id", suffix = c("", ".y"))
+    retrieval_individ_id <- paste(retrievals$euring_code, retrievals$ring_number, sep = "_")
+    all_db_retrievals <- dplyr::filter(db_retrievals, retrieval_date %in% retrievals$date, logger_serial_no %in% retrievals$logger_id_retrieved, individ_id %in% retrieval_individ_id) %>%
+        dplyr::select(retrieval_date, individ_id, logger_serial_no, retrieval_id) %>%
+        dplyr::collect()
+
+    db_retrieval_df <- tibble(
         retrieval_date = retrievals$date,
-        individ_id = paste(retrievals$euring_code, retrievals$ring_number, sep = "_")
+        individ_id = retrieval_individ_id,
+        logger_serial_no = retrievals$logger_id_retrieved
     )
-    new_rows_bool <- check_db_metadata_import(db_retrievals_df, "loggers.retrieval")
-    new_retrievals <- retrievals[new_rows_bool, ]
+    db_retrieval_df <- left_join(db_retrieval_df, all_db_retrievals, by = join_by(retrieval_date, individ_id, logger_serial_no))
+
+    new_retrievals <- retrievals[is.na(db_retrieval_df$retrieval_id), ]
+
+
+
+    # db_retrievals_df <- tibble(
+    #     retrieval_date = retrievals$date,
+    #     individ_id = paste(retrievals$euring_code, retrievals$ring_number, sep = "_")
+    # )
+    # new_rows_bool <- check_db_metadata_import(db_retrievals_df, "loggers.retrieval")
+    # new_retrievals <- retrievals[new_rows_bool, ]
     return(new_retrievals)
 }
 
@@ -286,11 +305,22 @@ check_deployment_db <- function(deployments) {
     if (nrow(deployments) == 0) {
         return(deployments)
     }
+    db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
+    db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
+    db_deployments <- dplyr::left_join(db_deployments, db_logger_info, by = "logger_id", suffix = c("", ".y"))
+    deployments_individ_id <- paste(deployments$euring_code, deployments$ring_number, sep = "_")
+    all_db_deployments <- dplyr::filter(db_deployments, deployment_date %in% deployments$date, logger_serial_no %in% deployments$logger_id_deployed, individ_id %in% deployments_individ_id) %>%
+        dplyr::select(deployment_date, individ_id, logger_serial_no, deployment_id) %>%
+        dplyr::collect()
+
     db_deployments_df <- tibble(
         deployment_date = deployments$date,
-        individ_id = paste(deployments$euring_code, deployments$ring_number, sep = "_")
+        individ_id = deployments_individ_id,
+        logger_serial_no = deployments$logger_id_deployed
     )
-    new_rows_bool <- check_db_metadata_import(db_deployments_df, "loggers.deployment")
-    new_deployments <- deployments[new_rows_bool, ]
+    db_deployments_df <- left_join(db_deployments_df, all_db_deployments, by = join_by(deployment_date, individ_id, logger_serial_no))
+    # Need to join
+    # new_rows_bool <- check_db_metadata_import(db_deployments_df, "loggers.deployment")
+    new_deployments <- deployments[is.na(db_deployments_df$deployment_id), ]
     return(new_deployments)
 }

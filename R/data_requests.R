@@ -301,7 +301,7 @@ data_request <- function(
     data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
     start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL, 
     age_deployment = "A", export = TRUE, output_dir = NULL,
-    additional_notes = "", additional_data_files = list(), additional_files = list()) {
+    additional_notes = "", additional_data_files = list(), additional_files = list(), additional_data = list()) {
     start_date <- as.Date(paste0(start_year, "-01-01"))
     end_date <- as.Date(paste0(end_year, "-12-31")) + 1
     all_data <- list()
@@ -325,7 +325,7 @@ data_request <- function(
 
     if ("GLS_positional_data" %in% data_types) {
         log_info("Fetching GLS position data...")
-        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment = age_deployment)
+        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment_class = age_deployment)
         all_data$GLS_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
             description = "GLS Positional data"
@@ -341,8 +341,9 @@ data_request <- function(
         )
     }
 
+    all_data <- c(all_data, additional_data)
 
-    if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% data_types)) {
+    if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% c(data_types, names(all_data)))) {
         log_info("Fetching individual data...")
         individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL)
         if (!is.null(species)) {
@@ -370,7 +371,14 @@ data_request <- function(
         if (!is.null(species)) {
             logger_info <- logger_info[logger_info$deployment_species %in% species, ]
         }
-        all_data$logger_info <- list(data = individuals, description = "Logger info")
+        if ("GLS_positional_data" %in% names(all_data)) {
+            indiv_ids <- unique(all_data$GLS_positional_data$data$individ_id)
+            logger_info <- logger_info[logger_info$individ_id %in% indiv_ids, ]
+        } else if ("IRMA_positional_data" %in% names(all_data)) {
+            indiv_ids <- unique(all_data$IRMA_positional_data$data$individ_id)
+            logger_info <- logger_info[logger_info$individ_id %in% indiv_ids, ]
+        }
+        all_data$logger_info <- list(data = logger_info, description = "Logger info")
     }
 
     descriptions <- c(
@@ -404,13 +412,13 @@ data_request <- function(
     # should log the removal of the data
     all_data <- all_data[data_exists_bool]
 
-    if (any(c("GLS_positional_data", "light_data", "temperature_data", "immersion_data") %in% names(all_data))) {
+    if (any(c("GLS_positional_data", "IRMA_positional_data", "light_data", "temperature_data", "immersion_data") %in% names(all_data))) {
         times <- NULL
     } else {
         times <- c(start_date, end_date)
     }
 
-    if (any(c("GLS_positional_data", "individual_data") %in% names(all_data))) {
+    if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data") %in% names(all_data))) {
         species <- NULL
         colony <- NULL
     }
@@ -435,4 +443,136 @@ data_request <- function(
             data_request_result
         )
     }
+}
+
+#' Get IRMA data from OneDrive
+#'
+#' This function retrieves IRMA positional data from OneDrive for a specified species, colony, time range. and age class.
+#' The function reads the IRMA data from RDS files stored in the SEATRACK OneDrive folder, filters the data based on the provided parameters, and returns a data frame containing the relevant IRMA positional data.
+#' @param start_year An integer representing the start year for the data retrieval.
+#' @param end_year An integer representing the end year for the data retrieval. Defaults to the current year.
+#' @param species An optional string specifying the species to filter the data. If NULL, data for all species will be retrieved.
+#' @param colony An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.
+#' @param age_deployment An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".
+#' @param release An optional string specifying the release of the IRMA data to retrieve. Defaults to "20241120".
+#' @param version An optional string specifying the version of the IRMA data to retrieve. Defaults to "v3.1".
+#' @return A named list to be appended inside the data_request function.
+get_irma_from_onedrive <- function(
+    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL,
+    age_deployment = "A", release = "20241120", version = "v3.1") {
+    start_date <- as.Date(paste0(start_year, "-01-01"))
+    end_date <- as.Date(paste0(end_year, "-12-31")) + 1
+
+    all_species <- cbind.data.frame(
+        full_name = c(
+            "Little auk", "Atlantic puffin", "Northern fulmar",
+            "Black-legged kittiwake", "Common guillemot", "Brünnich's guillemot"
+        ),
+        latin_name = c("Alle_alle", "Fratercula_arctica", "Fulmarus_glacialis", "Rissa_tridactyla", "Uria_aalge", "Uria_lomvia"),
+        acronym = c("ALALL", "FRARC", "FUGLA", "RITRI", "URAAL", "URLOM")
+    )
+    if (!is.null(species)) {
+        target_species <- all_species[tolower(all_species$full_name) %in% tolower(species), ]
+    } else {
+        target_species <- all_species
+    }
+
+    irma_dir <- file.path(the$sea_track_folder, "Data", "Data products", "IRMA_data")
+    all_irma_files <- list.files(path = irma_dir, pattern = paste0(release, "_", gsub(".", "\\.", version, fixed = TRUE), "\\.rds$"), recursive = TRUE)
+    all_irma_data <- list()
+    for (i in seq_len(nrow(target_species))) {
+        current_species <- target_species[i, ]
+        irma_file_path <- all_irma_files[grep(current_species$acronym, all_irma_files)]
+        irma_file <- readRDS(file.path(irma_dir, irma_file_path))
+        irma_file <- dplyr::mutate(irma_file, individ_year_tracked = case_when(
+            lubridate::month(timestamp) %in% c(6:12) ~ paste(individ_id, lubridate::year(timestamp), formatC(as.numeric(substr(lubridate::year(timestamp), 3, 4)) + 1, flag = "0", width = 2), sep = "_"),
+            lubridate::month(timestamp) %in% c(1:5) ~ paste(individ_id, lubridate::year(timestamp) - 1, formatC(as.numeric(substr(lubridate::year(timestamp), 3, 4)), flag = "0", width = 2), sep = "_")
+        ))
+        irma_file <- dplyr::filter(irma_file, as.Date(timestamp) >= start_date & as.Date(timestamp) <= end_date)
+
+        db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logging_session"))
+
+        if (!is.null(colony)) {
+            db_sessions <- dplyr::filter(db_sessions, colony == {{ colony }})
+        }
+
+        db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
+
+        db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
+
+
+        db_info <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_status"))
+        db_deployments <- dplyr::left_join(db_deployments, db_info, dplyr::join_by("session_id", deployment_date == status_date), suffix = c("", ".status"))
+        db_deployments <- dplyr::mutate(db_deployments,
+            age_deployment = age,
+            age_class_irma = ifelse(tolower(age) %in% c("pullus", "chick", "pull") & !is.na(age), "C", "A"),
+        )
+
+        db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
+        db_sessions <- dplyr::left_join(db_sessions, db_logger_info, by = "logger_id", suffix = c("", ".logger"))
+
+        db_sessions <- dplyr::left_join(db_sessions, db_deployments, by = "deployment_id", suffix = c("", ".deployment"))
+        db_sessions <- dplyr::left_join(db_sessions, db_retrievals, by = "retrieval_id", suffix = c("", ".retrieval"))
+
+        db_colony <- dplyr::tbl(con, dbplyr::in_schema("metadata", "colony"))
+        db_sessions <- dplyr::left_join(db_sessions, db_colony, by = dplyr::join_by(colony == colony_int_name), suffix = c("", ".colony"))
+        db_sessions <- dplyr::select(db_sessions,
+            logger_id = logger_serial_no,
+            logger_model,
+            year_tracked,
+            session_id,
+            individ_id,
+            deployment_date,
+            retrieval_date,
+            ring_number,
+            country_code = euring_code,
+            species,
+            colony,
+            col_lon = lon,
+            col_lat = lat,
+            sex,
+            age_deployment,
+            age_class_irma,
+            data_responsible
+        )
+
+        irma_db_info <- dplyr::filter(irma_file, session_id %in% dplyr::pull(db_sessions, session_id)) %>% dplyr::select(
+            session_id,
+            date_time = timestamp,
+            loc_type,
+            lon,
+            lat
+        )
+
+        irma_db_info <- dplyr::inner_join(irma_db_info, db_sessions, by = "session_id", copy = TRUE)
+        irma_db_info$id <- seq_len(nrow(irma_db_info))
+        irma_db_info <- dplyr::select(
+            irma_db_info,
+            id,
+            date_time,
+            logger_id,
+            logger_model,
+            year_tracked,
+            session_id,
+            individ_id,
+            deployment_date,
+            retrieval_date,
+            ring_number,
+            country_code,
+            species,
+            colony,
+            col_lon,
+            col_lat,
+            loc_type,
+            lon,
+            lat,
+            sex,
+            age_deployment,
+            age_class_irma,
+            data_responsible
+        )
+        all_irma_data <- rbind(all_irma_data, irma_db_info)
+    }
+
+    return(list(IRMA_positional_data = list(data = all_irma_data, description = "IRMA Positional data")))
 }

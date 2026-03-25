@@ -105,8 +105,8 @@ knitr::include_graphics(image_path)
 `r if(has_pos) {"| *For more information about the processing of GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2735757)*"}`
 `r if(has_pos) {"| *contact re. GLS data processing: vegard.brathen@nina.no*"}`
 `r if(has_pop) {"| *For more information about the creation of population maps, please see this [paper](https://www.int-res.com/articles/meps_oa/m676p255.pdf)*"}`
-`r if(has_pop) {"| *contact re. Population maps: arnaud.tarroux@nina.no*"}`
-`r if(has_irma_pos) {"| *For more information about the use of IRMA to fill in gaps in the GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2595504)*"}`
+`r if(has_pop) {"| *Contact re. Population maps: arnaud.tarroux@nina.no*"}`
+`r if(has_irma_pos) {"| *For more information about the use of IRMA to fill in gaps in the GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2595504) and the disclaimer below*"}`
 `r if(has_irma_pos) {"| *contact re. IRMA: arnaud.tarroux@nina.no*"}`
 | ___________________________________________________________________________________________________
 ## Package overview
@@ -128,7 +128,7 @@ knitr::include_graphics(image_path)
 | **Data responsible**:
 `r knitr::kable(params$data_responsible, col.names = c("Species", "Colony", "Responsible persons"))`
 | ___________________________________________________________________________________________________
-## Disclaimer
+## Data use disclaimer
 | ___________________________________________________________________________________________________
 | Data is shared under the [Agreement of Understanding](https://seatrack.net/wp-content/uploads/2024/11/SEATRACK_Agreement-of-understanding_2024.pdf).
 | Depending on the intended use of the data, include the SEATRACK program group and data responsible individuals early in the process. 

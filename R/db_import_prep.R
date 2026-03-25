@@ -291,7 +291,7 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         metadata$logger_model_retrieved[metadata$logger_model_retrieved %in% fixable$md_model] <- fixable$db_model[match(metadata$logger_model_retrieved[metadata$logger_model_retrieved %in% fixable$md_model], fixable$md_model)]
         metadata$logger_model_deployed[metadata$logger_model_deployed %in% fixable$md_model] <- fixable$db_model[match(metadata$logger_model_deployed[metadata$logger_model_deployed %in% fixable$md_model], fixable$md_model)]
         startup_shutdown$logger_model[startup_shutdown$logger_model %in% fixable$md_model] <- fixable$db_model[match(startup_shutdown$logger_model[startup_shutdown$logger_model %in% fixable$md_model], fixable$md_model)]
-        
+
         problem_logger_models <- problem_logger_models[!problem_logger_models %in% fixable$md_model]
     }
 
@@ -370,11 +370,11 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     # As the above only checks startups and shutdowns, we need to check for sessions that might have missing deployments or retrievals
     log_info("Check deployments")
     deployments_new <- prepare_session_deployments(startup_shutdown, metadata, TRUE, TRUE)
-    missing_deployment_ids <- paste(deployments_new$sessions$logger_serial_no, deployments_new$sessions$starttime_gmt)
+    missing_deployment_ids <- paste(deployments_new$sessions$logger_serial_no[!is.na(deployments_new$sessions$logger_serial_no)], deployments_new$sessions$starttime_gmt[!is.na(deployments_new$sessions$logger_serial_no)])
 
     log_info("Check retrievals")
     retrievals_new <- prepare_session_retrievals(startup_shutdown, metadata, TRUE, TRUE)
-    missing_retrieval_ids <- paste(retrievals_new$sessions$logger_serial_no, retrievals_new$sessions$starttime_gmt)
+    missing_retrieval_ids <- paste(retrievals_new$sessions$logger_serial_no[!is.na(retrievals_new$sessions$logger_serial_no)], retrievals_new$sessions$starttime_gmt[!is.na(retrievals_new$sessions$logger_serial_no)])
 
     # which of our closed sessions are open sessions in the database vs. not existing at all in the database?
     db_shutdown_starts_df <-
@@ -623,8 +623,8 @@ prepare_session_deployments <- function(sessions, metadata, filter_sessions = FA
 
         deployed_match_idx <- deployed_match_idx[!original_idx %in% duplicate_idx]
         sessions <- sessions[!original_idx %in% duplicate_idx, ]
-        original_idx <- original_idx[!original_idx %in% duplicate_idx]
         session_has_matches <- session_has_matches[!original_idx %in% duplicate_idx]
+        original_idx <- original_idx[!original_idx %in% duplicate_idx]
     }
 
     if (report_missing) {
@@ -653,10 +653,9 @@ prepare_session_deployments <- function(sessions, metadata, filter_sessions = FA
         deployment_id <- paste(deployments$logger_id_deployed, deployments$date)
         # Get filtered retrieval IDs
         new_deployments_id <- paste(new_deployments$logger_id_deployed, new_deployments$date)
-        # Get back session index of only IDs present in new retrievals
-        session_idx <- original_idx[session_has_matches][deployment_id %in% new_deployments_id]
 
-        sessions <- sessions[session_idx, ]
+        sessions <- sessions[session_has_matches, ]
+        sessions <- sessions[deployment_id %in% new_deployments_id, ]
     }
 
     return(list(deployments = new_deployments, sessions = sessions))
@@ -711,8 +710,8 @@ prepare_session_retrievals <- function(sessions, metadata, filter_sessions = FAL
         }
         retrieved_match_idx <- retrieved_match_idx[!original_idx %in% duplicate_idx]
         sessions <- sessions[!original_idx %in% duplicate_idx, ]
-        original_idx <- original_idx[!original_idx %in% duplicate_idx]
         session_has_matches <- session_has_matches[!original_idx %in% duplicate_idx]
+        original_idx <- original_idx[!original_idx %in% duplicate_idx]
     }
 
     flat_retrieved_match_idx <- unlist(retrieved_match_idx)
@@ -743,10 +742,9 @@ prepare_session_retrievals <- function(sessions, metadata, filter_sessions = FAL
         retrieval_id <- paste(retrievals$logger_id_retrieved, retrievals$date)
         # Get filtered retrieval IDs
         new_retrievals_id <- paste(new_retrievals$logger_id_retrieved, new_retrievals$date)
-        # Get back session index of only IDs present in new retrievals
-        session_idx <- original_idx[session_has_matches][retrieval_id %in% new_retrievals_id]
 
-        sessions <- sessions[session_idx, ]
+        sessions <- sessions[session_has_matches, ]
+        sessions <- sessions[retrieval_id %in% new_retrievals_id, ]
     }
 
     return(list(retrievals = new_retrievals, sessions = sessions))
