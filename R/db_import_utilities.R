@@ -267,17 +267,27 @@ check_retrieval_db <- function(retrievals) {
     db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
     db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
     db_retrievals <- dplyr::left_join(db_retrievals, db_logger_info, by = "logger_id", suffix = c("", ".y"))
-    retrieval_individ_id <- paste(retrievals$euring_code, retrievals$ring_number, sep = "_")
-    all_db_retrievals <- dplyr::filter(db_retrievals, retrieval_date %in% retrievals$date, logger_serial_no %in% retrievals$logger_id_retrieved, individ_id %in% retrieval_individ_id) %>%
-        dplyr::select(retrieval_date, individ_id, logger_serial_no, retrieval_id) %>%
+    db_individ_info <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_info"))
+    db_retrievals <- dplyr::left_join(db_retrievals, db_individ_info, by = "individ_id", suffix = c("", ".y"))
+
+    # retrieval_individ_id <- paste(retrievals$euring_code, retrievals$ring_number, sep = "_")
+    all_db_retrievals <- dplyr::filter(
+        db_retrievals,
+        retrieval_date %in% retrievals$date &
+            logger_serial_no %in% retrievals$logger_id_retrieved &
+            euring_code %in% retrievals$euring_code &
+            ring_number %in% retrievals$ring_number
+    ) %>%
+        dplyr::select(retrieval_date, euring_code, ring_number, logger_serial_no, retrieval_id) %>%
         dplyr::collect()
 
     db_retrieval_df <- tibble(
         retrieval_date = retrievals$date,
-        individ_id = retrieval_individ_id,
+        euring_code = retrievals$euring_code,
+        ring_number = retrievals$ring_number,
         logger_serial_no = retrievals$logger_id_retrieved
     )
-    db_retrieval_df <- left_join(db_retrieval_df, all_db_retrievals, by = join_by(retrieval_date, individ_id, logger_serial_no))
+    db_retrieval_df <- left_join(db_retrieval_df, all_db_retrievals, by = join_by(retrieval_date, euring_code, ring_number, logger_serial_no))
 
     new_retrievals <- retrievals[is.na(db_retrieval_df$retrieval_id), ]
 
@@ -308,17 +318,29 @@ check_deployment_db <- function(deployments) {
     db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
     db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
     db_deployments <- dplyr::left_join(db_deployments, db_logger_info, by = "logger_id", suffix = c("", ".y"))
-    deployments_individ_id <- paste(deployments$euring_code, deployments$ring_number, sep = "_")
-    all_db_deployments <- dplyr::filter(db_deployments, deployment_date %in% deployments$date, logger_serial_no %in% deployments$logger_id_deployed, individ_id %in% deployments_individ_id) %>%
-        dplyr::select(deployment_date, individ_id, logger_serial_no, deployment_id) %>%
+    db_individ_info <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_info"))
+    db_deployments <- dplyr::left_join(db_deployments, db_individ_info, by = "individ_id", suffix = c("", ".y"))
+
+
+    # deployments_individ_id <- paste(deployments$euring_code, deployments$ring_number, sep = "_")
+
+    all_db_deployments <- dplyr::filter(
+        db_deployments,
+        deployment_date %in% deployments$date &
+            logger_serial_no %in% deployments$logger_id_deployed &
+            euring_code %in% deployments$euring_code &
+            ring_number %in% deployments$ring_number
+    ) %>%
+        dplyr::select(deployment_date, euring_code, ring_number, logger_serial_no, deployment_id) %>%
         dplyr::collect()
 
     db_deployments_df <- tibble(
         deployment_date = deployments$date,
-        individ_id = deployments_individ_id,
+        euring_code = deployments$euring_code,
+        ring_number = deployments$ring_number,
         logger_serial_no = deployments$logger_id_deployed
     )
-    db_deployments_df <- left_join(db_deployments_df, all_db_deployments, by = join_by(deployment_date, individ_id, logger_serial_no))
+    db_deployments_df <- left_join(db_deployments_df, all_db_deployments, by = join_by(deployment_date, euring_code, ring_number, logger_serial_no))
     # Need to join
     # new_rows_bool <- check_db_metadata_import(db_deployments_df, "loggers.deployment")
     new_deployments <- deployments[is.na(db_deployments_df$deployment_id), ]

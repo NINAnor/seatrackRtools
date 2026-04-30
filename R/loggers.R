@@ -321,10 +321,18 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
             logger_restart_datetime <- paste(restart_info$startdate_GMT, format(restart_info$starttime_GMT, "%H:%M:%S"))
             logger_restart_datetime <- strptime(logger_restart_datetime, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
 
+            # Get full logger_info from database
+            db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info")) %>%
+                dplyr::filter(logger_serial_no == {{ logger_id }}) %>%
+                dplyr::select(logger_serial_no, logger_model, producer, production_year, project) %>%
+                dplyr::mutate(logging_mode = NA, intended_species = NA, intended_location = NA) %>%
+                dplyr::collect()
+
             # Get full logger info from existing sheet
             previous_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
-            if (nrow(previous_sessions) == 0) {
-                log_error(paste("Logger ID:", logger_id, "not present in master startup sheet. Cannot get full info for restart."))
+
+            if (nrow(db_sessions) == 0 && nrow(previous_sessions) == 0) {
+                log_error(paste("Logger ID:", logger_id, "not present in master startup sheet or db. Cannot get full info for restart."))
                 next
             }
             # Check this restart doesn't already exist in previous sessions
@@ -332,6 +340,9 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
             if (paste(logger_id, as.character(logger_restart_datetime)) %in% previous_session_logger_dates) {
                 log_info(paste("Logger ID:", logger_id, "session starting at", logger_restart_datetime, " already in master sheet."))
                 next
+            }
+            if (nrow(db_sessions) > 0) {
+                previous_sessions <- previous_sessions
             }
             # generate new row
             new_session <- tibble(

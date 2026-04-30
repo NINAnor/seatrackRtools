@@ -1,5 +1,5 @@
 # Function to return background colour based on value of x
-success_col_func <- function(x, background) {
+success_col_func <- function(x, background, breaks = c(0, 0.05, 0.25, 0.45, Inf)) {
     # Define colour palette
     col_palette <- c("#EF3F27", "#FEC76B", "#F2EF92", "#A3D09C")
     # Check which values in x are numeric
@@ -12,7 +12,7 @@ success_col_func <- function(x, background) {
     if (sum(numeric_x_bool) > 0) {
         # Cut numeric values into bins and assign colours
         col_cut <- cut(x[numeric_x_bool],
-            breaks = c(0, 0.05, 0.25, 0.45, Inf),
+            breaks = breaks,
             include.lowest = TRUE, label = FALSE, right = FALSE
         )
         # Assign colours based on bins

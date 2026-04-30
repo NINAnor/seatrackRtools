@@ -59,11 +59,40 @@ file_list <- c(file_list, "| -- data")
 included_data <- c()
 for (i in seq_along(params$file_list)) {
   included_data <- c(included_data, names(params$file_list)[i])
-  file_list <- c(file_list, knitr::knit_expand(text = '| &nbsp;&nbsp;&nbsp;&nbsp;|-- {{params$file_list[[i]]$description}} (<span style="color: #ABB2B9;">{{params$file_list[[i]]$path}}</span>)'))
+  if ("files" %in% names(params$file_list[[i]])) {
+    file_list <- c(file_list, "<details>")
+  }
+
+  if ("files" %in% names(params$file_list[[i]])) {
+    base_text <- "<summary>&nbsp;"
+  } else {
+    base_text <- "| &nbsp;&nbsp;&nbsp;&nbsp;"
+  }
+
+  base_text <- paste0(base_text, "|-- {{params$file_list[[i]]$description}}")
+  if ("path" %in% names(params$file_list[[i]])) {
+    base_text <- paste(base_text, '(<span style="color: #ABB2B9;">{{params$file_list[[i]]$path}}</span>)')
+  }
+  if ("files" %in% names(params$file_list[[i]])) {
+    base_text <- paste0(base_text, " - click to expand</summary>")
+  }
+  file_list <- c(file_list, knitr::knit_expand(text = base_text))
+
+
+  if ("files" %in% names(params$file_list[[i]])) {
+    for (j in seq_along(params$file_list[[i]]$files)) {
+      base_text <- "| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- {{params$file_list[[i]]$files[[j]]$description}}"
+      if ("path" %in% names(params$file_list[[i]]$files[[j]])) {
+        sub_path <- basename(params$file_list[[i]]$files[[j]]$path)
+        base_text <- paste(base_text, '(<span style="color: #ABB2B9;">{{sub_path}}</span>)')
+      }
+      file_list <- c(file_list, knitr::knit_expand(text = base_text))
+    }
+    file_list <- c(file_list, "</details>")
+  }
 }
 
 file_list <- paste(knitr::knit_expand(text = file_list), collapse = "\n")
-
 species_list <- md_list(unique(params$species))
 colony_list <- md_list(unique(params$colonies))
 time_span <- knitr::knit_expand(text = "| - *{{params$times[1]}}* - *{{params$times[2]}}*")
@@ -71,10 +100,14 @@ additional_notes <- knitr::knit_expand(text = "| {{params$notes}}")
 
 has_pop <- any(grepl("Abundance_model", included_data))
 has_pos <- "GLS_positional_data" %in% included_data
-has_irma_pos <- "IRMA_positional_data" %in% included_data
+has_irma_pos <- any(grepl("IRMA_positional_data", included_data))
+# To pull the generic overview from the YAML
 if (has_pop) {
-  # To pull the generic overview from the YAML
+
   included_data <- c(included_data, "population_maps")
+}
+if (has_irma_pos) {
+  included_data <- c(included_data, "IRMA_positional_data")
 }
 
 # Load schema
@@ -85,8 +118,6 @@ included_schema <- names(schema_dict$datasets)[names(schema_dict$datasets) %in% 
 schema_md <- paste(sapply(included_schema, render_schema, dict = schema_dict), collapse = "\n\n")
 
 image_path <- system.file("img", "SEATRACK_logo_landscape.jpg", package = "seatrackR")
-
-
 ```
 
 ```{r include-package-image, echo=FALSE}

@@ -428,8 +428,9 @@ load_partner_metadata <- function(file_path) {
     if (!file.exists(file_path)) {
         stop("The specified file does not exist.")
     }
+    # Peak at file to ascertain version
 
-    # Desired sheets
+    # Desired sheets (V1)
     sheets <- c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES")
 
     # Skip the first row as it contains extra headers.

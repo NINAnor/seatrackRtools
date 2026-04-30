@@ -7122,7 +7122,7 @@
       "RemoteUsername": "ninanor",
       "RemoteRepo": "seatrackR",
       "RemoteRef": "main",
-      "RemoteSha": "9cc6494eb42a90bd362ce919b045fed1420b38da",
+      "RemoteSha": "7f32696a80a173011b004854433d185e37a08252",
       "Remotes": "seatrackR=github::NINAnor/NinaR"
     },
     "seatrackRgls": {

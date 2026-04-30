@@ -95,6 +95,9 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
     file_list <- list()
 
     for (type in names(all_data)) {
+        if (type %in% c("raw_data")) {
+            next()
+        }
         log_info(paste0("Writing data type: ", type))
         file_name <- paste0(request_name, "_", type, "_", creation_date, ".gz.parquet")
         file_list[[type]] <- list(path = file_name, description = all_data[[type]]$description)
@@ -134,11 +137,35 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
         data_responsible <- NULL
     }
 
+    if ("raw_data" %in% names(all_data)) {
+        raw_data_files <- all_data$raw_data$data
+        file_list$raw_data <- list(description = "raw_data", files = list())
+        dir.create(file.path(tmp_dir, "data", "raw_data"), recursive = TRUE)
+        for (i in seq_len(nrow(raw_data_files$local_files))) {
+            current_file <- raw_data_files$local_files[i, ]
+            if (!file.exists(current_file$file_path)) {
+                log_warn(paste0("Raw data file not found, skipping: ", current_file$file_path))
+                next
+            }
+            log_info(paste0("Adding raw data file to data package: ", current_file$file_path))
+            new_name <- paste0(current_file$session_id, current_file$file_basename)
+            new_path <- file.path(tmp_dir, "data", "raw_data", new_name)
+            file.copy(current_file$file_path, new_path)
+            file_list$raw_data$files[[paste("raw_data", current_file$session_id, current_file$filename, sep = "_")]] <- list(
+                path = file.path("raw_data", new_name),
+                description = paste0("Raw ", current_file$file_basename, " for session ", current_file$session_id)
+            )
+        }
+        # Do the same for FTP files.
+    }
+
     if (length(additional_data_files) > 0) {
         db_colonies <- seatrackR::getColonies()
-        for (additional_file in additional_data_files) {
+        for (i in seq_along(additional_data_files)) {
+            additional_file <- additional_data_files[[i]]
             if (!file.exists(additional_file$path)) {
-                warning(paste0("Additional file not found, skipping: ", additional_file$path))
+                log_warn(paste0("Additional file not found, skipping: ", additional_file$path))
+                additional_data_files[[i]] <- NULL
                 next
             }
             log_info(paste0("Adding additional data file to data package: ", additional_file$path))
@@ -146,6 +173,7 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
             current_description <- additional_file$description
             new_path <- file.path(tmp_dir, "data", basename(current_path))
             file.copy(current_path, new_path)
+
             # Try to extract metadata from additional_data_file
             # Check if this is a pop map
             if (grepl("Abundance_Model", additional_file$path)) {
@@ -178,15 +206,18 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
 
                 popmap_responsible <- seatrackR::get_responsible(colony = colony_names, species = common)
                 data_responsible <- rbind(data_responsible, popmap_responsible)
+                file_list[[paste("Abundance_model", version, common, sep = "_")]] <- list(path = basename(current_path), description = current_description)
             }
-            file_list[[paste("Abundance_model", version, common, sep = "_")]] <- list(path = basename(current_path), description = current_description)
         }
     }
+    additional_data_files <- additional_data_files[!sapply(additional_data_files, is.null)]
 
     if (length(additional_files) > 0) {
-        for (additional_file in additional_files) {
+        for (i in seq_along(additional_files)) {
+            additional_file <- additional_files[[i]]
             if (!file.exists(additional_file$path)) {
-                warning(paste0("Additional file not found, skipping: ", additional_file$path))
+                log_warn(paste0("Additional file not found, skipping: ", additional_file$path))
+                additional_files[[i]] <- NULL
                 next
             }
             log_info(paste0("Adding additional file to data package: ", additional_file$path))
@@ -195,6 +226,7 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
             file.copy(current_path, new_path)
         }
     }
+    additional_files <- additional_files[!sapply(additional_files, is.null)]
 
 
     # render markdown template to the temp dir
@@ -282,10 +314,12 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' @param species An optional string specifying the species to filter the data. If NULL, data for all species will be retrieved.
 #' @param colony An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.
 #' @param age_deployment An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".
+#' @param session_ID Optional list of strings specifying exact session IDs.
 #' @param export A boolean indicating whether to export the data package as a zip file. If FALSE, the function will return the data as a list instead.
 #' @param output_dir An optional string specifying the directory where the exported zip file will be saved.
 #' @param additional_notes An optional string containing additional notes to be included in the README file in the export.
 #' @param additional_data_files An optional list of additional data files to include in the data directory of the exported zip file. Each element of the list should contain the file path to the file to be included and a description.
+#' @param additional_data An optional named list of lists containing `data`: a data.frame to be included in the export and `description`: A string description. Each name corresponds to a data type. This can be used to include data that is not directly available through the SEATRACK database, but is relevant for the data request.
 #' @param additional_files An optional list of additional files to include in the exported zip file. Each element of the list should contain the file path to the file to be included and a description.
 #' If NULL, it will be saved in a default location based on the current year.
 #' @return If `export` is `TRUE`: None. The function creates a zip file in the specified output directory.
@@ -298,9 +332,11 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' @concept data_requests
 data_request <- function(
     request_name,
-    data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
-    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL, 
-    age_deployment = "A", export = TRUE, output_dir = NULL,
+    data_types = c("raw_data", "GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
+    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL,
+    age_deployment = "A",
+    session_ID = NULL,
+    export = TRUE, output_dir = NULL,
     additional_notes = "", additional_data_files = list(), additional_files = list(), additional_data = list()) {
     start_date <- as.Date(paste0(start_year, "-01-01"))
     end_date <- as.Date(paste0(end_year, "-12-31")) + 1
@@ -325,7 +361,7 @@ data_request <- function(
 
     if ("GLS_positional_data" %in% data_types) {
         log_info("Fetching GLS position data...")
-        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment_class = age_deployment)
+        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID)
         all_data$GLS_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
             description = "GLS Positional data"
@@ -334,7 +370,7 @@ data_request <- function(
 
     if ("IRMA_positional_data" %in% data_types) {
         log_info("Fetching IRMA position data...")
-        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = colony)
+        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = colony, sessionId = session_ID)
         all_data$IRMA_positional_data <- list(
             data = irma_pos[irma_pos$date_time >= start_date & irma_pos$date_time < end_date, ],
             description = "IRMA Positional data"
@@ -345,38 +381,78 @@ data_request <- function(
 
     if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% c(data_types, names(all_data)))) {
         log_info("Fetching individual data...")
-        individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL)
-        if (!is.null(species)) {
-            individuals <- individuals[individuals$species %in% species, ]
-        }
+        individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL, age_at_deployment = age_deployment, species = species)
 
         if ("individual_data" %in% data_types) {
+            # Filter the individual information based on the data being returned
+            session_ids <- c()
             if ("GLS_positional_data" %in% names(all_data)) {
-                indiv_ids <- unique(all_data$GLS_positional_data$data$individ_id)
-                individuals <- individuals[individuals$individ_id %in% indiv_ids, ]
-            } else if ("IRMA_positional_data" %in% names(all_data)) {
-                indiv_ids <- unique(all_data$IRMA_positional_data$data$individ_id)
-                individuals <- individuals[individuals$individ_id %in% indiv_ids, ]
+                session_ids <- c(session_ids, unique(all_data$GLS_positional_data$data$session_id))
+            }
+            if ("IRMA_positional_data" %in% names(all_data)) {
+                session_ids <- c(session_ids, unique(all_data$IRMA_positional_data$data$session_id))
+            }
+            if (length(session_ids) > 0) {
+                individuals <- individuals[individuals$session_id %in% session_ids, ]
+            } else {
+                overlap_individuals <- lapply(unique(individuals$session_id), function(x) {
+                    current_individ <- individuals[individuals$session_id == x, ]
+                    deployment <- current_individ[current_individ$eventType == "Deployment", ]
+                    retrieval <- current_individ[current_individ$eventType == "Retrieval", ]
+                    deployment_date <- min(deployment$status_date)
+                    if (nrow(retrieval) > 0) {
+                        retrieval_date <- max(retrieval$status_date)
+                    } else {
+                        retrieval_date <- as.Date(Inf)
+                    }
+
+                    if ((deployment_date <= end_date) && (retrieval_date >= start_date)) {
+                        return(current_individ)
+                    } else {
+                        return(NULL)
+                    }
+                })
+                individuals <- do.call(rbind, overlap_individuals)
             }
             all_data$individual_data <- list(data = individuals, description = "Individual information data")
         }
     }
+    if ("raw_data" %in% data_types) {
+        all_data$raw_data <- list(
+            data = find_raw_data(session_ids = unique(all_data$individual_data$data$session_id)),
+            description = "Raw data files"
+        )
+    }
+
     if ("logger_info" %in% data_types) {
         log_info("Fetching logger data...")
         logger_info <- seatrackR::getLoggerInfo()
-        logger_info <- logger_info[logger_info$deployment_date >= start_date & logger_info$retrieval_date < end_date, ]
-        if (!is.null(colony)) {
-            logger_info <- logger_info[logger_info$colony %in% colony, ]
-        }
-        if (!is.null(species)) {
-            logger_info <- logger_info[logger_info$deployment_species %in% species, ]
-        }
+
+        session_ids <- c()
         if ("GLS_positional_data" %in% names(all_data)) {
-            indiv_ids <- unique(all_data$GLS_positional_data$data$individ_id)
-            logger_info <- logger_info[logger_info$individ_id %in% indiv_ids, ]
-        } else if ("IRMA_positional_data" %in% names(all_data)) {
-            indiv_ids <- unique(all_data$IRMA_positional_data$data$individ_id)
-            logger_info <- logger_info[logger_info$individ_id %in% indiv_ids, ]
+            session_ids <- c(session_ids, unique(all_data$GLS_positional_data$data$session_id))
+        }
+        if ("IRMA_positional_data" %in% names(all_data)) {
+            session_ids <- c(session_ids, unique(all_data$IRMA_positional_data$data$session_id))
+        }
+        if ("raw_data" %in% names(all_data)) {
+            session_ids <- c(session_ids, unique(c(all_data$raw_data$data$local_files$session_id, all_data$raw_data$data$ftp_files$session_id)))
+        }
+        if ("individual_data" %in% names(all_data)) {
+            session_ids <- c(session_ids, unique(all_data$individual_data$data$session_id))
+        }
+
+        if (length(session_ids) > 0) {
+            logger_info <- logger_info[logger_info$session_id %in% unique(session_ids), ]
+        } else {
+            if (!is.null(colony)) {
+                logger_info <- logger_info[logger_info$colony %in% colony, ]
+            }
+            if (!is.null(species)) {
+                logger_info <- logger_info[logger_info$deployment_species %in% species, ]
+            }
+            logger_info <- logger_info[logger_info$deployment_date >= start_date & (!is.na(logger_info$retrieval_date) & logger_info$retrieval_date < end_date), ]
+            # Should filter by age too in this fallback
         }
         all_data$logger_info <- list(data = logger_info, description = "Logger info")
     }
@@ -466,10 +542,10 @@ get_irma_from_onedrive <- function(
     all_species <- cbind.data.frame(
         full_name = c(
             "Little auk", "Atlantic puffin", "Northern fulmar",
-            "Black-legged kittiwake", "Common guillemot", "Brünnich's guillemot"
+            "Black-legged kittiwake", "Common guillemot", "Brünnich's guillemot", "Leach's storm petrel"
         ),
-        latin_name = c("Alle_alle", "Fratercula_arctica", "Fulmarus_glacialis", "Rissa_tridactyla", "Uria_aalge", "Uria_lomvia"),
-        acronym = c("ALALL", "FRARC", "FUGLA", "RITRI", "URAAL", "URLOM")
+        latin_name = c("Alle_alle", "Fratercula_arctica", "Fulmarus_glacialis", "Rissa_tridactyla", "Uria_aalge", "Uria_lomvia", "Hydrobates_leucorhous"),
+        acronym <- c("ALALL", "FRARC", "FUGLA", "RITRI", "URAAL", "URLOM", "HYLEU")
     )
     if (!is.null(species)) {
         target_species <- all_species[tolower(all_species$full_name) %in% tolower(species), ]
@@ -479,6 +555,9 @@ get_irma_from_onedrive <- function(
 
     irma_dir <- file.path(the$sea_track_folder, "Data", "Data products", "IRMA_data")
     all_irma_files <- list.files(path = irma_dir, pattern = paste0(release, "_", gsub(".", "\\.", version, fixed = TRUE), "\\.rds$"), recursive = TRUE)
+    if (length(all_irma_files) == 0) {
+        stop(paste0("No IRMA files found for release ", release, " and version ", version, " in OneDrive."))
+    }
     all_irma_data <- list()
     for (i in seq_len(nrow(target_species))) {
         current_species <- target_species[i, ]
@@ -493,7 +572,7 @@ get_irma_from_onedrive <- function(
         db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logging_session"))
 
         if (!is.null(colony)) {
-            db_sessions <- dplyr::filter(db_sessions, colony == {{ colony }})
+            db_sessions <- dplyr::filter(db_sessions, colony %in% {{ colony }})
         }
 
         db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
@@ -574,5 +653,42 @@ get_irma_from_onedrive <- function(
         all_irma_data <- rbind(all_irma_data, irma_db_info)
     }
 
-    return(list(IRMA_positional_data = list(data = all_irma_data, description = "IRMA Positional data")))
+    return(list(IRMA_positional_data = list(data = all_irma_data, description = glue::glue("IRMA Positional data version: {version}, release: {release}"))))
+}
+
+#' Find raw data files for a given session ID and data type
+#'
+#' This function searches for raw data files associated with specific session IDs and a given data type. It first checks a local directory for the files and, if not found, it can be extended to check an FTP server or other storage locations.
+#' @param session_ids A vector of session IDs for which to find raw data files.
+#' @return A list containing two elements: `local_files`, a data frame of files found in the local directory with their paths, and `ftp_files`, a data frame of files found on the FTP server (currently empty, to be implemented).
+find_raw_data <- function(session_ids) {
+    # Get file name
+    db_file_archive <- dplyr::tbl(con, dbplyr::in_schema("loggers", "file_archive"))
+    session_files <- dplyr::filter(db_file_archive, session_id %in% session_ids) %>% dplyr::collect()
+
+    # Check ALL folder for associated files
+    import_directory <- file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL")
+    import_dir_files <- list.files(import_directory)
+    files_local_bool <- tolower(session_files$filename) %in% tolower(import_dir_files)
+
+    local_files <- session_files[files_local_bool, ]
+    if (length(local_files) > 0) {
+        local_files$file_path <- file.path(import_directory, local_files$filename)
+    }
+
+    missing_files <- session_files[!files_local_bool, ]
+    if (nrow(missing_files) > 0) {
+        # If nothing found, check FTP server
+        archive_files <- seatrackR::listFileArchive()
+
+        missing_files$ftp_available <- tolower(missing_files$filename) %in% tolower(archive_files$filesInArchive$filename)
+        ftp_files <- missing_files[missing_files$ftp_available, ]
+        unavailable_files <- missing_files[!missing_files$ftp_available, ]
+        if (nrow(unavailable_files) > 0) {
+            log_warn(paste0("The following raw data files were not found locally or on the FTP server and will be excluded from the data package: ", paste(unavailable_files$filename, collapse = ", ")))
+        }
+    } else {
+        ftp_files <- missing_files
+    }
+    return(list(local_files = local_files, ftp_files = ftp_files))
 }

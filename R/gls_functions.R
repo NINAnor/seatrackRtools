@@ -63,7 +63,7 @@ gls_seatrack_calibration <- function(metadata_path, split_years = "06-01") {
             template_row <- logger_calibration[1, , drop = FALSE]
             new_rows <- do.call(rbind, lapply(missing_years, function(y) {
                 r <- template_row
-
+                if ("analyzer" %in% names(r)) r$analyzer <- NA
                 if ("sun_angle_start" %in% names(r)) r$sun_angle_start <- NA
                 if ("sun_angle_end" %in% names(r)) r$sun_angle_end <- NA
                 if ("light_threshold" %in% names(r)) r$light_threshold <- NA
@@ -141,10 +141,11 @@ gls_get_existing_calibration <- function(existing_calibration_dir = file.path(th
 #' @param time_windows Logical indicating whether to split metadata into time windows based on deployment/retrieval dates. Default is TRUE.
 #' @param split_years Character string indicating the month and day to split years for calibration (e.g., "06-01" for June 1st). Default is "06-01".
 #' @param no_pos_only Logical indicating whether to include only loggers without position data in the database. Default is TRUE.
+#' @param download_types Character vector of logger download types to include (e.g., c("Successfully downloaded", "Reconstructed")). Default is c("Successfully downloaded", "Reconstructed").
 #' @return A dataframe containing metadata for the GLS loggers found in the import directory.
 #' @export
 #' @concept gls_helper
-gls_metadata <- function(import_directory, colony = NULL, species = NULL, id_year_model = NULL, time_windows = TRUE, split_years = "06-01", no_pos_only = TRUE) {
+gls_metadata <- function(import_directory, colony = NULL, species = NULL, id_year_model = NULL, time_windows = TRUE, split_years = "06-01", no_pos_only = TRUE, download_types = c("Successfully downloaded", "Reconstructed")) {
     log_info("Scan import directory for files...")
     all_files <- list.files(import_directory, pattern = "*.lux|*.lig", recursive = TRUE, full.names = TRUE)
     all_files_split <- strsplit(tools::file_path_sans_ext(basename(all_files)), "_")
@@ -170,7 +171,7 @@ gls_metadata <- function(import_directory, colony = NULL, species = NULL, id_yea
     db_info <- seatrackR::getSessionInfo(
         posdata_filename = file_info$id_year_model,
         has_pos_data = has_pos_data,
-        logger_download_type = c("Successfully downloaded", "Reconstructed"),
+        logger_download_type = download_types,
         colony_names = colony, species_names = species
     )
     if (nrow(db_info) == 0) {
@@ -179,11 +180,15 @@ gls_metadata <- function(import_directory, colony = NULL, species = NULL, id_yea
     # logger_id, logger_model, species, date_deployed, date_retrieved, colony
     metadata <- dplyr::select(
         db_info,
+        session_id,
         logger_id = logger_serial_no,
         logger_model,
         species,
+        starttime_gmt = starttime_gmt,
         date_deployed = deployment_date,
         date_retrieved = retrieval_date,
+        download_date,
+        download_type,
         colony
     )
 # # report missing files
@@ -207,7 +212,7 @@ gls_metadata <- function(import_directory, colony = NULL, species = NULL, id_yea
             new_metadata <- data.frame(
                 logger_metadata[, c("logger_id", "logger_model")],
                 time_windows,
-                logger_metadata[, !names(logger_metadata) %in% c("logger_id", "logger_model", "date_deployed", "date_retrieved")]
+                logger_metadata[, !names(logger_metadata) %in% c("logger_id", "logger_model", "session_id", "date_deployed", "date_retrieved", "starttime_gmt", "download_date", "download_type")]
             )
             new_metadata$total_years_tracked <- paste(logger_deployment_year, logger_retrieval_year, sep = "_")
             new_metadata$year_tracked <- paste(format(new_metadata$start_datetime, "%Y"), format(new_metadata$end_datetime, "%Y"), sep = "_")

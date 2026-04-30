@@ -6,18 +6,21 @@
 \usage{
 data_request(
   request_name,
-  data_types = c("GLS_positional_data", "IRMA_positional_data", "individual_data",
-    "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
+  data_types = c("raw_data", "GLS_positional_data", "IRMA_positional_data",
+    "individual_data", "light", "temperature", "activity", "population_maps",
+    "logger_info", "immersion"),
   start_year = "2000",
   end_year = format(Sys.Date(), "\%Y"),
   species = NULL,
   colony = NULL,
   age_deployment = "A",
+  session_ID = NULL,
   export = TRUE,
   output_dir = NULL,
   additional_notes = "",
   additional_data_files = list(),
-  additional_files = list()
+  additional_files = list(),
+  additional_data = list()
 )
 }
 \arguments{
@@ -35,6 +38,8 @@ data_request(
 
 \item{age_deployment}{An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".}
 
+\item{session_ID}{Optional list of strings specifying exact session IDs.}
+
 \item{export}{A boolean indicating whether to export the data package as a zip file. If FALSE, the function will return the data as a list instead.}
 
 \item{output_dir}{An optional string specifying the directory where the exported zip file will be saved.}
@@ -45,6 +50,8 @@ data_request(
 
 \item{additional_files}{An optional list of additional files to include in the exported zip file. Each element of the list should contain the file path to the file to be included and a description.
 If NULL, it will be saved in a default location based on the current year.}
+
+\item{additional_data}{An optional named list of lists containing \code{data}: a data.frame to be included in the export and \code{description}: A string description. Each name corresponds to a data type. This can be used to include data that is not directly available through the SEATRACK database, but is relevant for the data request.}
 }
 \value{
 If \code{export} is \code{TRUE}: None. The function creates a zip file in the specified output directory.

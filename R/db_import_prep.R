@@ -27,6 +27,8 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     metadata <- master_sheets$data$METADATA
     metadata <- metadata[order(metadata$date), ]
 
+    metadata$ring_number <- as.character(metadata$ring_number)
+
     startup_shutdown <- master_sheets$data$STARTUP_SHUTDOWN
     # remove cases with no startup date. For some loggers, this should be inferred from the deployment date. This can happen here.
 
@@ -120,6 +122,8 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         }
         metadata <- metadata[!invalid_sex_bool, ]
     }
+
+    # Check sexing method
 
     # check hatching success/breeding success
     metadata$hatching_success <- as.logical(metadata$hatching_success)
@@ -396,6 +400,41 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     db_to_open_only <- startup_new[is.na(startup_new$download_date), ]
     log_info(nrow(db_to_open_only), " sessions to open")
 
+    # neither db_to_close or db_to_open_only should have any duplicates. Remove these and warn the user
+    # # THIS SHOULDN'T REALLY HAPPEN - but it does!
+    # duplicate_to_close_loggers <- unique(paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model)[duplicated(paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model))])
+    # if (length(duplicate_to_close_loggers) > 0) {
+    #     log_warn(
+    #         "The following logger serial numbers have multiple close entries in the import sheet that cannot be added to the database: "
+    #     )
+
+    #     for (duplicate_logger in duplicate_to_close_loggers) {
+    #         duplicate_summary <- db_to_close_only[paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model) == duplicate_logger, c("logger_serial_no", "starttime_gmt", "download_date")]
+    #         log_warn(duplicate_logger, ":\n", paste(capture.output(print(duplicate_summary, n = nrow(duplicate_summary)))[c(-1, -3)], collapse = "\n"))
+    #     }
+
+    #     db_to_close_only <- db_to_close_only[!db_to_close_only$logger_serial_no %in% duplicate_to_close_loggers, ]
+    #     log_warn("These sessions will not be added to the database. Check if these sessions can be closed in the master import sheet.")
+    # }
+    # # WOULD SUGGEST MULTIPLE OPEN SESSIONS IN THE DB - this can happen! Or overlapping sessions within the master sheet
+
+    # duplicate_to_open_loggers <- unique(db_to_open_only$logger_serial_no[duplicated(paste(db_to_open_only$logger_serial_no, db_to_open_only$logger_model))])
+    # if (length(duplicate_to_open_loggers) > 0) {
+    #     log_warn(
+    #         "The following logger serial numbers have multiple open startup entries in the import sheet that cannot be added to the database: ",
+    #         paste(duplicate_to_open_loggers, collapse = ", ")
+    #     )
+
+    #     for (duplicate_logger in duplicate_to_open_loggers) {
+    #         duplicate_summary <- db_to_open_only[db_to_open_only$logger_serial_no == duplicate_logger, c("logger_serial_no", "starttime_gmt", "download_date")]
+    #         log_warn(duplicate_logger, ":\n", paste(capture.output(print(duplicate_summary, n = nrow(duplicate_summary)))[c(-1, -3)], collapse = "\n"))
+    #     }
+
+    #     db_to_open_only <- db_to_open_only[!db_to_open_only$logger_serial_no %in% duplicate_to_open_loggers, ]
+
+    #     log_warn("These sessions will not be added to the database. Check if these sessions can be closed in the master import sheet.")
+    # }
+
     # Combine all db IDs from these three dataframes
     all_db_ids <- paste(
         c(
@@ -433,42 +472,7 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         db_to_open_and_close <- rbind(db_to_open_and_close, startup_shutdown[startup_shutdown_id %in% deployment_retrieval_ids, ])
     }
 
-    # neither db_to_close or db_to_open_only should have any duplicates. Remove these and warn the user
 
-    # THIS SHOULDN'T REALLY HAPPEN - but it does!
-    duplicate_to_close_loggers <- unique(db_to_close_only$logger_serial_no[duplicated(paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model))])
-    if (length(duplicate_to_close_loggers) > 0) {
-        log_warn(
-            "The following logger serial numbers have multiple close entries in the import sheet that cannot be added to the database: ",
-            paste(duplicate_to_close_loggers, collapse = ", ")
-        )
-
-        for (duplicate_logger in duplicate_to_close_loggers) {
-            duplicate_summary <- db_to_close_only[paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model) == duplicate_logger, c("logger_serial_no", "starttime_gmt", "download_date")]
-            log_warn(duplicate_logger, ":\n", paste(capture.output(print(duplicate_summary, n = nrow(duplicate_summary)))[c(-1, -3)], collapse = "\n"))
-        }
-
-        db_to_close_only <- db_to_close_only[!db_to_close_only$logger_serial_no %in% duplicate_to_close_loggers, ]
-        log_warn("These sessions will not be added to the database. Check if these sessions can be closed in the master import sheet.")
-    }
-    # WOULD SUGGEST MULTIPLE OPEN SESSIONS IN THE DB - this can happen! Or overlapping sessions within the master sheet
-
-    duplicate_to_open_loggers <- unique(db_to_open_only$logger_serial_no[duplicated(paste(db_to_open_only$logger_serial_no, db_to_open_only$logger_model))])
-    if (length(duplicate_to_open_loggers) > 0) {
-        log_warn(
-            "The following logger serial numbers have multiple open startup entries in the import sheet that cannot be added to the database: ",
-            paste(duplicate_to_open_loggers, collapse = ", ")
-        )
-
-        for (duplicate_logger in duplicate_to_open_loggers) {
-            duplicate_summary <- db_to_open_only[db_to_open_only$logger_serial_no == duplicate_logger, c("logger_serial_no", "starttime_gmt", "download_date")]
-            log_warn(duplicate_logger, ":\n", paste(capture.output(print(duplicate_summary, n = nrow(duplicate_summary)))[c(-1, -3)], collapse = "\n"))
-        }
-
-        db_to_open_only <- db_to_open_only[!db_to_open_only$logger_serial_no %in% duplicate_to_open_loggers, ]
-
-        log_warn("These sessions will not be added to the database. Check if these sessions can be closed in the master import sheet.")
-    }
 
     # batch open closed sessions
     db_to_open_and_close_list <- list()
@@ -554,16 +558,33 @@ prepare_session_batch <- function(session_batch, metadata) {
 
 #' Get open session dates
 #' Convenience function to get the open date for a set of logger sessions.
-#' If the download date is available, use that. If not, use the shutdown date. If both exist, use the later date.
+#' If the shutdown date is available, use that. If not, use the download date. If both exist, use the earlier date.
+#' If there is another session from the same logger, use the start of that.
 #' If neither are available, use a date far in the future to indicate the session is still open.
 #' @param sessions A tibble containing session information from master import startup_shutdown.
 #' @return A vector of POSIXct dates representing the open dates for the sessions.
 #' @concept utility
 get_open_session_dates <- function(sessions) {
-    session_batch_open_date <- sessions$download_date
-    later_shutdown_bool <- (!is.na(sessions$shutdown_date)) & (!is.na(sessions$download_date)) & (sessions$shutdown_date > sessions$download_date)
-    session_batch_open_date[later_shutdown_bool] <- sessions$shutdown_date[later_shutdown_bool]
-    session_batch_open_date[is.na(session_batch_open_date)] <- sessions$shutdown_date[is.na(session_batch_open_date)]
+    session_batch_open_date <- sessions$shutdown_date
+    session_batch_open_date[is.na(session_batch_open_date)] <- sessions$download_date[is.na(session_batch_open_date)]
+    earlier_download_bool <- (!is.na(sessions$shutdown_date)) & (!is.na(sessions$download_date)) & (sessions$shutdown_date > sessions$download_date)
+    session_batch_open_date[earlier_download_bool] <- sessions$download_date[earlier_download_bool]
+
+    inferred_close <- sapply(which(is.na(session_batch_open_date)), function(missing_idx) {
+        logger_id <- sessions$logger_serial_no[missing_idx]
+        start_time <- sessions$starttime_gmt[missing_idx]
+        logger_model <- sessions$logger_model[missing_idx]
+        # Find other instances of this logger ID that are not this start time
+        other_sessions <- sessions[sessions$logger_serial_no %in% logger_id & sessions$logger_model == logger_model & sessions$starttime_gmt > start_time, ]
+        if (nrow(other_sessions) == 0) {
+            return(NA)
+        }
+        # find which other session start time is closes to start time
+        time_diff <- other_sessions$starttime_gmt - start_time
+        return(as.Date(other_sessions$starttime_gmt[time_diff == min(time_diff)][1]) - 1)
+    })
+    session_batch_open_date[is.na(session_batch_open_date)] <- inferred_close
+
     session_batch_open_date[is.na(session_batch_open_date)] <- sessions$starttime_gmt[is.na(session_batch_open_date)] + (100 * 60 * 60 * 24 * 365)
     return(session_batch_open_date)
 }
