@@ -1,3 +1,11 @@
+#' Push activity data to database
+#'
+#' This function scans the import directory for activity data files, checks for corresponding sessions in the database, processes the files, and uploads the data to the SEATRACK database. It also handles error checking and logs the progress of the upload.
+#' The function is designed to be flexible and can handle different types of activity data (e.g., accelerometer, light, temperature) based on the file extensions and specified processing functions.
+#' @param None. The function operates on the files in the import directory and the database.
+#' @return None. The function uploads the activity data to the SEATRACK database and logs the progress and any issues encountered during the process.
+#' @export
+#' @concept activity_db_import
 push_db_activity <- function() {
     recording_types <- list(
         accelerometer = list(table_name = "accelerometer_raw", process_function = NULL, extensions = c(), argname = "accelerationData"),
@@ -85,6 +93,20 @@ push_db_activity <- function() {
     }
 }
 
+#' Handle activity data file
+#'
+#' This function processes a single activity data file based on the specified recording type. It reads the file, clips the data to the deployment and retrieval dates, and uploads the data to the SEATRACK database. It also handles error checking and logs the progress of the upload.
+#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
+#' @param recording_type A list containing information about the recording type, including table_name, process_function, extensions, and argname.
+#' @return None. The function uploads the processed activity data to the SEATRACK database and logs the progress and any issues encountered during the process.
+#' @export
+#' @concept activity_db_import
+#' @details The function performs the following steps:
+#' 1. Reads the activity data file using the specified processing function for the recording type
+#' 2. Clips the data to the deployment and retrieval dates specified in the file_info
+#' 3. Uploads the clipped data to the SEATRACK database using the appropriate table based on the recording type
+#' 4. Logs the progress of the upload and any issues encountered during the process
+#' 5. If the upload is successful, it also uploads the raw file to the archive
 handle_activity <- function(file_info, recording_type) {
     log_trace(glue::glue("{file_info$filename} - begin handling."))
     if (is.null(recording_type$process_function)) {

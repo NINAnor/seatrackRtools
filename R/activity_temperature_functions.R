@@ -1,3 +1,10 @@
+#' Load temperature data from file
+#'
+#' This function loads temperature data from a specified file, processes it according to the file type (Lotek or Migrate), and returns a cleaned data frame with date-time and temperature information. The function includes error checking for data quality and consistency.
+#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
+#' @return A cleaned data frame with date-time, temperature, and standardized temperature information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 load_temperature_data <- function(file_info) {
     # load a light data file
     if (file_info$extension == "tem") {
@@ -8,6 +15,13 @@ load_temperature_data <- function(file_info) {
     return(light_data)
 }
 
+#' Handle temperature data from Migrate logger
+#'
+#' This function processes temperature data from a Migrate logger file. It reads the file, extracts date-time and temperature information, performs error checking for data quality, and returns a cleaned data frame with standardized temperature values.
+#' @param filepath The full path to the Migrate logger file to be processed.
+#' @return A cleaned data frame with date-time, temperature, and standardized temperature information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 handle_temperature_migrate <- function(filepath) {
     file <- read.table(filepath, sep = "\t", header = FALSE, fill = TRUE, skip = 20)
     if (nrow(file) < 5) {
@@ -74,6 +88,13 @@ handle_temperature_migrate <- function(filepath) {
     return(file_final)
 }
 
+#' Handle temperature data from Lotek logger
+#'
+#' This function processes temperature data from a Lotek logger file. It reads the file, extracts date-time and temperature information, performs error checking for data quality, and returns a cleaned data frame with standardized temperature values.
+#' @param filepath The full path to the Lotek logger file to be processed.
+#' @return A cleaned data frame with date-time, temperature, and standardized temperature information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 handle_temperature_lotek <- function(filepath) {
     file <- read.table(filepath, sep = ",", header = FALSE, fill = TRUE, skip = 1)
     if (nrow(file) < 5) {

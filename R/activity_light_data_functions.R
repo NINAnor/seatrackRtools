@@ -1,3 +1,10 @@
+#' Load light data from file
+#'
+#' This function loads light data from a specified file, processes it according to the file type (Lotek or Migrate), and returns a cleaned data frame with date-time and light information. The function includes error checking for data quality and consistency.
+#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
+#' @return A cleaned data frame with date-time, light, and standardized light information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 load_light_data <- function(file_info) {
     # load a light data file
     if (file_info$extension == "lig") {
@@ -8,6 +15,13 @@ load_light_data <- function(file_info) {
     return(light_data)
 }
 
+#' Handle light data from Migrate logger
+#'
+#' This function processes light data from a Migrate logger file. It reads the file, extracts date-time and light information, performs error checking for data quality, and returns a cleaned data frame with standardized light values.
+#' @param filepath The full path to the Migrate logger file to be processed.
+#' @return A cleaned data frame with date-time, light, and standardized light information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 handle_light_migrate <- function(filepath) {
     # FROM VEGARD'S ORIGINAL SCRIPT
 
@@ -98,6 +112,13 @@ handle_light_migrate <- function(filepath) {
     return(file_final)
 }
 
+#' Handle light data from Lotek logger
+#'
+#' This function processes light data from a Lotek logger file. It reads the file, extracts date-time and light information, performs error checking for data quality, and returns a cleaned data frame with standardized light values.
+#' @param filepath The full path to the Lotek logger file to be processed.
+#' @return A cleaned data frame with date-time, light, and standardized light information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 handle_light_lotek <- function(filepath) {
     file <- read.table(filepath, sep = ",", header = FALSE, fill = TRUE, skip = 1)
     if (nrow(file) < 5) {

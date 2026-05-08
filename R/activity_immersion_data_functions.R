@@ -1,3 +1,10 @@
+#' Load immersion data from file
+#'
+#' This function loads immersion data from a specified file, processes it according to the file type (Lotek or Migrate), and returns a cleaned data frame with date-time and conductivity information. The function includes error checking for data quality and consistency.
+#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
+#' @return A cleaned data frame with date-time, conductivity, and standardized conductivity information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 load_immersion_data <- function(file_info) {
     # load a data file
     if (file_info$extension == "act") {
@@ -8,6 +15,13 @@ load_immersion_data <- function(file_info) {
     return(light_data)
 }
 
+#' Handle immersion data from Migrate logger
+#'
+#' This function processes immersion data from a Migrate logger file. It reads the file, extracts date-time and conductivity information, performs error checking for data quality, and returns a cleaned data frame with standardized conductivity values.
+#' @param filepath The full path to the Migrate logger file to be processed.
+#' @return A cleaned data frame with date-time, conductivity, and standardized conductivity information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 handle_immersion_migrate <- function(filepath) {
     file <- read.table(filepath, sep = "\t", header = FALSE, fill = TRUE, skip = 20)
     if (nrow(file) < 5) {
@@ -90,6 +104,13 @@ handle_immersion_migrate <- function(filepath) {
     return(file_final)
 }
 
+#' Handle immersion data from Lotek logger
+#'
+#' This function processes immersion data from a Lotek logger file. It reads the file, extracts date-time and conductivity information, performs error checking for data quality, and returns a cleaned data frame with standardized conductivity values.
+#' @param filepath The full path to the Lotek logger file to be processed.
+#' @return A cleaned data frame with date-time, conductivity, and standardized conductivity information, or NULL if the file fails quality checks.
+#' @export
+#' @concept activity_db_import
 handle_immersion_lotek <- function(filepath) {
     file <- read.table(filepath, sep = ",", header = FALSE, fill = TRUE, skip = 1)
     if (nrow(file) < 5) {
