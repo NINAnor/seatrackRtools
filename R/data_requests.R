@@ -381,7 +381,7 @@ data_request <- function(
 
     if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% c(data_types, names(all_data)))) {
         log_info("Fetching individual data...")
-        individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL, age_at_deployment = age_deployment, species = species)
+        individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL, age_at_deployment = age_deployment, species = species, session_id = session_ID)
 
         if ("individual_data" %in% data_types) {
             # Filter the individual information based on the data being returned
