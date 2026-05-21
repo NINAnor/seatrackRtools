@@ -95,7 +95,8 @@ gls_process_species_colony <- function(
     all_colony_info = gls_seatrack_colony_info(),
     no_pos_only = TRUE,
     filter_plots = TRUE,
-    skip_existing_files = TRUE) {
+    skip_existing_files = TRUE,
+    stop_on_error = FALSE) {
     calibration_dir <- file.path(the$sea_track_folder, "Database", "Imports_Logger data", "Callibration_GLSpositions", species, colony)
     calibration_filename <- paste(species, colony, "calibration.xlsx", sep = "_")
     calibration_data <- file.path(calibration_dir, calibration_filename)
@@ -138,7 +139,9 @@ gls_process_species_colony <- function(
         import_directory = import_directory,
         calibration_data = calibration_data,
         all_colony_info = all_colony_info,
-        output_directory = pos_output_dir
+        output_directory = pos_output_dir,
+        stop_on_error = stop_on_error,
+        show_filter_plots = filter_plots
     )
 }
 
