@@ -163,14 +163,17 @@ push_deployments <- function(deployments, dry_run = FALSE) {
         dplyr::select(logger_serial_no, starttime_gmt, programmed_gmt_time, session_id, deployment_id) %>%
         dplyr::collect()
 
-    existing_sessions <- dplyr::mutate(existing_sessions, start_time = as.POSIXct(ifelse(!is.na(programmed_gmt_time), programmed_gmt_time, starttime_gmt), tz = "UTC"))
+    existing_sessions <- dplyr::mutate(existing_sessions,
+        start_time = as.POSIXct(ifelse(!is.na(programmed_gmt_time), programmed_gmt_time, starttime_gmt), tz = "UTC"),
+        start_date = as.Date(start_time)
+    )
     deploy_startup_df <- data.frame(
         logger_serial_no = deployments$logger_id_deployed,
         deployment_date = deployments$date
     )
-    deploy_startup_df <- dplyr::left_join(deploy_startup_df, existing_sessions, by = join_by("logger_serial_no", dplyr::closest(deployment_date >= start_time)))
+    deploy_startup_df <- dplyr::left_join(deploy_startup_df, existing_sessions, by = join_by("logger_serial_no", dplyr::closest(deployment_date >= start_date)))
 
-    deploy_startup_df <- deploy_startup_df[!is.na(deploy_startup_df$start_time) & deploy_startup_df$deployment_date >= as.Date(deploy_startup_df$start_time), ]
+    deploy_startup_df <- deploy_startup_df[!is.na(deploy_startup_df$start_time) & deploy_startup_df$deployment_date >= deploy_startup_df$start_date, ]
 
     missing_startups <- !paste(deployments$logger_id_deployed, deployments$date) %in% paste(deploy_startup_df$logger_serial_no, deploy_startup_df$deployment_date)
     deployment_missing_startups <- deployments[missing_startups, ]

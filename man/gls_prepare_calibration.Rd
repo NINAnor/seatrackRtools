@@ -15,7 +15,8 @@ gls_prepare_calibration(
   rerun_existing = TRUE,
   include_existing = TRUE,
   filter_plots = FALSE,
-  rerun_existing_plots = FALSE
+  rerun_existing_plots = FALSE,
+  new_filter_settings = FALSE
 )
 }
 \arguments{

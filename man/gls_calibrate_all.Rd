@@ -10,7 +10,8 @@ gls_calibrate_all(
   include_existing = TRUE,
   filter_plots = FALSE,
   rerun_existing_plots = FALSE,
-  n_workers = 4
+  n_workers = 4,
+  new_filter_settings = FALSE
 )
 }
 \arguments{

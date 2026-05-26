@@ -4,7 +4,7 @@
 #' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
 #' @return A cleaned data frame with date-time, conductivity, and standardized conductivity information, or NULL if the file fails quality checks.
 #' @export
-#' @concept activity_db_import
+#' @concept activity_db_prep
 load_immersion_data <- function(file_info) {
     # load a data file
     if (file_info$extension == "act") {
@@ -21,7 +21,7 @@ load_immersion_data <- function(file_info) {
 #' @param filepath The full path to the Migrate logger file to be processed.
 #' @return A cleaned data frame with date-time, conductivity, and standardized conductivity information, or NULL if the file fails quality checks.
 #' @export
-#' @concept activity_db_import
+#' @concept activity_db_prep
 handle_immersion_migrate <- function(filepath) {
     file <- read.table(filepath, sep = "\t", header = FALSE, fill = TRUE, skip = 20)
     if (nrow(file) < 5) {
@@ -110,7 +110,7 @@ handle_immersion_migrate <- function(filepath) {
 #' @param filepath The full path to the Lotek logger file to be processed.
 #' @return A cleaned data frame with date-time, conductivity, and standardized conductivity information, or NULL if the file fails quality checks.
 #' @export
-#' @concept activity_db_import
+#' @concept activity_db_prep
 handle_immersion_lotek <- function(filepath) {
     file <- read.table(filepath, sep = ",", header = FALSE, fill = TRUE, skip = 1)
     if (nrow(file) < 5) {

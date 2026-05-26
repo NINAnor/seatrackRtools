@@ -439,7 +439,7 @@ check_critical_missing <- function(startup_rows, logger_partner_logger_data, mas
                         # Otherwise, there is no guaruntee this is the correct session
                         log_info(paste(
                             "Logger ID", logger_id, "was retrieved on", logger_partner_logger_data$date, "but no startup was added. \n",
-                            "This falls into a single open session started on", str(valid_open_sessions$starttime_gmt), ". The retrieval may belong to this open session"
+                            "This falls into a single open session started on", strftime(valid_open_sessions$starttime_gmt), ". The retrieval may belong to this open session"
                         ))
                         return(FALSE)
                     } else {

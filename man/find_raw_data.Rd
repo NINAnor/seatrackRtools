@@ -15,3 +15,4 @@ A list containing two elements: \code{local_files}, a data frame of files found 
 \description{
 This function searches for raw data files associated with specific session IDs and a given data type. It first checks a local directory for the files and, if not found, it can be extended to check an FTP server or other storage locations.
 }
+\concept{data_requests}

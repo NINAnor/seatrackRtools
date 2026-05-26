@@ -7,13 +7,14 @@
 gls_calibrate_species_colony(
   import_directory = file.path(the$sea_track_folder,
     "Database\\\\Imports_Logger data\\\\Raw logger data\\\\ALL"),
-  species,
-  colony,
+  species = NULL,
+  colony = NULL,
   no_pos_only = TRUE,
   rerun_existing = TRUE,
   include_existing = TRUE,
   filter_plots = FALSE,
-  rerun_existing_plots = TRUE
+  rerun_existing_plots = TRUE,
+  new_filter_settings = FALSE
 )
 }
 \arguments{

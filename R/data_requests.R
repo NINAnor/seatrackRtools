@@ -533,6 +533,8 @@ data_request <- function(
 #' @param release An optional string specifying the release of the IRMA data to retrieve. Defaults to "20241120".
 #' @param version An optional string specifying the version of the IRMA data to retrieve. Defaults to "v3.1".
 #' @return A named list to be appended inside the data_request function.
+#' @export
+#' @concept data_requests
 get_irma_from_onedrive <- function(
     start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL, session_ids = NULL,
     age_deployment = "A", release = "20241120", version = "v3.1") {
@@ -673,6 +675,8 @@ get_irma_from_onedrive <- function(
 #' This function searches for raw data files associated with specific session IDs and a given data type. It first checks a local directory for the files and, if not found, it can be extended to check an FTP server or other storage locations.
 #' @param session_ids A vector of session IDs for which to find raw data files.
 #' @return A list containing two elements: `local_files`, a data frame of files found in the local directory with their paths, and `ftp_files`, a data frame of files found on the FTP server (currently empty, to be implemented).
+#' @export
+#' @concept data_requests
 find_raw_data <- function(session_ids) {
     # Get file name
     db_file_archive <- dplyr::tbl(con, dbplyr::in_schema("loggers", "file_archive"))

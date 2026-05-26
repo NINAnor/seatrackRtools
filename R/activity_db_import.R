@@ -220,6 +220,7 @@ push_db_activity <- function(import_directory = file.path(the$sea_track_folder, 
 #' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
 #' @param recording_type A list containing information about the recording type, including table_name, process_function, extensions, and argname.
 #' @return A dataframe containing the clipped activity data for the specified file and recording type, or NULL if there was an error in processing the file or if there is no data within the deployment and retrieval dates.
+#' @concept activity_db_import
 load_activity <- function(file_info, recording_type) {
     if (is.null(recording_type$process_function)) {
         log_warn(glue::glue("No handling function for {recording_type$table_name}"))

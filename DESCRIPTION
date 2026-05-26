@@ -1,6 +1,6 @@
 Package: seatrackRtools
 Title: Internal utility Functions for Seatrack
-Version: 0.0.0.34
+Version: 0.0.0.35
 Authors@R:
     c(
     person("Julian", "Evans", email = "julian.evans@nina.no", role = c("aut", "cre")),

@@ -10,7 +10,8 @@ gls_calibrate_file(
   rerun_existing = TRUE,
   include_existing = TRUE,
   filter_plots = TRUE,
-  rerun_existing_plots = TRUE
+  rerun_existing_plots = TRUE,
+  new_filter_settings = FALSE
 )
 }
 \arguments{

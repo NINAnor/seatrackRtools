@@ -48,7 +48,7 @@ success_col_func_retrieved <- function(x) {
 #' @export
 #' @importFrom openxlsx2 wb_workbook wb_set_col_widths wb_set_row_heights int2col
 #' @importFrom flexlsx wb_add_flextable
-#' @concept appendix_table
+#' @concept annual_report
 export_appendix_table_excel <- function(ft, file_path, sheet_name = "table", body_cell_width = 4.5, species_height = 100, lme_width = 4) {
     wb <- openxlsx2::wb_workbook()$add_worksheet(sheet_name)
     wb <- flexlsx::wb_add_flextable(wb, sheet_name, ft)
@@ -81,7 +81,7 @@ export_appendix_table_excel <- function(ft, file_path, sheet_name = "table", bod
 #' create_appendix_table(field_plan_clean, "GLS", "A", target_species)
 #' }
 #' @export
-#' @concept appendix_table
+#' @concept annual_report
 create_appendix_table <- function(field_plan_clean, logger_type, age_target, target_species) {
     # If Total is not in target_species, add it
     if (!"Total" %in% target_species) {

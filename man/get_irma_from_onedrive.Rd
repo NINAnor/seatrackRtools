@@ -9,6 +9,7 @@ get_irma_from_onedrive(
   end_year = format(Sys.Date(), "\%Y"),
   species = NULL,
   colony = NULL,
+  session_ids = NULL,
   age_deployment = "A",
   release = "20241120",
   version = "v3.1"
@@ -36,3 +37,4 @@ A named list to be appended inside the data_request function.
 This function retrieves IRMA positional data from OneDrive for a specified species, colony, time range. and age class.
 The function reads the IRMA data from RDS files stored in the SEATRACK OneDrive folder, filters the data based on the provided parameters, and returns a data frame containing the relevant IRMA positional data.
 }
+\concept{data_requests}
