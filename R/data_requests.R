@@ -534,7 +534,7 @@ data_request <- function(
 #' @param version An optional string specifying the version of the IRMA data to retrieve. Defaults to "v3.1".
 #' @return A named list to be appended inside the data_request function.
 get_irma_from_onedrive <- function(
-    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL,
+    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL, session_ids = NULL,
     age_deployment = "A", release = "20241120", version = "v3.1") {
     start_date <- as.Date(paste0(start_year, "-01-01"))
     end_date <- as.Date(paste0(end_year, "-12-31")) + 1
@@ -547,17 +547,75 @@ get_irma_from_onedrive <- function(
         latin_name = c("Alle_alle", "Fratercula_arctica", "Fulmarus_glacialis", "Rissa_tridactyla", "Uria_aalge", "Uria_lomvia", "Hydrobates_leucorhous"),
         acronym <- c("ALALL", "FRARC", "FUGLA", "RITRI", "URAAL", "URLOM", "HYLEU")
     )
-    if (!is.null(species)) {
-        target_species <- all_species[tolower(all_species$full_name) %in% tolower(species), ]
-    } else {
-        target_species <- all_species
-    }
+
+
 
     irma_dir <- file.path(the$sea_track_folder, "Data", "Data products", "IRMA_data")
-    all_irma_files <- list.files(path = irma_dir, pattern = paste0(release, "_", gsub(".", "\\.", version, fixed = TRUE), "\\.rds$"), recursive = TRUE)
+    all_irma_files <- list.files(path = irma_dir, pattern = paste0(release, "_", gsub(".", "\\.", version, fixed = TRUE), ".*", "\\.rds$"), recursive = TRUE)
     if (length(all_irma_files) == 0) {
         stop(paste0("No IRMA files found for release ", release, " and version ", version, " in OneDrive."))
     }
+
+    db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logging_session"))
+    db_colony <- dplyr::tbl(con, dbplyr::in_schema("metadata", "colony"))
+    db_sessions <- dplyr::left_join(db_sessions, db_colony, by = dplyr::join_by(colony == colony_int_name), suffix = c("", ".colony"))
+
+    db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
+
+    db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
+
+    db_info <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_status"))
+    db_deployments <- dplyr::left_join(db_deployments, db_info, dplyr::join_by("session_id", deployment_date == status_date), suffix = c("", ".status"))
+    db_deployments <- dplyr::mutate(db_deployments,
+        age_deployment = age,
+        age2 = if_else(is.na(age), "NA", age),
+        age_class_irma = ifelse(tolower(age2) %in% c("pullus", "chick", "pull"), "C", "A")
+    )
+
+    db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
+    db_sessions <- dplyr::left_join(db_sessions, db_logger_info, by = "logger_id", suffix = c("", ".logger"))
+
+    db_sessions <- dplyr::left_join(db_sessions, db_deployments, by = "deployment_id", suffix = c("", ".deployment"))
+    db_sessions <- dplyr::left_join(db_sessions, db_retrievals, by = "retrieval_id", suffix = c("", ".retrieval"))
+
+    db_sessions <- dplyr::select(db_sessions,
+        logger_id = logger_serial_no,
+        logger_model,
+        year_tracked,
+        session_id,
+        individ_id,
+        deployment_date,
+        retrieval_date,
+        ring_number,
+        country_code = euring_code,
+        species,
+        colony,
+        col_lon = lon,
+        col_lat = lat,
+        sex,
+        age_deployment,
+        age_class_irma,
+        data_responsible
+    )
+
+    if (!is.null(session_ids)) {
+        db_sessions <- dplyr::filter(db_sessions, session_id %in% {{ session_ids }})
+    }
+
+    if (!is.null(colony)) {
+        db_sessions <- dplyr::filter(db_sessions, colony %in% {{ colony }})
+    }
+
+    if (!is.null(age_deployment)) {
+        db_sessions <- dplyr::filter(db_sessions, age_class_irma %in% {{ age_deployment }})
+    }
+
+    if (!is.null(species)) {
+        db_sessions <- dplyr::filter(db_sessions, species %in% {{ species }})
+    }
+
+    target_species <- all_species[tolower(all_species$full_name) %in% tolower(dplyr::pull(db_sessions, species)), ]
+
     all_irma_data <- list()
     for (i in seq_len(nrow(target_species))) {
         current_species <- target_species[i, ]
@@ -568,52 +626,6 @@ get_irma_from_onedrive <- function(
             lubridate::month(timestamp) %in% c(1:5) ~ paste(individ_id, lubridate::year(timestamp) - 1, formatC(as.numeric(substr(lubridate::year(timestamp), 3, 4)), flag = "0", width = 2), sep = "_")
         ))
         irma_file <- dplyr::filter(irma_file, as.Date(timestamp) >= start_date & as.Date(timestamp) <= end_date)
-
-        db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logging_session"))
-
-        if (!is.null(colony)) {
-            db_sessions <- dplyr::filter(db_sessions, colony %in% {{ colony }})
-        }
-
-        db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
-
-        db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
-
-
-        db_info <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_status"))
-        db_deployments <- dplyr::left_join(db_deployments, db_info, dplyr::join_by("session_id", deployment_date == status_date), suffix = c("", ".status"))
-        db_deployments <- dplyr::mutate(db_deployments,
-            age_deployment = age,
-            age_class_irma = ifelse(tolower(age) %in% c("pullus", "chick", "pull") & !is.na(age), "C", "A"),
-        )
-
-        db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
-        db_sessions <- dplyr::left_join(db_sessions, db_logger_info, by = "logger_id", suffix = c("", ".logger"))
-
-        db_sessions <- dplyr::left_join(db_sessions, db_deployments, by = "deployment_id", suffix = c("", ".deployment"))
-        db_sessions <- dplyr::left_join(db_sessions, db_retrievals, by = "retrieval_id", suffix = c("", ".retrieval"))
-
-        db_colony <- dplyr::tbl(con, dbplyr::in_schema("metadata", "colony"))
-        db_sessions <- dplyr::left_join(db_sessions, db_colony, by = dplyr::join_by(colony == colony_int_name), suffix = c("", ".colony"))
-        db_sessions <- dplyr::select(db_sessions,
-            logger_id = logger_serial_no,
-            logger_model,
-            year_tracked,
-            session_id,
-            individ_id,
-            deployment_date,
-            retrieval_date,
-            ring_number,
-            country_code = euring_code,
-            species,
-            colony,
-            col_lon = lon,
-            col_lat = lat,
-            sex,
-            age_deployment,
-            age_class_irma,
-            data_responsible
-        )
 
         irma_db_info <- dplyr::filter(irma_file, session_id %in% dplyr::pull(db_sessions, session_id)) %>% dplyr::select(
             session_id,

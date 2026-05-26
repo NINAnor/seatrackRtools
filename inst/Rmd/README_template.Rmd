@@ -169,7 +169,7 @@ knitr::include_graphics(image_path)
 
 ```{r, show_examples, echo=FALSE, results='asis'}
 if (has_pos) {
-  pos_path <- params$file_list[["GLS_positional_data"]]$path
+  pos_path <- [[which(grepl("GLS_positional_data", names(params$file_list)))[1]]]
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_locations.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -177,7 +177,7 @@ if (has_pos) {
 }
 
 if (has_irma_pos) {
-  IRMA_pos_path <- params$file_list[["IRMA_positional_data"]]$path
+  IRMA_pos_path <- params$file_list[[which(grepl("IRMA_positional_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_IRMA_locations.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -185,7 +185,7 @@ if (has_irma_pos) {
 }
 
 if ("individual_data" %in% included_data) {
-  indiv_path <- params$file_list[["individual_data"]]$path
+  indiv_path <- params$file_list[[which(grepl("individual_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_individuals.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -193,7 +193,7 @@ if ("individual_data" %in% included_data) {
 }
 
 if ("light_data" %in% included_data) {
-  light_path <- params$file_list[["light_data"]]$path
+  light_path <- params$file_list[[[[which(grepl("light_data", names(params$file_list)))[1]]]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_light.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -201,7 +201,7 @@ if ("light_data" %in% included_data) {
 }
 
 if ("immersion_data" %in% included_data) {
-  imm_path <- params$file_list[["immersion_data"]]$path
+  imm_path <- [[which(grepl("immersion_data", names(params$file_list)))[1]]]
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_immersion.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
