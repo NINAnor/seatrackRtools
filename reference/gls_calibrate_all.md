@@ -9,9 +9,12 @@ import folder.
 ``` r
 gls_calibrate_all(
   no_pos_only = TRUE,
-  rerun_existing = TRUE,
+  rerun_existing = FALSE,
   include_existing = TRUE,
-  filter_plots = FALSE
+  filter_plots = FALSE,
+  rerun_existing_plots = FALSE,
+  n_workers = 4,
+  new_filter_settings = FALSE
 )
 ```
 
@@ -25,7 +28,7 @@ gls_calibrate_all(
 - rerun_existing:
 
   Logical indicating whether to rerun calibration for loggers that
-  already have calibration data. Default is TRUE.
+  already have calibration data. Default is FALSE.
 
 - include_existing:
 
@@ -35,6 +38,16 @@ gls_calibrate_all(
 - filter_plots:
 
   Logical indicating whether to export filter plots. Default is FALSE.
+
+- rerun_existing_plots:
+
+  Logical indicating whether to rerun calibration for loggers that
+  already have calibration plots. Default is FALSE.
+
+- n_workers:
+
+  Integer specifying the number of worker processes to use for parallel
+  processing. Default is 4.
 
 ## Value
 

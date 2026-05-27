@@ -11,19 +11,38 @@ will be removed and a warning will be logged.
 ## Usage
 
 ``` r
-prepare_session_retrievals(session_batch, metadata)
+prepare_session_retrievals(
+  sessions,
+  metadata,
+  filter_sessions = FALSE,
+  report_missing = FALSE,
+  duplicate_warnings = TRUE
+)
 ```
 
 ## Arguments
 
-- session_batch:
+- sessions:
 
-  A SessionBatch object containing session information from master
-  import startup_shutdown.
+  A tibble containing session information from master import
+  startup_shutdown.
 
 - metadata:
 
   A dataframe containing metadata information for the sessions.
+
+- filter_sessions:
+
+  Logical indicating whether to filter out sessions with no retrievals.
+
+- report_missing:
+
+  Logical indicating whether to report retrievals that are not
+  associated with any sessions.
+
+- duplicate_warnings:
+
+  Logical indicating whether to report duplicate retrievals
 
 ## Value
 

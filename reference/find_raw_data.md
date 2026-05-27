@@ -1,0 +1,25 @@
+# Find raw data files for a given session ID and data type
+
+This function searches for raw data files associated with specific
+session IDs and a given data type. It first checks a local directory for
+the files and, if not found, it can be extended to check an FTP server
+or other storage locations.
+
+## Usage
+
+``` r
+find_raw_data(session_ids)
+```
+
+## Arguments
+
+- session_ids:
+
+  A vector of session IDs for which to find raw data files.
+
+## Value
+
+A list containing two elements: `local_files`, a data frame of files
+found in the local directory with their paths, and `ftp_files`, a data
+frame of files found on the FTP server (currently empty, to be
+implemented).

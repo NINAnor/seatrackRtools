@@ -5,6 +5,7 @@
 Loading the library:
 
 ``` r
+
 library(seatrackRtools)
 ```
 
@@ -18,6 +19,7 @@ package for logging. This will print messages to the console and write
 them to a file.
 
 ``` r
+
 start_logging()
 ```
 
@@ -26,6 +28,7 @@ scripts to be more verbose by changing the log threshold using commands
 from the logger library:
 
 ``` r
+
 library(logger)
 log_threshold(TRACE)
 ```
@@ -38,11 +41,12 @@ placed in your file system. This variable will be used by many functions
 contained in this package.
 
 ``` r
-path_to_seatrack <- file.path("a_filepath","SEATRACK - shared")
+
+path_to_seatrack <- file.path("a_filepath", "SEATRACK - shared")
 set_sea_track_folder(path_to_seatrack)
 ```
 
-    #> INFO [2026-01-09 13:11:01] Sea track folder set to: /tmp/RtmphzifOl/seatrack_vignette_2ae63c143387/SEATRACK - shared
+    #> INFO [2026-05-27 14:10:26] Sea track folder set to: /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared
 
 ## Loading data
 
@@ -54,7 +58,8 @@ You can check for non_processed sheets by location, or just enter a path
 directly.
 
 ``` r
-unprocessed_metadata_paths <- get_location_unprocessed(location)
+
+unprocessed_metadata_paths <- get_location_unprocessed("location_name")
 ```
 
 The partner metadata excel can then be loaded into R.
@@ -64,19 +69,19 @@ The partner metadata excel can then be loaded into R.
 partner_data <- load_partner_metadata(partner_xlsx)
 #> Warning in (function (file, sheet, start_row = NULL, start_col = NULL,
 #> row_names = FALSE, : variable from `types` not found in data
+#> Warning in (function (file, sheet, start_row = NULL, start_col = NULL,
+#> row_names = FALSE, : variable from `types` not found in data
 ```
 
 You can then load the master file that you wish to update. This can be
 done by using the colony name.
 
 ``` r
+
 master_import <- load_master_import("TestColony")
-#> Warning in FUN(X[[i]], ...): NAs introduced by coercion
-#> Warning in FUN(X[[i]], ...): NAs introduced by coercion
-#> Warning in convert_date(x, origin = origin): NAs introduced by coercion
-#> Warning in convert_date(x, origin = origin): NAs introduced by coercion
-#> Warning in convert_date(x, origin = origin): NAs introduced by coercion
-#> Warning in convert_datetime(x, origin = origin): NAs introduced by coercion
+#> INFO [2026-05-27 14:10:27] Get Master import file for colony 'TestColony', use existing paths: TRUE
+#> NULL
+#> INFO [2026-05-27 14:10:27] Master import file for colony 'TestColony' found at: /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
 ```
 
 The function returns a class with two elements, `data` and `wb`. `wb` is
@@ -84,26 +89,16 @@ the original excel workbook from which the data was loaded. `data` is a
 list, where each element is a sheet from the imported master file.
 
 ``` r
+
 names(master_import$data)
 #> [1] "METADATA"         "STARTUP_SHUTDOWN"
 head(master_import$data$METADATA)
-#> # A tibble: 1 × 6
-#>   date       ring_number logger_id_deployed logger_id_retrieved colony   comment
-#>   <date>     <chr>       <chr>              <chr>               <chr>    <chr>  
-#> 1 2024-01-10 42          L1                 #N/A                TestCol… A smal…
-```
-
-Optionally, you can also load or initialise some sheets of nonresponsive
-loggers. This function takes a vector of file paths and a vector of
-manufacturers.
-
-Initialise the sheets if they don’t exist.
-
-``` r
-nonresponsive_list <- load_nonresponsive(
-  c(lotek_path, migrate_path),
-  c("Lotek", "Migrate Technology")
-)
+#> # A tibble: 1 × 8
+#>   date       ring_number logger_model_deployed logger_id_deployed
+#>   <date>     <chr>       <chr>                 <chr>             
+#> 1 2024-01-10 42          birdTracker5000       L1                
+#> # ℹ 4 more variables: logger_model_retrieved <dbl>, logger_id_retrieved <dbl>,
+#> #   colony <chr>, comment <chr>
 ```
 
 ## Workflow
@@ -112,18 +107,36 @@ There are several steps to updating the master import sheet. Firstly
 checking startup files for missing logger sessions.
 
 ``` r
-master_import_data <- master_import$data
-updated_startup <- add_loggers_from_startup(master_import_data$`STARTUP_SHUTDOWN`, partner_data$data$`ENCOUNTER DATA`)
+
+updated_startup <- add_loggers_from_startup(master_import, partner_data)
+#> ## seatrackR is up to date.
+#> WARN [2026-05-27 14:10:27] No database connection from which to get models
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> SUCCESS [2026-05-27 14:10:27] Adding 0 new loggers from startup files
 ```
 
 Then appending reported encounter data.
 
 ``` r
+
 updated_metadata <- append_encounter_data(
-  master_import_data$METADATA,
+  master_import$data$METADATA,
   partner_data$data$`ENCOUNTER DATA`
 )
-#> SUCCESS [2026-01-09 13:11:02] Appended 1 rows to master metadata. New total is 2 rows.
+#> SUCCESS [2026-05-27 14:10:27] Appended 1 rows to master metadata. New total is 2 rows.
 ```
 
 Finally the processing reported logger returns and attempts to update
@@ -136,19 +149,19 @@ generating new sessions for them in the master startup sheet.
 The function will also update the nonresponsive lists.
 
 ``` r
+
 updated_sessions <- handle_returned_loggers(
   "TestColony",
   updated_startup,
   partner_data$data$`LOGGER RETURNS`,
   partner_data$data$`RESTART TIMES`,
-  nonresponsive_list
 )
-#> SUCCESS [2026-01-09 13:11:02] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2026-01-09 13:11:02] Unfinished session:
+#> SUCCESS [2026-05-27 14:10:27] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2026-05-27 14:10:27] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2026-01-09 13:11:02] Updated 1 sessions.
-#> SUCCESS [2026-01-09 13:11:03] Updated sessions:
+#> SUCCESS [2026-05-27 14:10:27] Updated 1 sessions.
+#> SUCCESS [2026-05-27 14:10:27] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
 #> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10
 ```
@@ -167,37 +180,52 @@ excel files as arguments. It returns a list containing the updated
 master sheets, and the updated nonresponsive sheets.
 
 ``` r
+
 new_sheets <- handle_partner_metadata(
   "TestColony",
   partner_data,
   master_import
 )
-#> INFO [2026-01-09 13:11:03] Handle partner metadata for TestColony
-#> INFO [2026-01-09 13:11:03] Add missing sessions from start up files
-#> INFO [2026-01-09 13:11:03] Append encounter data
-#> SUCCESS [2026-01-09 13:11:03] Appended 1 rows to master metadata. New total is 2 rows.
-#> INFO [2026-01-09 13:11:03] Update sessions from logger returns
-#> SUCCESS [2026-01-09 13:11:03] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2026-01-09 13:11:03] Unfinished session:
+#> INFO [2026-05-27 14:10:27] Handle partner metadata /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/Metadata_SEATRACK_2025-TestColony.xlsx 
+#> for TestColony /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
+#> INFO [2026-05-27 14:10:27] Add missing sessions from start up files
+#> WARN [2026-05-27 14:10:27] No database connection from which to get models
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
+#> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
+#> "Ops.POSIXt") for ">="
+#> WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> SUCCESS [2026-05-27 14:10:27] Adding 0 new loggers from startup files
+#> INFO [2026-05-27 14:10:27] Check for duplicate sessions
+#> INFO [2026-05-27 14:10:27] Append encounter data
+#> SUCCESS [2026-05-27 14:10:27] Appended 1 rows to master metadata. New total is 2 rows.
+#> INFO [2026-05-27 14:10:27] Update sessions from logger returns
+#> SUCCESS [2026-05-27 14:10:27] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2026-05-27 14:10:27] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2026-01-09 13:11:03] Updated 1 sessions.
-#> SUCCESS [2026-01-09 13:11:03] Updated sessions:
+#> SUCCESS [2026-05-27 14:10:27] Updated 1 sessions.
+#> SUCCESS [2026-05-27 14:10:27] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
-#> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10
+#> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10   
+#> INFO [2026-05-27 14:10:27] Finished handling partner metadata /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/Metadata_SEATRACK_2025-TestColony.xlsx 
+#> for TestColony /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
 new_master_sheets <- new_sheets$master_import
-new_nonresponsive_list <- new_sheets$nonresponsive_list
 ```
 
 Finally, if you are happy with the changes made, you can save the
 updated master sheet.
 
 ``` r
+
 save_master_sheet(new_master_sheets)
-```
-
-And the new/modified nonresponsive sheets.
-
-``` r
-save_nonresponsive(c(lotek_path, migrate_path), new_nonresponsive_list)
 ```

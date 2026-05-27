@@ -11,19 +11,38 @@ will be removed and a warning will be logged.
 ## Usage
 
 ``` r
-prepare_session_deployments(session_batch, metadata)
+prepare_session_deployments(
+  sessions,
+  metadata,
+  filter_sessions = FALSE,
+  report_missing = FALSE,
+  duplicate_warnings = TRUE
+)
 ```
 
 ## Arguments
 
-- session_batch:
+- sessions:
 
-  A SessionBatch object containing session information from master
-  import startup_shutdown.
+  A tibble containing session information from master import
+  startup_shutdown.
 
 - metadata:
 
   A dataframe containing metadata information for the sessions.
+
+- filter_sessions:
+
+  Logical indicating whether to filter out sessions with no deployments.
+
+- report_missing:
+
+  Logical indicating whether to report deployments that are not
+  associated with any sessions.
+
+- duplicate_warnings:
+
+  Logical indicating whether to report duplicate deployments
 
 ## Value
 

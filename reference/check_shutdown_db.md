@@ -9,7 +9,7 @@ database.
 ## Usage
 
 ``` r
-check_shutdown_db(startup_shutdown)
+check_shutdown_db(startup_shutdown, check_active = FALSE)
 ```
 
 ## Arguments
@@ -18,6 +18,11 @@ check_shutdown_db(startup_shutdown)
 
   A tibble containing session information from master import
   startup_shutdown.
+
+- check_active:
+
+  A logical indicating whether to first check for active sessions and
+  filter out associated startups. Default is FALSE.
 
 ## Value
 

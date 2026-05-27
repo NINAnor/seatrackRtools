@@ -37,12 +37,24 @@ Functions to set up the sea track folder and paths.
 
 Functions to assist in running the within-seatrack GLS pipeline
 
+- [`export_check_calibration()`](https://ninanor.github.io/seatrackRtools/reference/export_check_calibration.md)
+  : Export calibration check results to Excel
+
 - [`gls_calibrate_all()`](https://ninanor.github.io/seatrackRtools/reference/gls_calibrate_all.md)
   : Calibrate all species/colony combinations found in seatrack logger
   data import folder
 
+- [`gls_calibrate_file()`](https://ninanor.github.io/seatrackRtools/reference/gls_calibrate_file.md)
+  : Prepare GLS files for calibration
+
 - [`gls_calibrate_species_colony()`](https://ninanor.github.io/seatrackRtools/reference/gls_calibrate_species_colony.md)
   : Prepare a seatrack species/colony combination for calibration
+
+- [`gls_check_calibration()`](https://ninanor.github.io/seatrackRtools/reference/gls_check_calibration.md)
+  : Check calibration status for all species/colony combinations
+
+- [`gls_import()`](https://ninanor.github.io/seatrackRtools/reference/gls_import.md)
+  : Import GLS position data to the SEATRACK database
 
 - [`gls_metadata()`](https://ninanor.github.io/seatrackRtools/reference/gls_metadata.md)
   : Get metadata from database based on GLS files in import directory
@@ -59,6 +71,9 @@ Functions to assist in running the within-seatrack GLS pipeline
 - [`gls_process_positions()`](https://ninanor.github.io/seatrackRtools/reference/gls_process_positions.md)
   : Process GLS position data using seatrackRgls
 
+- [`gls_process_species_colony()`](https://ninanor.github.io/seatrackRtools/reference/gls_process_species_colony.md)
+  : Process GLS position data for a specific species/colony combination
+
 - [`gls_seatrack_calibration()`](https://ninanor.github.io/seatrackRtools/reference/gls_seatrack_calibration.md)
   : Handle existing GLS calibration data
 
@@ -67,16 +82,23 @@ Functions to assist in running the within-seatrack GLS pipeline
 
   Get `all_colony_info` for GLS processing
 
+- [`gls_upload_pos_data()`](https://ninanor.github.io/seatrackRtools/reference/gls_upload_pos_data.md)
+  : Upload GLS position data to the SEATRACK database
+
 ## Metdata functions
 
 Functions to handle and process metadata sheets.
 
 ### General metadata functions
 
+- [`correct_models()`](https://ninanor.github.io/seatrackRtools/reference/correct_models.md)
+  : Correct logger models in metadata based on database values
 - [`get_location_unprocessed()`](https://ninanor.github.io/seatrackRtools/reference/get_location_unprocessed.md)
   : Get unimported metadata
 - [`get_master_import_path()`](https://ninanor.github.io/seatrackRtools/reference/get_master_import_path.md)
   : Get the path of the master import file
+- [`get_master_import_paths()`](https://ninanor.github.io/seatrackRtools/reference/get_master_import_paths.md)
+  : Get master import paths
 - [`handle_partner_metadata()`](https://ninanor.github.io/seatrackRtools/reference/handle_partner_metadata.md)
   : Add partner provided metadata to the master import file
 - [`load_all_master_import()`](https://ninanor.github.io/seatrackRtools/reference/load_all_master_import.md)
@@ -92,6 +114,8 @@ Functions to handle and process metadata sheets.
   : Save all modified master sheets
 - [`save_master_sheet()`](https://ninanor.github.io/seatrackRtools/reference/save_master_sheet.md)
   : Save a master sheet to an Excel file.
+- [`set_master_import_paths()`](https://ninanor.github.io/seatrackRtools/reference/set_master_import_paths.md)
+  : Set master import paths
 
 ### Logger metadata functions
 
@@ -116,6 +140,8 @@ Functions to load and update non-responsive sheets
   : Append to nonresponsive list
 - [`get_raw_data_prev_session()`](https://ninanor.github.io/seatrackRtools/reference/get_raw_data_prev_session.md)
   : Get raw data from previous sessions
+- [`get_raw_data_prev_session_excel()`](https://ninanor.github.io/seatrackRtools/reference/get_raw_data_prev_session_excel.md)
+  : Get raw data from previous sessions from an excel sheet
 - [`load_nonresponsive()`](https://ninanor.github.io/seatrackRtools/reference/load_nonresponsive.md)
   : Load multiple nonresponsive logger sheets
 - [`load_nonresponsive_sheet()`](https://ninanor.github.io/seatrackRtools/reference/load_nonresponsive_sheet.md)
@@ -147,9 +173,9 @@ Functions to load and update encounter data
 
 ## Database import
 
-Functions to import master import data into the Database
+Functions to import data into the Database
 
-### Preperation
+### Metadata preperation functions
 
 - [`prepare_master_sheet_for_db()`](https://ninanor.github.io/seatrackRtools/reference/prepare_master_sheet_for_db.md)
   : Prepare master sheet for database import
@@ -162,7 +188,7 @@ Functions to import master import data into the Database
 - [`prepare_session_retrievals()`](https://ninanor.github.io/seatrackRtools/reference/prepare_session_retrievals.md)
   : Get session retrievals
 
-### Import
+### Metadata upload functions
 
 - [`push_db_import_collection()`](https://ninanor.github.io/seatrackRtools/reference/push_db_import_collection.md)
   : Push database import collection to database
@@ -173,15 +199,43 @@ Functions to import master import data into the Database
 - [`push_master_import_file_to_db()`](https://ninanor.github.io/seatrackRtools/reference/push_master_import_file_to_db.md)
   : Push master import file to database
 - [`push_retrievals()`](https://ninanor.github.io/seatrackRtools/reference/push_retrievals.md)
-  : Push retrievals to database Function to push retrievals from a
-  master import sheet to the database. It checks the database for
-  existing retrievals and only imports new retrievals to avoid
-  duplicates. It also checks that the loggers being retrieved have an
-  associated deployment in the database.
+  : Push retrievals to database
 - [`push_shutdowns()`](https://ninanor.github.io/seatrackRtools/reference/push_shutdowns.md)
   : Push shutdowns to database
 - [`push_startup()`](https://ninanor.github.io/seatrackRtools/reference/push_startup.md)
   : Push startups to database
+
+### Activity data preperation functions
+
+- [`handle_immersion_lotek()`](https://ninanor.github.io/seatrackRtools/reference/handle_immersion_lotek.md)
+  : Handle immersion data from Lotek logger
+- [`handle_immersion_migrate()`](https://ninanor.github.io/seatrackRtools/reference/handle_immersion_migrate.md)
+  : Handle immersion data from Migrate logger
+- [`handle_light_lotek()`](https://ninanor.github.io/seatrackRtools/reference/handle_light_lotek.md)
+  : Handle light data from Lotek logger
+- [`handle_light_migrate()`](https://ninanor.github.io/seatrackRtools/reference/handle_light_migrate.md)
+  : Handle light data from Migrate logger
+- [`handle_temperature_lotek()`](https://ninanor.github.io/seatrackRtools/reference/handle_temperature_lotek.md)
+  : Handle temperature data from Lotek logger
+- [`handle_temperature_migrate()`](https://ninanor.github.io/seatrackRtools/reference/handle_temperature_migrate.md)
+  : Handle temperature data from Migrate logger
+- [`load_immersion_data()`](https://ninanor.github.io/seatrackRtools/reference/load_immersion_data.md)
+  : Load immersion data from file
+- [`load_light_data()`](https://ninanor.github.io/seatrackRtools/reference/load_light_data.md)
+  : Load light data from file
+- [`load_temperature_data()`](https://ninanor.github.io/seatrackRtools/reference/load_temperature_data.md)
+  : Load temperature data from file
+
+### Activity data upload functions
+
+- [`get_activity_db_sessions()`](https://ninanor.github.io/seatrackRtools/reference/get_activity_db_sessions.md)
+  : Get activity database sessions
+- [`handle_activity()`](https://ninanor.github.io/seatrackRtools/reference/handle_activity.md)
+  : Handle activity data file
+- [`load_activity()`](https://ninanor.github.io/seatrackRtools/reference/load_activity.md)
+  : Load activity data from file
+- [`push_db_activity()`](https://ninanor.github.io/seatrackRtools/reference/push_db_activity.md)
+  : Push activity data to database
 
 ## Field planning sheet functions
 
@@ -206,14 +260,17 @@ Functions to create and export annual report appendix tables
   : Create a formatted flextable for the appendix table
 - [`export_appendix_table_excel()`](https://ninanor.github.io/seatrackRtools/reference/export_appendix_table_excel.md)
   : Export the flextable to an Excel file with formatting
+- [`make_annual_report_tables()`](https://ninanor.github.io/seatrackRtools/reference/make_annual_report_tables.md)
+  : Export tables for annual report
 
 ## General utility functions
 
 - [`get_open_session_dates()`](https://ninanor.github.io/seatrackRtools/reference/get_open_session_dates.md)
   : Get open session dates Convenience function to get the open date for
-  a set of logger sessions. If the download date is available, use that.
-  If not, use the shutdown date. If both exist, use the later date. If
-  neither are available, use a date far in the future to indicate the
+  a set of logger sessions. If the shutdown date is available, use that.
+  If not, use the download date. If both exist, use the earlier date. If
+  there is another session from the same logger, use the start of that.
+  If neither are available, use a date far in the future to indicate the
   session is still open.
 - [`load_sheets_as_list()`](https://ninanor.github.io/seatrackRtools/reference/load_sheets_as_list.md)
   : Load specified sheets from an Excel file into a list of data frames
@@ -229,6 +286,8 @@ Functions to create and export annual report appendix tables
   : Check existing retrievals in database
 - [`check_shutdown_db()`](https://ninanor.github.io/seatrackRtools/reference/check_shutdown_db.md)
   : Check existing shutdowns in database
+- [`check_startups_active_db()`](https://ninanor.github.io/seatrackRtools/reference/check_startups_active_db.md)
+  : Check existing active sessions in database
 - [`check_startups_db()`](https://ninanor.github.io/seatrackRtools/reference/check_startups_db.md)
   : Check existing startups in database
 
@@ -253,6 +312,21 @@ Functions to assist in working with the ColonyRepr-package
 - [`run_ColonyRepr()`](https://ninanor.github.io/seatrackRtools/reference/run_ColonyRepr.md)
   : Function to extract desired data from the SEATRACK database and
   fully run the colony representativeness analysis
+
+## Data request handling
+
+Functions for managing data requests in the database.
+
+- [`create_readme()`](https://ninanor.github.io/seatrackRtools/reference/create_readme.md)
+  : Create SEATRACK documentation README
+- [`data_request()`](https://ninanor.github.io/seatrackRtools/reference/data_request.md)
+  : Get SEATRACK data request
+- [`export_data_package()`](https://ninanor.github.io/seatrackRtools/reference/export_data_package.md)
+  : Export a data request package
+- [`find_raw_data()`](https://ninanor.github.io/seatrackRtools/reference/find_raw_data.md)
+  : Find raw data files for a given session ID and data type
+- [`get_irma_from_onedrive()`](https://ninanor.github.io/seatrackRtools/reference/get_irma_from_onedrive.md)
+  : Get IRMA data from OneDrive
 
 # Articles
 

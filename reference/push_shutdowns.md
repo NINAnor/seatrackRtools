@@ -11,7 +11,7 @@ being shutdown if they are marked as 'Successfully downloaded' or
 ## Usage
 
 ``` r
-push_shutdowns(shutdown)
+push_shutdowns(shutdown, dry_run = FALSE)
 ```
 
 ## Arguments
@@ -20,3 +20,8 @@ push_shutdowns(shutdown)
 
   A tibble containing session information from a DBImportCollection
   object.
+
+- dry_run:
+
+  Logical indicating whether to perform a dry run (default is FALSE). If
+  TRUE, no data will be written to the database.

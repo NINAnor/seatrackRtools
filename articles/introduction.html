@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Example script • seatrackRtools</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Example script">
 </head>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">seatrackRtools</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.35</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,9 +92,9 @@ using commands from the logger library:</p>
 placed in your file system. This variable will be used by many functions
 contained in this package.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">path_to_seatrack</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"a_filepath"</span>,<span class="st">"SEATRACK - shared"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">path_to_seatrack</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"a_filepath"</span>, <span class="st">"SEATRACK - shared"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/set_sea_track_folder.html">set_sea_track_folder</a></span><span class="op">(</span><span class="va">path_to_seatrack</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; INFO [2026-01-09 13:11:01] Sea track folder set to: /tmp/RtmphzifOl/seatrack_vignette_2ae63c143387/SEATRACK - shared</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; INFO [2026-05-27 14:10:26] Sea track folder set to: /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="loading-data">Loading data<a class="anchor" aria-label="anchor" href="#loading-data"></a>
@@ -105,23 +105,21 @@ in the real files.</p>
 <p>You can check for non_processed sheets by location, or just enter a
 path directly.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">unprocessed_metadata_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_location_unprocessed.html">get_location_unprocessed</a></span><span class="op">(</span><span class="va">location</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">unprocessed_metadata_paths</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_location_unprocessed.html">get_location_unprocessed</a></span><span class="op">(</span><span class="st">"location_name"</span><span class="op">)</span></span></code></pre></div>
 <p>The partner metadata excel can then be loaded into R.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">partner_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_partner_metadata.html">load_partner_metadata</a></span><span class="op">(</span><span class="va">partner_xlsx</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">partner_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_partner_metadata.html">load_partner_metadata</a></span><span class="op">(</span><span class="va">partner_xlsx</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in (function (file, sheet, start_row = NULL, start_col = NULL,</span></span>
+<span><span class="co">#&gt; row_names = FALSE, : variable from `types` not found in data</span></span>
 <span><span class="co">#&gt; Warning in (function (file, sheet, start_row = NULL, start_col = NULL,</span></span>
 <span><span class="co">#&gt; row_names = FALSE, : variable from `types` not found in data</span></span></code></pre></div>
 <p>You can then load the master file that you wish to update. This can
 be done by using the colony name.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">master_import</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_master_import.html">load_master_import</a></span><span class="op">(</span><span class="st">"TestColony"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning in FUN(X[[i]], ...): NAs introduced by coercion</span></span>
-<span><span class="co">#&gt; Warning in FUN(X[[i]], ...): NAs introduced by coercion</span></span>
-<span><span class="co">#&gt; Warning in convert_date(x, origin = origin): NAs introduced by coercion</span></span>
-<span><span class="co">#&gt; Warning in convert_date(x, origin = origin): NAs introduced by coercion</span></span>
-<span><span class="co">#&gt; Warning in convert_date(x, origin = origin): NAs introduced by coercion</span></span>
-<span><span class="co">#&gt; Warning in convert_datetime(x, origin = origin): NAs introduced by coercion</span></span></code></pre></div>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Get Master import file for colony 'TestColony', use existing paths: TRUE</span></span>
+<span><span class="co">#&gt; NULL</span></span>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Master import file for colony 'TestColony' found at: /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span></code></pre></div>
 <p>The function returns a class with two elements, <code>data</code> and
 <code>wb</code>. <code>wb</code> is the original excel workbook from
 which the data was loaded. <code>data</code> is a list, where each
@@ -130,55 +128,63 @@ element is a sheet from the imported master file.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">master_import</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "METADATA"         "STARTUP_SHUTDOWN"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">master_import</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">METADATA</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
-<span><span class="co">#&gt;   date       ring_number logger_id_deployed logger_id_retrieved colony   comment</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2024-01-10 42          L1                 #N/A                TestCol… A smal…</span></span></code></pre></div>
-<p>Optionally, you can also load or initialise some sheets of
-nonresponsive loggers. This function takes a vector of file paths and a
-vector of manufacturers.</p>
-<p>Initialise the sheets if they don’t exist.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">nonresponsive_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_nonresponsive.html">load_nonresponsive</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">lotek_path</span>, <span class="va">migrate_path</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Lotek"</span>, <span class="st">"Migrate Technology"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 8</span></span></span>
+<span><span class="co">#&gt;   date       ring_number logger_model_deployed logger_id_deployed</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                 <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2024-01-10 42          birdTracker5000       L1                </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: logger_model_retrieved &lt;dbl&gt;, logger_id_retrieved &lt;dbl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   colony &lt;chr&gt;, comment &lt;chr&gt;</span></span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="workflow">Workflow<a class="anchor" aria-label="anchor" href="#workflow"></a>
 </h2>
 <p>There are several steps to updating the master import sheet. Firstly
 checking startup files for missing logger sessions.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">master_import_data</span> <span class="op">&lt;-</span> <span class="va">master_import</span><span class="op">$</span><span class="va">data</span></span>
-<span><span class="va">updated_startup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_loggers_from_startup.html">add_loggers_from_startup</a></span><span class="op">(</span><span class="va">master_import_data</span><span class="op">$</span><span class="va">`STARTUP_SHUTDOWN`</span>, <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`ENCOUNTER DATA`</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">updated_startup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_loggers_from_startup.html">add_loggers_from_startup</a></span><span class="op">(</span><span class="va">master_import</span>, <span class="va">partner_data</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ## seatrackR is up to date.</span></span>
+<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] No database connection from which to get models</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Adding 0 new loggers from startup files</span></span></code></pre></div>
 <p>Then appending reported encounter data.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">updated_metadata</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/append_encounter_data.html">append_encounter_data</a></span><span class="op">(</span></span>
-<span>  <span class="va">master_import_data</span><span class="op">$</span><span class="va">METADATA</span>,</span>
+<span>  <span class="va">master_import</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">METADATA</span>,</span>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`ENCOUNTER DATA`</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:02] Appended 1 rows to master metadata. New total is 2 rows.</span></span></code></pre></div>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Appended 1 rows to master metadata. New total is 2 rows.</span></span></code></pre></div>
 <p>Finally the processing reported logger returns and attempts to update
 the appropriate session in the master startup sheet, setting download
 status and dates.</p>
 <p>This function also handles loggers that the partner restearts,
 generating new sessions for them in the master startup sheet.</p>
 <p>The function will also update the nonresponsive lists.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">updated_sessions</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/handle_returned_loggers.html">handle_returned_loggers</a></span><span class="op">(</span></span>
 <span>  <span class="st">"TestColony"</span>,</span>
 <span>  <span class="va">updated_startup</span>,</span>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`LOGGER RETURNS`</span>,</span>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`RESTART TIMES`</span>,</span>
-<span>  <span class="va">nonresponsive_list</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:02] Found unfinished session for logger ID: L1 2025-01-10</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:02] Unfinished session:</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Found unfinished session for logger ID: L1 2025-01-10</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Unfinished session:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       intended_species intended_location</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> bird             TestColony       </span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:02] Updated 1 sessions.</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:03] Updated sessions:</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated 1 sessions.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated sessions:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       download_type download_date</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> Downloaded    2025-01-10</span></span></code></pre></div>
 <p>At every stage, the log will report the changes that the functions
@@ -194,34 +200,50 @@ metadata sheet or the master sheet.</p>
 <code>handle_partner_metadata</code> that takes the colony name and the
 imported excel files as arguments. It returns a list containing the
 updated master sheets, and the updated nonresponsive sheets.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">new_sheets</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/handle_partner_metadata.html">handle_partner_metadata</a></span><span class="op">(</span></span>
 <span>  <span class="st">"TestColony"</span>,</span>
 <span>  <span class="va">partner_data</span>,</span>
 <span>  <span class="va">master_import</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; INFO [2026-01-09 13:11:03] Handle partner metadata for TestColony</span></span>
-<span><span class="co">#&gt; INFO [2026-01-09 13:11:03] Add missing sessions from start up files</span></span>
-<span><span class="co">#&gt; INFO [2026-01-09 13:11:03] Append encounter data</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:03] Appended 1 rows to master metadata. New total is 2 rows.</span></span>
-<span><span class="co">#&gt; INFO [2026-01-09 13:11:03] Update sessions from logger returns</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:03] Found unfinished session for logger ID: L1 2025-01-10</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:03] Unfinished session:</span></span>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Handle partner metadata /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/Metadata_SEATRACK_2025-TestColony.xlsx </span></span>
+<span><span class="co">#&gt; for TestColony /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Add missing sessions from start up files</span></span>
+<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] No database connection from which to get models</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
+<span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
+<span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
+<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Adding 0 new loggers from startup files</span></span>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Check for duplicate sessions</span></span>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Append encounter data</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Appended 1 rows to master metadata. New total is 2 rows.</span></span>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Update sessions from logger returns</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Found unfinished session for logger ID: L1 2025-01-10</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Unfinished session:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       intended_species intended_location</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> bird             TestColony       </span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:03] Updated 1 sessions.</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-01-09 13:11:03] Updated sessions:</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated 1 sessions.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated sessions:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       download_type download_date</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> Downloaded    2025-01-10</span></span>
-<span><span class="va">new_master_sheets</span> <span class="op">&lt;-</span> <span class="va">new_sheets</span><span class="op">$</span><span class="va">master_import</span></span>
-<span><span class="va">new_nonresponsive_list</span> <span class="op">&lt;-</span> <span class="va">new_sheets</span><span class="op">$</span><span class="va">nonresponsive_list</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> Downloaded    2025-01-10   </span></span>
+<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Finished handling partner metadata /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/Metadata_SEATRACK_2025-TestColony.xlsx </span></span>
+<span><span class="co">#&gt; for TestColony /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
+<span><span class="va">new_master_sheets</span> <span class="op">&lt;-</span> <span class="va">new_sheets</span><span class="op">$</span><span class="va">master_import</span></span></code></pre></div>
 <p>Finally, if you are happy with the changes made, you can save the
 updated master sheet.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/save_master_sheet.html">save_master_sheet</a></span><span class="op">(</span><span class="va">new_master_sheets</span><span class="op">)</span></span></code></pre></div>
-<p>And the new/modified nonresponsive sheets.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/save_nonresponsive.html">save_nonresponsive</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">lotek_path</span>, <span class="va">migrate_path</span><span class="op">)</span>, <span class="va">new_nonresponsive_list</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

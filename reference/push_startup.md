@@ -7,7 +7,7 @@ to avoid duplicates.
 ## Usage
 
 ``` r
-push_startup(startup)
+push_startup(startup, dry_run = FALSE)
 ```
 
 ## Arguments
@@ -16,3 +16,8 @@ push_startup(startup)
 
   A tibble containing session information from a DBImportCollection
   object.
+
+- dry_run:
+
+  Logical indicating whether to perform a dry run (default is FALSE). If
+  TRUE, no data will be written to the database.

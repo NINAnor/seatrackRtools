@@ -10,7 +10,12 @@ moved to seatrackRdb at some point.
 ## Usage
 
 ``` r
-get_history_table(history_year, event_type = c("Deployment", "Retrieval"))
+get_history_table(
+  history_year,
+  gps_models,
+  gsm_models,
+  event_type = c("Deployment", "Retrieval")
+)
 ```
 
 ## Arguments

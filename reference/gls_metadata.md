@@ -10,9 +10,11 @@ gls_metadata(
   import_directory,
   colony = NULL,
   species = NULL,
+  id_year_model = NULL,
   time_windows = TRUE,
   split_years = "06-01",
-  no_pos_only = TRUE
+  no_pos_only = TRUE,
+  download_types = c("Successfully downloaded", "Reconstructed")
 )
 ```
 
@@ -30,6 +32,11 @@ gls_metadata(
 
   Species name to filter metadata. Default is NULL (no filtering).
 
+- id_year_model:
+
+  Character string in the format "loggerID_year_model" to filter for a
+  specific logger, year and model. Default is NULL (no filtering).
+
 - time_windows:
 
   Logical indicating whether to split metadata into time windows based
@@ -44,6 +51,12 @@ gls_metadata(
 
   Logical indicating whether to include only loggers without position
   data in the database. Default is TRUE.
+
+- download_types:
+
+  Character vector of logger download types to include (e.g.,
+  c("Successfully downloaded", "Reconstructed")). Default is
+  c("Successfully downloaded", "Reconstructed").
 
 ## Value
 

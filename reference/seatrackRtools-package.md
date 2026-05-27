@@ -16,3 +16,6 @@ Useful links:
 Other contributors:
 
 - Lars Ursem <lars.ursem@npolar.no> \[contributor\]
+
+- Vegard Sandøy Bråthen <vegard.brathen@nina.no>
+  ([ORCID](https://orcid.org/0000-0002-7357-6727)) \[contributor\]

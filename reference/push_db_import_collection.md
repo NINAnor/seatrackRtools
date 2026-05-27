@@ -13,7 +13,7 @@ database fails on.
 ## Usage
 
 ``` r
-push_db_import_collection(db_import_collection)
+push_db_import_collection(db_import_collection, dry_run = FALSE)
 ```
 
 ## Arguments
@@ -22,3 +22,8 @@ push_db_import_collection(db_import_collection)
 
   A DBImportCollection object containing session, deployment, and
   retrieval information.
+
+- dry_run:
+
+  Logical indicating whether to perform a dry run (default is FALSE). If
+  TRUE, no data will be written to the database.

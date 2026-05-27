@@ -6,7 +6,10 @@ upload to the Sea Track database.
 ## Usage
 
 ``` r
-gls_prepare_folder_upload(gls_directory_path)
+gls_prepare_folder_upload(
+  gls_directory_path = file.path(the$sea_track_folder,
+    "Database\\Imports_Logger data\\Output_GLSpositions")
+)
 ```
 
 ## Arguments

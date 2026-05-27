@@ -9,12 +9,14 @@ metadata passed to gls_prepare_calibration by species/colony.
 gls_calibrate_species_colony(
   import_directory = file.path(the$sea_track_folder,
     "Database\\Imports_Logger data\\Raw logger data\\ALL"),
-  species,
-  colony,
+  species = NULL,
+  colony = NULL,
   no_pos_only = TRUE,
   rerun_existing = TRUE,
   include_existing = TRUE,
-  filter_plots = FALSE
+  filter_plots = FALSE,
+  rerun_existing_plots = TRUE,
+  new_filter_settings = FALSE
 )
 ```
 
@@ -50,6 +52,11 @@ gls_calibrate_species_colony(
 - filter_plots:
 
   Logical indicating whether to export filter plots. Default is FALSE.
+
+- rerun_existing_plots:
+
+  Logical indicating whether to rerun calibration for loggers that
+  already have calibration plots. Default is TRUE.
 
 ## Value
 

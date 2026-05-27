@@ -7,9 +7,8 @@ This function initializes logging to a specified directory.
 ``` r
 start_logging(
   log_dir = "logs",
-  log_file = paste0("seatrackRtools_log_", Sys.Date(), ".txt"),
+  log_file = paste0("seatrackRtools_log_", Sys.Date(), ".log"),
   silent = FALSE,
-  log_namespace = "global",
   log_index = 1,
   log_level = logger::INFO,
   file_safe = FALSE
@@ -33,11 +32,6 @@ start_logging(
 
   Boolean. If FALSE, logger will not log that it has start logging.
 
-- log_namespace:
-
-  A character string specifying the namespace for the logger. Default is
-  "global".
-
 - log_level:
 
   The logging level. Default is logger::INFO.
@@ -46,6 +40,11 @@ start_logging(
 
   Boolean. If TRUE, uses a file-safe appender that handles file writing
   errors gracefully.
+
+- log_namespace:
+
+  A character string specifying the namespace for the logger. Default is
+  "global".
 
 ## Value
 

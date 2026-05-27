@@ -3,6 +3,7 @@
 First, set the sea trach folders
 
 ``` r
+
 seatrack_path <- "path/to/Norsk Polarinstitutt/Benjamin Merkel - SEATRACK - shared"
 set_sea_track_folder(seatrack_path)
 ```
@@ -12,12 +13,14 @@ Set up file paths for nonresponsive logger sheets and load the sheets.
 Load all master import sheets
 
 ``` r
+
 all_metadata_combined <- load_all_master_import(FALSE)
 ```
 
 Get information about a logger
 
 ``` r
+
 logger_data <- get_logger_from_metadata("B8478", all_metadata)
 ```
 
@@ -26,6 +29,7 @@ that some loggers might have multiple entries if they appear multiple
 times.
 
 ``` r
+
 print(logger_data[[1]]$path)
 print(logger_data[[1]]$row_index + 1)
 ```
@@ -33,6 +37,7 @@ print(logger_data[[1]]$row_index + 1)
 Print some relevant data.
 
 ``` r
+
 data_only <- lapply(logger_data, function(x) x$data[c("logger_serial_no", "logger_model", "production_year", "download_type", "download_date", "shutdown_date", "intended_location")])
 print(data_only, width = 1000)
 ```
@@ -40,6 +45,7 @@ print(data_only, width = 1000)
 Get the filename for downloading data from the logger.
 
 ``` r
+
 paste0(data_only[[1]]$logger_serial_no, "_", format(as.Date(Sys.time()), "%Y", ), "_", data_only[[1]]$logger_model)
 ```
 

@@ -8,7 +8,7 @@ deployed have an associated session in the database.
 ## Usage
 
 ``` r
-push_deployments(deployments)
+push_deployments(deployments, dry_run = FALSE)
 ```
 
 ## Arguments
@@ -17,3 +17,8 @@ push_deployments(deployments)
 
   A tibble containing deployment information from a DBImportCollection
   object.
+
+- dry_run:
+
+  Logical indicating whether to perform a dry run (default is FALSE). If
+  TRUE, no data will be written to the database.

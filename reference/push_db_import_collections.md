@@ -7,7 +7,7 @@ Each collection is processed in turn using the
 ## Usage
 
 ``` r
-push_db_import_collections(db_import_collections)
+push_db_import_collections(db_import_collections, dry_run = FALSE)
 ```
 
 ## Arguments

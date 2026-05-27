@@ -5,6 +5,7 @@
 Loading the library:
 
 ``` r
+
 library(seatrackRtools)
 library(seatrackRgls)
 ```
@@ -20,6 +21,7 @@ these already calibrated. If `include_existing` is TRUE, then these
 calibration values will be added to the calibration template.
 
 ``` r
+
 existing_calibration_dir <- file.path(the$sea_track_folder, "Locations")
 import_directory <- file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL")
 output_directory <- "test"
@@ -33,6 +35,7 @@ Do your calibration. Look at the charts!
 Process your data using the calibration values
 
 ``` r
+
 calibration_data <- file.path(output_directory, "calibration")
 gls_process_positions(
   import_directory,
@@ -44,6 +47,7 @@ gls_process_positions(
 Prep data for database
 
 ``` r
+
 pos_path <- file.path(output_directory, "positions")
 all_pos <- gls_prepare_folder_upload(pos_path)
 ```

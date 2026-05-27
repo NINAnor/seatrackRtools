@@ -9,14 +9,14 @@ issues.
 ## Usage
 
 ``` r
-add_loggers_from_startup(master_startup, partner_metadata)
+add_loggers_from_startup(master_import, new_metadata)
 ```
 
 ## Arguments
 
-- master_startup:
+- master_import:
 
-  A data frame containing the master startup and shutdown information.
+  Loaded Master startup file.
 
 - partner_metadata:
 
