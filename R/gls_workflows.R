@@ -387,8 +387,6 @@ gls_prepare_calibration <- function(
     }
 }
 
-
-
 #' Check calibration status for all species/colony combinations
 #'
 #' Function to check the calibration status for all species/colony combinations in the Sea Track database. It looks for existing calibration files and summarizes the number of calibrated, uncalibrated, and valid entries for each combination.

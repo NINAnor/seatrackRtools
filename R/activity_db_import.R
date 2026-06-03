@@ -35,7 +35,7 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
     if (length(all_files) == 0) {
         log_info("No files found in import directory after filtering by date.")
         return(list(file_info = data.frame(), missing_sessions = data.frame(), missing_raw_data_files = data.frame(), updated_raw_data_files = data.frame(), to_archive = data.frame()))
-    } else if (compare_file_to_db && length(all_files) > 1000) {
+    } else if (compare_file_to_db && length(all_files) > 5000) {
         log_warn(glue::glue("There are {length(all_files)} files in the import directory that have been modified after {min_date}. Comparing files to database records may take a long time."))
     }
 
@@ -108,7 +108,7 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
                 dplyr::filter(filename %in% recording_file_info$filename) %>%
                 dplyr::semi_join(recording_table, by = "session_id")
 
-            existing_session_info <- dplyr::collect(dplyr::select(existing_sessions, session_id, individ_id, filename, deployment_date, retrieval_date))
+            existing_session_info <- dplyr::collect(dplyr::select(existing_sessions, session_id, individ_id, filename, deployment_date, retrieval_date, logger_serial_no))
             recording_files <- dplyr::inner_join(existing_session_info, recording_file_info, by = "filename", suffix = c("", "y"))
 
             # For each session - open the file and get the first row. Compare this to the first row in the database. If they are different, add to list of files to re-upload
@@ -132,10 +132,21 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
                 recording_table_i <- dplyr::filter(recording_table, filename == existing_session_i$filename) %>%
                     head(1) %>%
                     dplyr::collect()
+                recording_table_i_filename <- dplyr::filter(recording_table, session_id == existing_session_i$session_id) %>%
+                    dplyr::distinct(filename) %>%
+                    dplyr::pull(filename)
+
+                if (nrow(recording_table_i) == 0) {
+                    log_info(glue::glue("{existing_session_i$filename} - filename differs from database recording table ({recording_table_i_filename}). Marking for re-upload."))
+                    to_reupload <- c(to_reupload, list(existing_session_i))
+                    next
+                }
+
                 db_time <- recording_table_i$date_time
 
                 # If the timestamp of the first row differs
                 if (db_time != file_time) {
+                    log_info(glue::glue("{existing_session_i$filename} - timestamp in file ({file_time}) differs from timestamp in database ({db_time}). Marking for re-upload."))
                     to_reupload <- c(to_reupload, list(existing_session_i))
                 }
             }

@@ -100,6 +100,7 @@ gls_process_species_colony <- function(
     calibration_dir <- file.path(the$sea_track_folder, "Database", "Imports_Logger data", "Callibration_GLSpositions", species, colony)
     calibration_filename <- paste(species, colony, "calibration.xlsx", sep = "_")
     calibration_data <- file.path(calibration_dir, calibration_filename)
+    filter_path <- file.path(calibration_dir, "filter_settings.xlsx")
     if (!file.exists(calibration_data)) {
         log_warn("No calibration data found for species '", species, "' and colony '", colony, "'. Skipping position processing.")
         return(invisible())
@@ -108,6 +109,8 @@ gls_process_species_colony <- function(
     log_info("Processing positions for species '", species, "' and colony '", colony, "'.")
     calibration_data <- openxlsx2::read_xlsx(calibration_data)
     calibration_data <- calibration_data[!is.na(calibration_data$sun_angle_start), ]
+
+    filter_list <- seatrackRgls::read_filter_file(filter_path)
 
     pos_output_dir <- file.path(output_directory, species, colony)
     if (!file.exists(output_directory)) {
@@ -141,7 +144,8 @@ gls_process_species_colony <- function(
         all_colony_info = all_colony_info,
         output_directory = pos_output_dir,
         stop_on_error = stop_on_error,
-        show_filter_plots = filter_plots
+        show_filter_plots = filter_plots,
+        filter_setting_list = filter_list
     )
 }
 
@@ -160,7 +164,7 @@ gls_import <- function(species = NULL, colony = NULL, chunk_size = 10, gls_direc
         species <- list.dirs(gls_directory_path, recursive = FALSE, full.names = FALSE)
     }
     for (current_species in species) {
-        species_dir <- file.path(gls_directory_path, species)
+        species_dir <- file.path(gls_directory_path, current_species)
         if (!dir.exists(species_dir)) {
             log_warn("Directory for species '", current_species, "' does not exist. Skipping this species.")
             next
