@@ -17,6 +17,7 @@ describe("File System and Logging Operations", {
   test_that("set_sea_track_folder sets global variable and logs", {
     set_sea_track_folder(tmp_dir)
     expect_true(exists("sea_track_folder", envir = the))
+    unlink(".Renviron")
   })
 })
 
@@ -176,6 +177,8 @@ describe("Colony Location Operations", {
 
   test_that("get_all_locations fails if Locations folder doesn't exist", {
     the$sea_track_folder <<- tmp_dir
+    locations_path <- file.path(tmp_dir, "Locations")
+    unlink(locations_path, recursive = TRUE)
     expect_error(get_all_locations(), "Locations folder not found")
   })
 
@@ -183,6 +186,8 @@ describe("Colony Location Operations", {
     the$sea_track_folder <<- tmp_dir
     locations_path <- file.path(tmp_dir, "Locations")
     
+    # Make sure clean slate for testing
+    unlink(locations_path, recursive = TRUE)
     # Create test directory structure
     dir.create(file.path(locations_path, "Norway", "Jan Mayen"), recursive = TRUE)
     dir.create(file.path(locations_path, "Norway", "Sklinna"), recursive = TRUE)

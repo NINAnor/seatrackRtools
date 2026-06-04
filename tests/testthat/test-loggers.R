@@ -7,44 +7,6 @@ library(openxlsx2)
 # Create a temporary directory for file-based tests
 tmp_dir <- tempdir()
 
-# Helper functions for test data
-create_test_startup_data <- function() {
-  tibble(
-    logger_serial_no = c("L1", "L2", "L3", "L4"),
-    logger_model = c("Model1", "Model2", "Model1", "Model3"),
-    producer = c("Lotek", "MigrateTech", "Lotek", "BAS"),
-    production_year = c(2024, 2023, 2024, 2022),
-    project = c("seatrack", "seatrack", "seatrack", "seatrack"),
-    starttime_gmt = as.POSIXct(c(
-      "2025-01-01 10:00:00",
-      "2025-01-02 12:00:00",
-      "2025-01-03 14:00:00",
-      "2025-01-04 16:00:00"
-    ), tz = "GMT"),
-    logging_mode = c(NA, NA, NA, NA),
-    started_by = c("User1", "User2", "User1", "User3"),
-    started_where = c("C1", "C2", "C1", "C3"),
-    days_delayed = c(0, 1, 0, 2),
-    programmed_gmt_time = as.POSIXct(c(
-      "2025-01-01 10:00:00",
-      "2025-01-02 12:00:00",
-      "2025-01-03 14:00:00",
-      "2025-01-04 16:00:00"
-    ), tz = "GMT"),
-    intended_species = c("A", "B", "A", "C"),
-    intended_location = c("L1", "L2", "L1", "L3"),
-    intended_deployer = c("D1", "D2", "D1", "D3"),
-    shutdown_session = c(NA, NA, NA, NA),
-    field_status = c(NA, NA, NA, NA),
-    downloaded_by = c(NA, NA, NA, NA),
-    download_type = c(NA, NA, "Downloaded", NA),
-    download_date = as.Date(c(NA, NA, "2025-01-10", NA)),
-    decomissioned = as.Date(c(NA, NA, NA, NA)),
-    shutdown_date = as.Date(c(NA, NA, "2025-01-10", NA)),
-    comment = c("", "", "Retrieved", "")
-  )
-}
-
 describe("Logger Metadata Search", {
   test_that("get_logger_from_metadata finds logger in single file", {
     # Create a test master import file
@@ -166,7 +128,9 @@ describe("Unfinished Session Detection", {
         "2025-01-20 14:00:00"
       ), tz = "GMT"),
       shutdown_date = c(NA, NA, NA),
-      download_date = c(NA, NA, NA)
+      download_date = c(NA, NA, NA),
+      intended_species = c("A", "A", "A"),
+      intended_location = c("L1", "L1", "L1")
     )
     result <- get_unfinished_session(master_startup, "L1", as.Date("2025-01-15"))
     expect_true(!is.null(result$index))
@@ -182,7 +146,9 @@ describe("Unfinished Session Detection", {
         "2025-01-05 12:00:00"
       ), tz = "GMT"),
       shutdown_date = c(NA, NA),
-      download_date = c(NA, NA)
+      download_date = c(NA, NA),
+      intended_species = c("A", "A"),
+      intended_location = c("L1", "L1")
     )
     result <- get_unfinished_session(master_startup, "L1", as.Date("2025-01-15"))
     expect_true(!is.null(result$index))
@@ -210,7 +176,9 @@ describe("Unfinished Session Detection", {
         "2025-01-20 12:00:00"
       ), tz = "GMT"),
       shutdown_date = c(NA, NA),
-      download_date = c(NA, NA)
+      download_date = c(NA, NA),
+      intended_species = c("A", "A"),
+      intended_location = c("L1", "L1")
     )
     result <- get_unfinished_session(master_startup, "L1", as.Date("2025-01-15"))
     expect_true(!is.null(result$index))
@@ -228,6 +196,8 @@ describe("Unfinished Session Detection", {
     master_startup <- tibble(
       logger_serial_no = c("L1", "L2"),
       starttime_gmt = c(NA, as.POSIXct("2025-01-01 10:00:00", tz = "GMT")),
+      intended_species = c("A", "B"),
+      intended_location = c("L1", "L2"),
       shutdown_date = c(NA, NA),
       download_date = c(NA, NA)
     )
@@ -428,6 +398,8 @@ describe("Returned Logger Handling", {
   })
 
   test_that("handle_returned_loggers handles not used loggers with restarts", {
+    skip_if_no_test_db()
+
     master_startup <- create_test_startup_data()
     
     logger_returns <- tibble(

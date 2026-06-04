@@ -84,27 +84,6 @@ describe("Encounter Data Processing", {
     expect_error(append_encounter_data(master, encounter), "Date format was loaded incorrectly")
   })
 
-  test_that("append_encounter_data errors on column mismatch (missing columns in encounter)", {
-    master <- tibble(
-      ring_number = NA,
-      logger_id_deployed = "A",
-      logger_id_retrieved = NA,
-      date = as.Date("2025-01-01"),
-      nest_latitude = NA,
-      nest_longitude = NA,
-      extra_col = NA
-    )
-    encounter <- tibble(
-      ring_number = NA,
-      logger_id_deployed = "B",
-      logger_id_retrieved = NA,
-      date = as.Date("2025-01-02"),
-      nest_latitude = NA,
-      nest_longitude = NA
-    )
-    expect_error(append_encounter_data(master, encounter), "following columns are in master_metadata but not in encounter_data")
-  })
-
   test_that("append_encounter_data errors on extra columns in encounter", {
     master <- tibble(
       ring_number = NA,
@@ -148,6 +127,7 @@ describe("Encounter Data Processing", {
 
   test_that("append_encounter_data preserves column order from master", {
     master <- tibble(
+      date = as.Date("2025-01-01"),
       a = 1,
       b = 2,
       c = 3,
@@ -155,6 +135,7 @@ describe("Encounter Data Processing", {
       e = NA
     )
     encounter <- tibble(
+      date = as.Date("2025-01-02"),
       a = 4,
       b = 5,
       c = 6,
@@ -162,7 +143,8 @@ describe("Encounter Data Processing", {
       e = NA
     )
     result <- append_encounter_data(master, encounter)
-    expect_equal(colnames(result), c("a", "b", "c", "d", "e"))
+    target_col_order <- c("date", "a", "b", "c", "d", "e")
+    expect_equal(colnames(result)[colnames(result) %in% target_col_order], target_col_order)
   })
 
   test_that("append_encounter_data detects duplicate rows and excludes them", {

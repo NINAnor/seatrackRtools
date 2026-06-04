@@ -44,7 +44,7 @@ load_sheets_as_list <- function(
             sheet = sheet,
             start_row = skip_rows + 1,
             skip_empty_rows = TRUE,
-            cols = col_range, na.strings = c("", "End", "end", "none", "-", "N/A", "NA", " ")
+            cols = col_range, na.strings = c("", "End", "end", "none", "-", "N/A", "NA", " ", "#N/A")
         )
         if (!is.null(sheet_col_types)) {
             arg_list$types <- sheet_col_types
@@ -53,7 +53,7 @@ load_sheets_as_list <- function(
         sheet_df <- do.call(openxlsx2::wb_to_df, arg_list)
         log_trace("Loaded sheet: ", sheet)
 
-        current_sheet <- tibble(sheet_df[, !is.na(names(sheet_df))])
+        current_sheet <- tibble(sheet_df[, !is.na(names(sheet_df)), drop = FALSE])
 
         if (force_date) {
             # keep dates as dates only

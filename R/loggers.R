@@ -385,7 +385,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
     log_trace("Handle nonresponsive loggers")
 
     nonresponsive_index <- which(logger_returns$`stored or sent to?` == "Nonresponsive")
-    if (length(nonresponsive_index) > 0) {
+    if (length(nonresponsive_index) > 0 & length(nonresponsive_list) > 0) {
         nonresponsive_returns <- logger_returns[nonresponsive_index, ]
         # Get manufacturers
         nonresponsive_returns$manufacturer <- master_startup$producer[match(nonresponsive_returns$logger_id, master_startup$logger_serial_no)]
