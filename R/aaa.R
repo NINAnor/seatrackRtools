@@ -5,9 +5,9 @@
 #' @param log_dir A character string specifying the directory where the log file will be saved. If NULL, the log file will be saved in the current working directory.
 #' @param log_file A character string specifying the name of the log file. Default is "seatrack_functions_log.txt".
 #' @param silent Boolean. If FALSE, logger will not log that it has start logging.
-#' @param log_namespace A character string specifying the namespace for the logger. Default is "global".
 #' @param log_level The logging level. Default is logger::INFO.
 #' @param file_safe Boolean. If TRUE, uses a file-safe appender that handles file writing errors gracefully.
+#' @param log_index Integer specifying the index of the logger to configure. Default is 1.
 #' @return None
 #'
 #' @examples

@@ -1,5 +1,3 @@
-# Test script for functions in R/functions.R
-
 library(testthat)
 library(openxlsx2)
 library(tibble)

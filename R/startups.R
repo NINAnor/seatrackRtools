@@ -34,7 +34,7 @@ get_startup_paths <- function() {
 #' Incorrectly formatted datetime columns can also lead to issues.
 #'
 #' @param master_import Loaded Master startup file.
-#' @param partner_metadata Dataframe of loggers handled by partners
+#' @param new_metadata Loaded filled metadata sheet.
 #'
 #' @return A new version of the master startup data frame, with the logger added if succesful.
 #' @examples

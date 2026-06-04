@@ -3,7 +3,7 @@
 #' This function checks the logger models in the metadata against the database values and corrects any mismatches.
 #' It also uses logger startup information to fill in missing logger models if available. Database connection is required
 #' @param metadata Metadata dataframe to correct
-#' @param startup Optional dataframe of logger startups to use for correction if database values are missing
+#' @param startups Optional dataframe of logger startups to use for correction if database values are missing
 #' @return Corrected metadata dataframe
 #' @export
 #' @concept metadata

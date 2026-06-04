@@ -4,6 +4,7 @@
 #' and merging with historical data to compute previous deployments. A connection to the SEATRACK database is required.
 #' @param field_plan_sheet A data frame containing the raw field plan data
 #' @param use_master_sheets A boolean indicating whether to use master sheets to calculate success.
+#' @param all_locations An optional data frame containing all location metadata from the master import, if not provided this will be imported.
 #' @param use_db A boolean indicating whether to use the database to calculate success.
 #' @param field_year The year to filter the metadata for when using master sheets (default is the current year)
 #' @return A cleaned data frame with deployment and retrieval statistics
@@ -85,8 +86,10 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
     field_plan_clean <- field_plan_clean[!is.na(field_plan_clean$planned), ]
 
     if (use_master_sheets) {
+        log_info("Using master sheets to calculate success...")
         # Shift to function
         if (is.null(all_locations)) {
+            log_info("Loading all metadata from master import...")
             all_locations <- load_all_master_import(skip = c(c("Blomstrand", "Keysite Vestland", "Lowestoft", "Iceland_processed_metadata", "not_processed", "no_location_not_processed")))
         }
 
@@ -129,6 +132,7 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
         metadata$model_type[metadata$type == "deployment" & metadata$logger_model_deployed %in% gps_models | metadata$type == "retrieval" & metadata$logger_model_retrieved %in% gps_models] <- "GPS"
         metadata$model_type[metadata$type == "deployment" & metadata$logger_model_deployed %in% gsm_models | metadata$type == "retrieval" & metadata$logger_model_retrieved %in% gsm_models] <- "GPS-GSM"
 
+        log_info("Calculating age at deployment for retrievals...")
         metadata$age_at_deployment <- NA
         metadata$age_at_deployment[metadata$type == "deployment"] <- metadata$age[metadata$type == "deployment"]
         # try to get age at deployment from the database
@@ -226,6 +230,7 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
     }
 
     if (use_db) {
+        log_info("Using database to calculate success...")
         db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
         db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
         db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
@@ -236,6 +241,7 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
         db_deployments <- dplyr::filter(db_deployments, lubridate::year(deployment_date) %in% field_year)
         db_retrievals <- dplyr::filter(db_retrievals, lubridate::year(retrieval_date) %in% field_year)
 
+        log_info("Filtering database status to first record for each logger and ring number...")
         db_status_filtered <- db_status %>%
             dplyr::group_by(session_id, logger_id) %>%
             dplyr::slice_min(status_date, n = 1, with_ties = FALSE) %>%
@@ -244,6 +250,7 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
         db_deployments <- dplyr::left_join(db_deployments, db_status_filtered, by = "session_id")
         db_retrievals <- dplyr::left_join(db_retrievals, db_status_filtered, by = "session_id")
 
+        log_info("Classifying logger types for database entries...")
         db_deployments <- dplyr::mutate(db_deployments,
             age_class = ifelse(tolower(age) %in% c("pullus", "chick", "pull") & !is.na(age), "C", "A"),
             logger_type = dplyr::case_when(logger_model %in% gps_models ~ "GPS", logger_model %in% gsm_models ~ "GPS-GSM", .default = "GLS")
@@ -254,15 +261,19 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
             logger_type = dplyr::case_when(logger_model %in% gps_models ~ "GPS", logger_model %in% gsm_models ~ "GPS-GSM", .default = "GLS")
         )
 
+        log_info("Summarising database deployments and retrievals...")
         db_deployments_summary <- dplyr::group_by(db_deployments, location, species, logger_type, age_class) %>%
             dplyr::summarise(deployed_db = n(), .groups = "drop") %>%
             dplyr::rename(age = "age_class", Location = "location", Species = "species") %>%
             dplyr::collect()
 
+
         db_retrievals_summary <- dplyr::group_by(db_retrievals, location, species, logger_type, age_class) %>%
             dplyr::summarise(retrieved_db = n(), .groups = "drop") %>%
             dplyr::rename(age = "age_class", Location = "location", Species = "species") %>%
             dplyr::collect()
+
+        log_info("Merging database summaries with field plan...")
 
         field_plan_clean$deployed_db <- dplyr::left_join(field_plan_clean, db_deployments_summary, by = join_by("Location", "age", "Species", "logger_type")) %>% pull("deployed_db")
         field_plan_clean$retrieved_db <- dplyr::left_join(field_plan_clean, db_retrievals_summary, by = join_by("Location", "age", "Species", "logger_type")) %>% pull("retrieved_db")
@@ -332,8 +343,14 @@ get_history_table <- function(history_year, gps_models, gsm_models, event_type =
     # Rewrite to do this in the db.
 
     # Get all individuals (seems fast, but a tad wasteful in terms of memory)
-    individual_info <- seatrackR::getIndividInfo()
-    individual_info <- individual_info[!is.na(individual_info$eventType), ]
+    if (event_type == "Deployment") {
+        log_info(paste("Retrieving historical deployment data for year", history_year, "..."))
+        individual_info <- seatrackR::getIndividInfo(event_type = event_type, deployment_year = history_year)
+    } else if (event_type == "Retrieval") {
+        log_info(paste("Retrieving historical retrieval data for year", history_year, "..."))
+        individual_info <- seatrackR::getIndividInfo(event_type = event_type, retrieval_year = history_year)
+    }
+
 
     # Filter to desired event type and age class.
     individual_events <- individual_info[individual_info$eventType %in% event_type, ]

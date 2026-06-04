@@ -18,17 +18,21 @@ species_groups <- rbind(
     ),
     data.frame(type = "shag", species = c("European shag"), colour = "#FCC363"),
     data.frame(type = "eider", species = c("Common eider"), colour = "#F8A482"),
-    data.frame(type = "total", species = "Total", colour = "white")
+    data.frame(type = "total", species = "Total", colour = "#dbdfe5")
 )
 
 usethis::use_data(species_groups, overwrite = TRUE)
 
 table_bg <- list(
-    deploy_bg = "#eae4df",
+    deployed_bg = "#eae4df",
     retrieved_bg = "#d6c9c2",
+    col_name_bg = "#dbdfe5",
     lme_bg = "#BDD6D5",
     header = "#69A4A4",
     footer = "#D2D3D5"
 )
 
 usethis::use_data(table_bg, overwrite = TRUE)
+
+table_borders <- list(st_border_inner <- officer::fp_border(color = "black", width = 1), st_border_outer = officer::fp_border(color = "black", width = 1.5))
+usethis::use_data(table_borders, overwrite = TRUE)

@@ -27,8 +27,8 @@ push_master_import_file_to_db <- function(colony = NULL, file_path = NULL, maste
 #'
 #' Function to push multiple DBImportCollection objects to the database. Each collection is processed in turn using the `push_db_import_collection` function.
 #' @param db_import_collections A list of DBImportCollection objects.
+#' @param dry_run Logical indicating whether to perform a dry run (default is FALSE). If TRUE, no data will be written to the database.
 #' @concept db_import
-#' @export
 push_db_import_collections <- function(db_import_collections, dry_run = FALSE) {
     log_info_all(paste("Upload to database."))
     for (collection_idx in seq_along(db_import_collections)) {

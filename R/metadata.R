@@ -25,7 +25,6 @@ get_master_import_path <- function(colony, use_stored = TRUE) {
             return(full_colony_file_path)
         }
     }
-    print(names(the$master_sheet_paths))
 
     # Get the path to the master import folder
     master_import_folder <- file.path(the$sea_track_folder, "Database", "Imports_Metadata")

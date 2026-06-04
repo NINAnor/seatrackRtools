@@ -124,11 +124,11 @@ handle_immersion_lotek <- function(filepath) {
         # From Vegard script
         act_bt2 <- file[file$V5 %in% "wet", ]
         act_bt2$V4 <- as.numeric(act_bt2$V4)
-        act_bt2$V2 <- as.POSIXct(file$V2, format = "%d/%m/%y %H:%M:%S", tz = "GMT")
+        act_bt2$V2 <- as.POSIXct(act_bt2$V2, format = "%d/%m/%y %H:%M:%S", tz = "GMT")
         act_bt_test <- aggregate(V4 ~ cut(V2, breaks = "10 mins"), act_bt2, sum)
         act_bt2 <- as.data.frame(act_bt_test[, 1])
         act_bt2$V1 <- "ok"
-        act_bt2$V3 <- as.numeric(as_datetime(act_bt2[, 1]))
+        act_bt2$V3 <- as.numeric(lubridate::as_datetime(act_bt2[, 1]))
         act_bt2$V4 <- as.numeric(act_bt_test[, 2])
         act_bt2 <- act_bt2[, c(2, 1, 3, 4)]
         names(act_bt2) <- c("V1", "V2", "V3", "V4")
@@ -203,7 +203,7 @@ handle_immersion_lotek <- function(filepath) {
     ## Error in date and time:
     # remove if data holes exceed 3 months or difference in dates are negative
     diff_time <- as.numeric(difftime(file$V2[2:length(file$V2)], file$V2[1:(length(file$V2) - 1)], "GMT", units = c("mins")))
-    if (min(diff_time) < 0 | max(diff_time) > 129600) {
+    if (min(diff_time) < 0 || max(diff_time) > 129600) {
         log_warn(glue::glue("{basename(filepath)} has time differences between rows that are negative or exceed 3 months."))
         return(NULL)
     }

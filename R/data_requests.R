@@ -529,6 +529,7 @@ data_request <- function(
 #' @param end_year An integer representing the end year for the data retrieval. Defaults to the current year.
 #' @param species An optional string specifying the species to filter the data. If NULL, data for all species will be retrieved.
 #' @param colony An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.
+#' @param session_ids Optional list of strings specifying exact session IDs to filter the data. If NULL, data for all sessions will be retrieved.
 #' @param age_deployment An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".
 #' @param release An optional string specifying the release of the IRMA data to retrieve. Defaults to "20241120".
 #' @param version An optional string specifying the version of the IRMA data to retrieve. Defaults to "v3.1".

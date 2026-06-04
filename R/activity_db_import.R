@@ -269,6 +269,7 @@ load_activity <- function(file_info, recording_type) {
 #' This function processes a single activity data file based on the specified recording type. It reads the file, clips the data to the deployment and retrieval dates, and uploads the data to the SEATRACK database. It also handles error checking and logs the progress of the upload.
 #' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
 #' @param recording_type A list containing information about the recording type, including table_name, process_function, extensions, and argname.
+#' @param remove_existing A boolean indicating whether to remove existing data for the session_id from the database before uploading the new data. This can be useful if you want to replace existing data with updated data. Defaults to FALSE.
 #' @return None. The function uploads the processed activity data to the SEATRACK database and logs the progress and any issues encountered during the process.
 #' @export
 #' @concept activity_db_import

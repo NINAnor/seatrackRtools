@@ -7,6 +7,7 @@
 #' @param filter_plots Logical indicating whether to export filter plots. Default is FALSE.
 #' @param rerun_existing_plots Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is FALSE.
 #' @param n_workers Integer specifying the number of worker processes to use for parallel processing. Default is 4.
+#' @param new_filter_settings Logical indicating whether to force creation of a new filter settings files for each species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings files will be overwritten.
 #' @return None. The function saves the prepared calibration data to the specified output directory.
 #' @concept gls_helper
 #' @export
@@ -71,6 +72,7 @@ gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = FALSE, includ
 #' @param include_existing Logical indicating whether to include existing calibration data in the final output. Default is TRUE.
 #' @param filter_plots Logical indicating whether to export filter plots. Default is FALSE.
 #' @param rerun_existing_plots Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is TRUE.
+#' @param new_filter_settings Logical indicating whether to force creation of a new filter settings file for the species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings file will be overwritten.
 #' @return None. The function saves the prepared calibration data to the specified output directory.
 #' @export
 #' @concept gls_helper
@@ -105,6 +107,7 @@ gls_calibrate_species_colony <- function(
 #' @param include_existing Logical indicating whether to include existing calibration data in the final output. Default is TRUE.
 #' @param filter_plots Logical indicating whether to export filter plots. Default is FALSE.
 #' @param rerun_existing_plots Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is TRUE.
+#' @param new_filter_settings Logical indicating whether to force creation of a new filter settings file for the species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings file will be overwritten.
 #' @return None. The function saves the prepared calibration data to the specified output directory.
 #' @export
 #' @concept gls_helper
@@ -141,6 +144,7 @@ gls_calibrate_file <- function(id_year_model, no_pos_only = TRUE, rerun_existing
 #' @param include_existing Logical indicating whether to include existing calibration data in the final output. Default is TRUE.
 #' @param filter_plots Logical indicating whether to export filter plots. Default is FALSE.
 #' @param rerun_existing_plots Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is FALSE.
+#' @param new_filter_settings Logical indicating whether to force creation of a new filter settings file for the species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings file will be overwritten.
 #' @return None. The function saves the prepared calibration data to the specified output directory.
 #' @export
 #' @concept gls_helper

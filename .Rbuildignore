@@ -17,3 +17,7 @@ test_script.R
 ^scaffolding\.R$
 ^\.devcontainer$
 ^test_data$
+^data-raw$
+^data_requests.R$
+^requested_data_packages.R$
+^seatrackRtools_app$
