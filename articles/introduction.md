@@ -46,7 +46,7 @@ path_to_seatrack <- file.path("a_filepath", "SEATRACK - shared")
 set_sea_track_folder(path_to_seatrack)
 ```
 
-    #> INFO [2026-06-04 09:15:52] Sea track folder set to: /tmp/RtmpSSudBQ/seatrack_vignette_2c2d4007874b/SEATRACK - shared
+    #> INFO [2026-06-04 15:28:21] Sea track folder set to: /tmp/RtmpWZketR/seatrack_vignette_2bff51adbc3f/SEATRACK - shared
 
 ## Loading data
 
@@ -79,8 +79,8 @@ done by using the colony name.
 ``` r
 
 master_import <- load_master_import("TestColony")
-#> INFO [2026-06-04 09:15:53] Get Master import file for colony 'TestColony', use existing paths: TRUE
-#> INFO [2026-06-04 09:15:53] Master import file for colony 'TestColony' found at: /tmp/RtmpSSudBQ/seatrack_vignette_2c2d4007874b/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
+#> INFO [2026-06-04 15:28:22] Get Master import file for colony 'TestColony', use existing paths: TRUE
+#> INFO [2026-06-04 15:28:22] Master import file for colony 'TestColony' found at: /tmp/RtmpWZketR/seatrack_vignette_2bff51adbc3f/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
 ```
 
 The function returns a class with two elements, `data` and `wb`. `wb` is
@@ -109,22 +109,22 @@ checking startup files for missing logger sessions.
 
 updated_startup <- add_loggers_from_startup(master_import, partner_data)
 #> ## seatrackR is up to date.
-#> WARN [2026-06-04 09:15:53] No database connection from which to get models
+#> WARN [2026-06-04 15:28:22] No database connection from which to get models
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
-#> WARN [2026-06-04 09:15:53] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> WARN [2026-06-04 15:28:22] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
-#> WARN [2026-06-04 09:15:53] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
-#> SUCCESS [2026-06-04 09:15:53] Adding 0 new loggers from startup files
+#> WARN [2026-06-04 15:28:22] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> SUCCESS [2026-06-04 15:28:22] Adding 0 new loggers from startup files
 ```
 
 Then appending reported encounter data.
@@ -135,7 +135,7 @@ updated_metadata <- append_encounter_data(
   master_import$data$METADATA,
   partner_data$data$`ENCOUNTER DATA`
 )
-#> SUCCESS [2026-06-04 09:15:53] Appended 1 rows to master metadata. New total is 2 rows.
+#> SUCCESS [2026-06-04 15:28:22] Appended 1 rows to master metadata. New total is 2 rows.
 ```
 
 Finally the processing reported logger returns and attempts to update
@@ -155,12 +155,12 @@ updated_sessions <- handle_returned_loggers(
   partner_data$data$`LOGGER RETURNS`,
   partner_data$data$`RESTART TIMES`,
 )
-#> SUCCESS [2026-06-04 09:15:54] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2026-06-04 09:15:54] Unfinished session:
+#> SUCCESS [2026-06-04 15:28:22] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2026-06-04 15:28:22] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2026-06-04 09:15:54] Updated 1 sessions.
-#> SUCCESS [2026-06-04 09:15:54] Updated sessions:
+#> SUCCESS [2026-06-04 15:28:22] Updated 1 sessions.
+#> SUCCESS [2026-06-04 15:28:22] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
 #> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10
 ```
@@ -185,39 +185,39 @@ new_sheets <- handle_partner_metadata(
   partner_data,
   master_import
 )
-#> INFO [2026-06-04 09:15:54] Handle partner metadata /tmp/RtmpSSudBQ/seatrack_vignette_2c2d4007874b/Metadata_SEATRACK_2025-TestColony.xlsx 
-#> for TestColony /tmp/RtmpSSudBQ/seatrack_vignette_2c2d4007874b/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
-#> INFO [2026-06-04 09:15:54] Add missing sessions from start up files
-#> WARN [2026-06-04 09:15:54] No database connection from which to get models
+#> INFO [2026-06-04 15:28:22] Handle partner metadata /tmp/RtmpWZketR/seatrack_vignette_2bff51adbc3f/Metadata_SEATRACK_2025-TestColony.xlsx 
+#> for TestColony /tmp/RtmpWZketR/seatrack_vignette_2bff51adbc3f/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
+#> INFO [2026-06-04 15:28:22] Add missing sessions from start up files
+#> WARN [2026-06-04 15:28:22] No database connection from which to get models
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
-#> WARN [2026-06-04 09:15:54] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> WARN [2026-06-04 15:28:22] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
 #> Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &
 #> !is.na(logger_partner_logger_data$date) & : Incompatible methods ("Ops.Date",
 #> "Ops.POSIXt") for ">="
-#> WARN [2026-06-04 09:15:54] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
-#> SUCCESS [2026-06-04 09:15:54] Adding 0 new loggers from startup files
-#> INFO [2026-06-04 09:15:54] Check for duplicate sessions
-#> INFO [2026-06-04 09:15:54] Append encounter data
-#> SUCCESS [2026-06-04 09:15:54] Appended 1 rows to master metadata. New total is 2 rows.
-#> INFO [2026-06-04 09:15:54] Update sessions from logger returns
-#> SUCCESS [2026-06-04 09:15:54] Found unfinished session for logger ID: L1 2025-01-10
-#> SUCCESS [2026-06-04 09:15:54] Unfinished session:
+#> WARN [2026-06-04 15:28:22] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.
+#> SUCCESS [2026-06-04 15:28:22] Adding 0 new loggers from startup files
+#> INFO [2026-06-04 15:28:22] Check for duplicate sessions
+#> INFO [2026-06-04 15:28:22] Append encounter data
+#> SUCCESS [2026-06-04 15:28:22] Appended 1 rows to master metadata. New total is 2 rows.
+#> INFO [2026-06-04 15:28:22] Update sessions from logger returns
+#> SUCCESS [2026-06-04 15:28:22] Found unfinished session for logger ID: L1 2025-01-10
+#> SUCCESS [2026-06-04 15:28:22] Unfinished session:
 #>   logger_serial_no starttime_gmt       intended_species intended_location
 #> 1 L1               2024-01-01 00:00:00 bird             TestColony       
-#> SUCCESS [2026-06-04 09:15:54] Updated 1 sessions.
-#> SUCCESS [2026-06-04 09:15:54] Updated sessions:
+#> SUCCESS [2026-06-04 15:28:22] Updated 1 sessions.
+#> SUCCESS [2026-06-04 15:28:22] Updated sessions:
 #>   logger_serial_no starttime_gmt       download_type download_date
 #> 1 L1               2024-01-01 00:00:00 Downloaded    2025-01-10   
-#> INFO [2026-06-04 09:15:54] Finished handling partner metadata /tmp/RtmpSSudBQ/seatrack_vignette_2c2d4007874b/Metadata_SEATRACK_2025-TestColony.xlsx 
-#> for TestColony /tmp/RtmpSSudBQ/seatrack_vignette_2c2d4007874b/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
+#> INFO [2026-06-04 15:28:22] Finished handling partner metadata /tmp/RtmpWZketR/seatrack_vignette_2bff51adbc3f/Metadata_SEATRACK_2025-TestColony.xlsx 
+#> for TestColony /tmp/RtmpWZketR/seatrack_vignette_2bff51adbc3f/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx
 new_master_sheets <- new_sheets$master_import
 ```
 
