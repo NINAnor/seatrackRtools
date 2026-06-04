@@ -94,7 +94,7 @@ contained in this package.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">path_to_seatrack</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"a_filepath"</span>, <span class="st">"SEATRACK - shared"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/set_sea_track_folder.html">set_sea_track_folder</a></span><span class="op">(</span><span class="va">path_to_seatrack</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">#&gt; INFO [2026-05-27 14:10:26] Sea track folder set to: /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared</span></span></code></pre>
+<pre><code><span><span class="co">#&gt; INFO [2026-06-04 09:12:16] Sea track folder set to: /tmp/RtmpbQXAoI/seatrack_vignette_2b831c42839f/SEATRACK - shared</span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="loading-data">Loading data<a class="anchor" aria-label="anchor" href="#loading-data"></a>
@@ -117,9 +117,9 @@ path directly.</p>
 be done by using the colony name.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">master_import</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_master_import.html">load_master_import</a></span><span class="op">(</span><span class="st">"TestColony"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Get Master import file for colony 'TestColony', use existing paths: TRUE</span></span>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:17] Get Master import file for colony 'TestColony', use existing paths: TRUE</span></span>
 <span><span class="co">#&gt; NULL</span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Master import file for colony 'TestColony' found at: /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span></code></pre></div>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:17] Master import file for colony 'TestColony' found at: /tmp/RtmpbQXAoI/seatrack_vignette_2b831c42839f/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span></code></pre></div>
 <p>The function returns a class with two elements, <code>data</code> and
 <code>wb</code>. <code>wb</code> is the original excel workbook from
 which the data was loaded. <code>data</code> is a list, where each
@@ -143,29 +143,29 @@ checking startup files for missing logger sessions.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">updated_startup</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/add_loggers_from_startup.html">add_loggers_from_startup</a></span><span class="op">(</span><span class="va">master_import</span>, <span class="va">partner_data</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ## seatrackR is up to date.</span></span>
-<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] No database connection from which to get models</span></span>
+<span><span class="co">#&gt; WARN [2026-06-04 09:12:17] No database connection from which to get models</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
-<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; WARN [2026-06-04 09:12:17] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
-<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Adding 0 new loggers from startup files</span></span></code></pre></div>
+<span><span class="co">#&gt; WARN [2026-06-04 09:12:17] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:17] Adding 0 new loggers from startup files</span></span></code></pre></div>
 <p>Then appending reported encounter data.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">updated_metadata</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/append_encounter_data.html">append_encounter_data</a></span><span class="op">(</span></span>
 <span>  <span class="va">master_import</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">METADATA</span>,</span>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`ENCOUNTER DATA`</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Appended 1 rows to master metadata. New total is 2 rows.</span></span></code></pre></div>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:17] Appended 1 rows to master metadata. New total is 2 rows.</span></span></code></pre></div>
 <p>Finally the processing reported logger returns and attempts to update
 the appropriate session in the master startup sheet, setting download
 status and dates.</p>
@@ -179,12 +179,12 @@ generating new sessions for them in the master startup sheet.</p>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`LOGGER RETURNS`</span>,</span>
 <span>  <span class="va">partner_data</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">`RESTART TIMES`</span>,</span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Found unfinished session for logger ID: L1 2025-01-10</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Unfinished session:</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:17] Found unfinished session for logger ID: L1 2025-01-10</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:17] Unfinished session:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       intended_species intended_location</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> bird             TestColony       </span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated 1 sessions.</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated sessions:</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:17] Updated 1 sessions.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:17] Updated sessions:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       download_type download_date</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> Downloaded    2025-01-10</span></span></code></pre></div>
 <p>At every stage, the log will report the changes that the functions
@@ -206,39 +206,39 @@ updated master sheets, and the updated nonresponsive sheets.</p>
 <span>  <span class="va">partner_data</span>,</span>
 <span>  <span class="va">master_import</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Handle partner metadata /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/Metadata_SEATRACK_2025-TestColony.xlsx </span></span>
-<span><span class="co">#&gt; for TestColony /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Add missing sessions from start up files</span></span>
-<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] No database connection from which to get models</span></span>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:18] Handle partner metadata /tmp/RtmpbQXAoI/seatrack_vignette_2b831c42839f/Metadata_SEATRACK_2025-TestColony.xlsx </span></span>
+<span><span class="co">#&gt; for TestColony /tmp/RtmpbQXAoI/seatrack_vignette_2b831c42839f/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:18] Add missing sessions from start up files</span></span>
+<span><span class="co">#&gt; WARN [2026-06-04 09:12:18] No database connection from which to get models</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
-<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; WARN [2026-06-04 09:12:18] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
 <span><span class="co">#&gt; Warning in `[.tbl_df`(sessions, !is.na(sessions$starttime_gmt) &amp;</span></span>
 <span><span class="co">#&gt; !is.na(logger_partner_logger_data$date) &amp; : Incompatible methods ("Ops.Date",</span></span>
 <span><span class="co">#&gt; "Ops.POSIXt") for "&gt;="</span></span>
-<span><span class="co">#&gt; WARN [2026-05-27 14:10:27] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Adding 0 new loggers from startup files</span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Check for duplicate sessions</span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Append encounter data</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Appended 1 rows to master metadata. New total is 2 rows.</span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Update sessions from logger returns</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Found unfinished session for logger ID: L1 2025-01-10</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Unfinished session:</span></span>
+<span><span class="co">#&gt; WARN [2026-06-04 09:12:18] Logger ID L1 was retrieved on 2025-01-10 but no startup was added and no suitable existing sessions were found.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:18] Adding 0 new loggers from startup files</span></span>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:18] Check for duplicate sessions</span></span>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:18] Append encounter data</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:18] Appended 1 rows to master metadata. New total is 2 rows.</span></span>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:18] Update sessions from logger returns</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:18] Found unfinished session for logger ID: L1 2025-01-10</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:18] Unfinished session:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       intended_species intended_location</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> bird             TestColony       </span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated 1 sessions.</span></span>
-<span><span class="co">#&gt; SUCCESS [2026-05-27 14:10:27] Updated sessions:</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:18] Updated 1 sessions.</span></span>
+<span><span class="co">#&gt; SUCCESS [2026-06-04 09:12:18] Updated sessions:</span></span>
 <span><span class="co">#&gt;   logger_serial_no starttime_gmt       download_type download_date</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> L1               2024-01-01 <span style="color: #949494;">00:00:00</span> Downloaded    2025-01-10   </span></span>
-<span><span class="co">#&gt; INFO [2026-05-27 14:10:27] Finished handling partner metadata /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/Metadata_SEATRACK_2025-TestColony.xlsx </span></span>
-<span><span class="co">#&gt; for TestColony /tmp/RtmpbQI4X1/seatrack_vignette_2b3d463fa586/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
+<span><span class="co">#&gt; INFO [2026-06-04 09:12:18] Finished handling partner metadata /tmp/RtmpbQXAoI/seatrack_vignette_2b831c42839f/Metadata_SEATRACK_2025-TestColony.xlsx </span></span>
+<span><span class="co">#&gt; for TestColony /tmp/RtmpbQXAoI/seatrack_vignette_2b831c42839f/SEATRACK - shared/Database/Imports_Metadata/imports_TestColony_2025.xlsx</span></span>
 <span><span class="va">new_master_sheets</span> <span class="op">&lt;-</span> <span class="va">new_sheets</span><span class="op">$</span><span class="va">master_import</span></span></code></pre></div>
 <p>Finally, if you are happy with the changes made, you can save the
 updated master sheet.</p>
