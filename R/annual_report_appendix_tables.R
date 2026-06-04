@@ -1,5 +1,5 @@
 # Function to return background colour based on value of x
-success_col_func <- function(x, background, breaks = c(0, 0.05, 0.25, 0.45, Inf)) {
+success_col_func <- function(x, background = "white", breaks = c(0, 0.05, 0.25, 0.45, Inf)) {
     # Define colour palette
     col_palette <- c("#EF3F27", "#FEC76B", "#F2EF92", "#A3D09C")
     # Check which values in x are numeric
@@ -82,7 +82,7 @@ export_appendix_table_excel <- function(ft, file_path, sheet_name = "table", bod
 #' }
 #' @export
 #' @concept annual_report
-create_appendix_table <- function(field_plan_clean, logger_type, age_target, target_species) {
+create_appendix_table_ft <- function(field_plan_clean, logger_type, age_target, target_species) {
     # If Total is not in target_species, add it
     if (!"Total" %in% target_species) {
         target_species <- c(target_species, "Total")
@@ -242,13 +242,11 @@ create_appendix_table <- function(field_plan_clean, logger_type, age_target, tar
     # Alternating background colours for header row
     ft <- bg(ft,
         j = seq(1, length(all_col_keys), 2),
-        part = "header",
-        bg = bg1
+        part = "header", bg = seatrackRtools::table_bg$retrieved_bg
     )
     ft <- bg(ft,
         j = seq(2, length(all_col_keys), 2),
-        part = "header",
-        bg = bg2
+        part = "header", bg = seatrackRtools::table_bg$deployed_bg
     )
 
     ### LME formatting
