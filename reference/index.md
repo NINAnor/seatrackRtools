@@ -243,12 +243,25 @@ Functions to load and handle data from the field planning sheet
 
 Functions to create and export annual report appendix tables
 
-- [`create_appendix_table()`](https://ninanor.github.io/seatrackRtools/reference/create_appendix_table.md)
+- [`create_appendix_table_ft()`](https://ninanor.github.io/seatrackRtools/reference/create_appendix_table_ft.md)
   : Create a formatted flextable for the appendix table
 - [`export_appendix_table_excel()`](https://ninanor.github.io/seatrackRtools/reference/export_appendix_table_excel.md)
   : Export the flextable to an Excel file with formatting
+- [`export_event_table()`](https://ninanor.github.io/seatrackRtools/reference/export_event_table.md)
+  : Annual report event tables This function exports an excel file of an
+  annual report event table. The table is generated using the
+  get_event_table_ft function, which creates a flextable object based on
+  the field plan and database. The export_event_table function then
+  formats the table and saves it as an excel file in the specified
+  directory.
+- [`get_event_table_ft()`](https://ninanor.github.io/seatrackRtools/reference/get_event_table_ft.md)
+  : Get event table as flextable This function generates a flextable
+  object for an event table based on the field plan and database. It
+  retrieves the relevant data for the specified event type, logger type,
+  target age, and target species, and formats it into a flextable with
+  appropriate styling and formatting for use in the annual report.
 - [`make_annual_report_tables()`](https://ninanor.github.io/seatrackRtools/reference/make_annual_report_tables.md)
-  : Export tables for annual report
+  : Export all tables for annual report
 
 ## General utility functions
 
