@@ -144,7 +144,7 @@ describe("Critical Missing Field Checking", {
   test_that("check_critical_missing returns TRUE for non-GPS critical models", {
     startup_rows <- tibble()
     logger_partner_data <- tibble(
-      logger_id = "L1",
+      logger_id = "CriticalID",
       model = "CriticalModel",
       date = as.Date("2025-01-01"),
       deployed = TRUE
@@ -155,7 +155,7 @@ describe("Critical Missing Field Checking", {
       startup_rows,
       logger_partner_data,
       master_startup,
-      "L1",
+      "CriticalID",
       tibble()
     )
 

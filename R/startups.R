@@ -421,8 +421,8 @@ check_critical_missing <- function(startup_rows, logger_partner_logger_data, mas
             sessions$end_date <- sessions$shutdown_date
             sessions$end_date[is.na(sessions$end_date)] <- sessions$download_date[is.na(sessions$end_date)]
 
-            valid_open_sessions <- sessions[!is.na(sessions$starttime_gmt) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= sessions$starttime_gmt & is.na(sessions$end_date), ]
-            valid_closed_sessions <- sessions[!is.na(sessions$starttime_gmt) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= sessions$starttime_gmt & logger_partner_logger_data$date <= sessions$end_date & !is.na(sessions$end_date), ]
+            valid_open_sessions <- sessions[!is.na(sessions$starttime_gmt) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= as.Date(sessions$starttime_gmt) & is.na(sessions$end_date), ]
+            valid_closed_sessions <- sessions[!is.na(sessions$starttime_gmt) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= as.Date(sessions$starttime_gmt) & logger_partner_logger_data$date <= sessions$end_date & !is.na(sessions$end_date), ]
             if (any(logger_partner_logger_data$deployed)) {
                 valid_open_sessions <- valid_open_sessions[logger_partner_logger_data$date < (as.Date(valid_open_sessions$starttime_gmt) + (6 * 30)), ]
             }

@@ -138,7 +138,7 @@ handle_immersion_lotek <- function(filepath) {
         ts <- seq.POSIXt(min(act_bt2$V2), max(act_bt2$V2), by = "10 min")
         df <- data.frame(timestamp = ts)
         act_bt2$timestamp <- act_bt2$V2
-        act_bt2 <- full_join(df, act_bt2)
+        act_bt2 <- full_join(df, act_bt2, by = "timestamp")
         act_bt2$V2 <- act_bt2$timestamp
         act_bt2$timestamp <- NULL
         act_bt2$V1 <- "ok"
@@ -151,15 +151,15 @@ handle_immersion_lotek <- function(filepath) {
         act_bt2$V5[(act_bt2$V4 * 200) > 200] <- 200
         act_bt2$V5[(act_bt2$V4 * 200) < 201] <- act_bt2$V4[(act_bt2$V4 * 200) < 201] * 200
 
-        t <- 1
         for (t in 1:length(act_bt2$V1)) {
             tryCatch(
                 {
+                    # Vegard doesn't remember what this was for - I have clamped it to the nrow of the df for now.
                     if (act_bt2$V6[t] > 0.99) {
-                        act_bt2$V5[t:(t + (act_bt2$V6[t]) - 1)] <- 200
+                        act_bt2$V5[t:min((t + (act_bt2$V6[t]) - 1), nrow(act_bt2))] <- 200
                     }
                     if (act_bt2$V6[t] > 0.99) {
-                        act_bt2$V5[(t + (act_bt2$V6[t]))] <- (act_bt2$V4[t] - floor(act_bt2$V4[t])) * 200
+                        act_bt2$V5[min((t + (act_bt2$V6[t])), nrow(act_bt2))] <- (act_bt2$V4[t] - floor(act_bt2$V4[t])) * 200
                     }
                 },
                 error = function(e) {
