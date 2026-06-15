@@ -28,6 +28,11 @@ get_clean_field_plan(
   A boolean indicating whether to use master sheets to calculate
   success.
 
+- all_locations:
+
+  An optional data frame containing all location metadata from the
+  master import, if not provided this will be imported.
+
 - use_db:
 
   A boolean indicating whether to use the database to calculate success.

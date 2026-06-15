@@ -17,7 +17,7 @@ correct_models(metadata, startups = NULL)
 
   Metadata dataframe to correct
 
-- startup:
+- startups:
 
   Optional dataframe of logger startups to use for correction if
   database values are missing

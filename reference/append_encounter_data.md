@@ -5,7 +5,7 @@ Append encounter data to the master import metadata
 ## Usage
 
 ``` r
-append_encounter_data(master_metadata, encounter_data)
+append_encounter_data(master_metadata, encounter_data, version = 2026)
 ```
 
 ## Arguments
@@ -17,6 +17,10 @@ append_encounter_data(master_metadata, encounter_data)
 - encounter_data:
 
   A data frame representing the encounter data to be appended.
+
+- version:
+
+  Version of processing to use
 
 ## Value
 

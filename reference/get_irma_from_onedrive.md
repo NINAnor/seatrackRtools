@@ -42,6 +42,11 @@ get_irma_from_onedrive(
   An optional string specifying the colony to filter the data. If NULL,
   data for all colonies will be retrieved.
 
+- session_ids:
+
+  Optional list of strings specifying exact session IDs to filter the
+  data. If NULL, data for all sessions will be retrieved.
+
 - age_deployment:
 
   An optional string specifying the age class to filter the data.

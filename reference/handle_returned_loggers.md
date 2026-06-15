@@ -11,7 +11,8 @@ handle_returned_loggers(
   master_startup,
   logger_returns,
   restart_times,
-  nonresponsive_list = list()
+  nonresponsive_list = list(),
+  version = 2026
 )
 ```
 
@@ -38,6 +39,10 @@ handle_returned_loggers(
   A list containing tibbles of unresponsive loggers for different
   manufacturers. The name of the list element should match the producer
   name in master_startup (e.g., "Lotek", "MigrateTech").
+
+- version:
+
+  Metadata sheet version being handled
 
 ## Value
 

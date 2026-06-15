@@ -67,6 +67,8 @@ Currently netCDF files are not included in the data request package, so these ha
 <span>  species <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  colony <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  age_deployment <span class="op">=</span> <span class="st">"A"</span>,</span>
+<span>  project <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  exclude_embargoed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  session_ID <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  export <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  output_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -107,6 +109,14 @@ Currently netCDF files are not included in the data request package, so these ha
 
 <dt id="arg-age-deployment">age_deployment<a class="anchor" aria-label="anchor" href="#arg-age-deployment"></a></dt>
 <dd><p>An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".</p></dd>
+
+
+<dt id="arg-project">project<a class="anchor" aria-label="anchor" href="#arg-project"></a></dt>
+<dd><p>An optional string specifying the project to filter the data. Defaults to "SEATRACK".</p></dd>
+
+
+<dt id="arg-exclude-embargoed">exclude_embargoed<a class="anchor" aria-label="anchor" href="#arg-exclude-embargoed"></a></dt>
+<dd><p>A boolean indicating whether to exclude data that is currently under embargo. Defaults to TRUE.</p></dd>
 
 
 <dt id="arg-session-id">session_ID<a class="anchor" aria-label="anchor" href="#arg-session-id"></a></dt>

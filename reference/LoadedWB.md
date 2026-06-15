@@ -19,6 +19,10 @@ Other classes:
 
   A workbook object
 
+- `version`:
+
+  A string indicating which version metadata sheet
+
 - `modified`:
 
   Has the workbook been modified since import?

@@ -49,6 +49,13 @@ gls_calibrate_all(
   Integer specifying the number of worker processes to use for parallel
   processing. Default is 4.
 
+- new_filter_settings:
+
+  Logical indicating whether to force creation of a new filter settings
+  files for each species/colony combination, using the seatrackRgls
+  defaults. Default is FALSE. If TRUE, existing filter settings files
+  will be overwritten.
+
 ## Value
 
 None. The function saves the prepared calibration data to the specified

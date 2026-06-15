@@ -18,9 +18,9 @@ add_loggers_from_startup(master_import, new_metadata)
 
   Loaded Master startup file.
 
-- partner_metadata:
+- new_metadata:
 
-  Dataframe of loggers handled by partners
+  Loaded filled metadata sheet.
 
 ## Value
 

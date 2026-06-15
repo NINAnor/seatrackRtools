@@ -32,6 +32,10 @@ start_logging(
 
   Boolean. If FALSE, logger will not log that it has start logging.
 
+- log_index:
+
+  Integer specifying the index of the logger to configure. Default is 1.
+
 - log_level:
 
   The logging level. Default is logger::INFO.
@@ -40,11 +44,6 @@ start_logging(
 
   Boolean. If TRUE, uses a file-safe appender that handles file writing
   errors gracefully.
-
-- log_namespace:
-
-  A character string specifying the namespace for the logger. Default is
-  "global".
 
 ## Value
 

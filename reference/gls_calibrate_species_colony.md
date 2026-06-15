@@ -7,10 +7,10 @@ metadata passed to gls_prepare_calibration by species/colony.
 
 ``` r
 gls_calibrate_species_colony(
-  import_directory = file.path(the$sea_track_folder,
-    "Database\\Imports_Logger data\\Raw logger data\\ALL"),
   species = NULL,
   colony = NULL,
+  import_directory = file.path(the$sea_track_folder,
+    "Database\\Imports_Logger data\\Raw logger data\\ALL"),
   no_pos_only = TRUE,
   rerun_existing = TRUE,
   include_existing = TRUE,
@@ -22,10 +22,6 @@ gls_calibrate_species_colony(
 
 ## Arguments
 
-- import_directory:
-
-  Path to the directory containing GLS files.
-
 - species:
 
   Species name to filter metadata.
@@ -33,6 +29,10 @@ gls_calibrate_species_colony(
 - colony:
 
   Colony name to filter metadata.
+
+- import_directory:
+
+  Path to the directory containing GLS files.
 
 - no_pos_only:
 
@@ -57,6 +57,13 @@ gls_calibrate_species_colony(
 
   Logical indicating whether to rerun calibration for loggers that
   already have calibration plots. Default is TRUE.
+
+- new_filter_settings:
+
+  Logical indicating whether to force creation of a new filter settings
+  file for the species/colony combination, using the seatrackRgls
+  defaults. Default is FALSE. If TRUE, existing filter settings file
+  will be overwritten.
 
 ## Value
 

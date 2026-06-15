@@ -56,6 +56,17 @@ gls_process_species_colony(
 
   Logical indicating whether to export filter plots. Default is TRUE.
 
+- skip_existing_files:
+
+  Logical indicating whether to skip processing for files that already
+  have processed position data in the output directory. Default is TRUE.
+
+- stop_on_error:
+
+  Logical indicating whether to stop processing if an error occurs.
+  Default is FALSE, which means that the function will log the error and
+  continue processing other files.
+
 ## Value
 
 None. The function saves the processed position data to the specified
