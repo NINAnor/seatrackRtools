@@ -20,6 +20,8 @@ Other classes:
 
 \item{\code{wb}}{A workbook object}
 
+\item{\code{version}}{A string indicating which version metadata sheet}
+
 \item{\code{modified}}{Has the workbook been modified since import?}
 }
 \if{html}{\out{</div>}}

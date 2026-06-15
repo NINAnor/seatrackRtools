@@ -17,6 +17,8 @@ get_clean_field_plan(
 
 \item{use_master_sheets}{A boolean indicating whether to use master sheets to calculate success.}
 
+\item{all_locations}{An optional data frame containing all location metadata from the master import, if not provided this will be imported.}
+
 \item{use_db}{A boolean indicating whether to use the database to calculate success.}
 
 \item{field_year}{The year to filter the metadata for when using master sheets (default is the current year)}

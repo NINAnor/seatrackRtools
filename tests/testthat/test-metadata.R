@@ -303,7 +303,8 @@ describe("Partner Metadata Loading and Handling", {
         `RESTART TIMES` = tibble()
       ),
       path = "/path/to/file.xlsx",
-      modified = FALSE
+      modified = FALSE,
+      version = 2025
     )
 
     master_import <- list(

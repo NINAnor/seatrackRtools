@@ -41,6 +41,8 @@ gls_prepare_calibration(
 \item{filter_plots}{Logical indicating whether to export filter plots. Default is FALSE.}
 
 \item{rerun_existing_plots}{Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is FALSE.}
+
+\item{new_filter_settings}{Logical indicating whether to force creation of a new filter settings file for the species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings file will be overwritten.}
 }
 \value{
 None. The function saves the prepared calibration data to the specified output directory.

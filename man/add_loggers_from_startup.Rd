@@ -9,7 +9,7 @@ add_loggers_from_startup(master_import, new_metadata)
 \arguments{
 \item{master_import}{Loaded Master startup file.}
 
-\item{partner_metadata}{Dataframe of loggers handled by partners}
+\item{new_metadata}{Loaded filled metadata sheet.}
 }
 \value{
 A new version of the master startup data frame, with the logger added if succesful.

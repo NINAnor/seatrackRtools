@@ -40,7 +40,8 @@ Imports:
     promises,
     progressr,
     arrow,
-    ncdf4
+    ncdf4,
+    pdftools
 Suggests: 
     knitr,
     rmarkdown,

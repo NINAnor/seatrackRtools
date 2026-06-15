@@ -12,6 +12,12 @@ LoadedWB <- R6::R6Class(
         #' @param wb A workbook object
         #' @return A new LoadedWB object
         initialize = function(data = list(), wb = openxlsx2::wb_workbook()) {
+            if ("sheet_metadata" %in% wb$get_sheet_names()) {
+                sheet_metadata <- openxlsx2::wb_to_df(wb, "sheet_metadata")
+                self$version <- sheet_metadata$version
+            } else {
+                self$version <- "2025"
+            }
             self$data <- data
             self$wb <- wb
         },
@@ -21,6 +27,9 @@ LoadedWB <- R6::R6Class(
 
         #' @field wb A workbook object
         wb = openxlsx2::wb_workbook(),
+
+        #' @field version A string indicating which version metadata sheet
+        version = "2025",
 
         #' @field modified Has the workbook been modified since import?
         modified = FALSE,

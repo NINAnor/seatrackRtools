@@ -14,6 +14,8 @@ data_request(
   species = NULL,
   colony = NULL,
   age_deployment = "A",
+  project = NULL,
+  exclude_embargoed = TRUE,
   session_ID = NULL,
   export = TRUE,
   output_dir = NULL,
@@ -37,6 +39,10 @@ data_request(
 \item{colony}{An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.}
 
 \item{age_deployment}{An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".}
+
+\item{project}{An optional string specifying the project to filter the data. Defaults to "SEATRACK".}
+
+\item{exclude_embargoed}{A boolean indicating whether to exclude data that is currently under embargo. Defaults to TRUE.}
 
 \item{session_ID}{Optional list of strings specifying exact session IDs.}
 

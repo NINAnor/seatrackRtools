@@ -82,15 +82,13 @@ load_sheets_as_list <- function(
         }
         if (!is.null(sheet_upper)) {
             for (col_name in sheet_upper) {
-                current_sheet[[col_name]] <- toupper(current_sheet[[col_name]])
+                if (col_name %in% names(current_sheet)) {
+                    current_sheet[[col_name]] <- toupper(current_sheet[[col_name]])
+                }
             }
         }
 
-        if (!is.null(sheet_upper)) {
-            for (col_name in sheet_upper) {
-                current_sheet[[col_name]] <- toupper(current_sheet[[col_name]])
-            }
-        }
+
         # Remove trailing spaces from character columns
         char_cols <- sapply(current_sheet, is.character)
         current_sheet[char_cols] <- lapply(current_sheet[char_cols], trimws)

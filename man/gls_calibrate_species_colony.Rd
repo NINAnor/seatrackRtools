@@ -5,10 +5,10 @@
 \title{Prepare a seatrack species/colony combination for calibration}
 \usage{
 gls_calibrate_species_colony(
-  import_directory = file.path(the$sea_track_folder,
-    "Database\\\\Imports_Logger data\\\\Raw logger data\\\\ALL"),
   species = NULL,
   colony = NULL,
+  import_directory = file.path(the$sea_track_folder,
+    "Database\\\\Imports_Logger data\\\\Raw logger data\\\\ALL"),
   no_pos_only = TRUE,
   rerun_existing = TRUE,
   include_existing = TRUE,
@@ -18,11 +18,11 @@ gls_calibrate_species_colony(
 )
 }
 \arguments{
-\item{import_directory}{Path to the directory containing GLS files.}
-
 \item{species}{Species name to filter metadata.}
 
 \item{colony}{Colony name to filter metadata.}
+
+\item{import_directory}{Path to the directory containing GLS files.}
 
 \item{no_pos_only}{Logical indicating whether to include only loggers without position data in the database. Default is TRUE.}
 
@@ -33,6 +33,8 @@ gls_calibrate_species_colony(
 \item{filter_plots}{Logical indicating whether to export filter plots. Default is FALSE.}
 
 \item{rerun_existing_plots}{Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is TRUE.}
+
+\item{new_filter_settings}{Logical indicating whether to force creation of a new filter settings file for the species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings file will be overwritten.}
 }
 \value{
 None. The function saves the prepared calibration data to the specified output directory.

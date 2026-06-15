@@ -30,8 +30,9 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
 
     log_info("Scan import directory for files...")
     all_files <- list.files(import_directory, pattern = all_formats_pattern, recursive = TRUE, full.names = TRUE)
-    file_info <- file.info(all_files, extra_cols = FALSE)
-    all_files <- all_files[as.Date(file_info$mtime) >= as.Date(min_date)]
+    file_details <- file.info(all_files, extra_cols = FALSE)
+    all_files <- all_files[as.Date(file_details$mtime) >= as.Date(min_date)]
+    file_details <- file_details[as.Date(file_details$mtime) >= as.Date(min_date), ]
     if (length(all_files) == 0) {
         log_info("No files found in import directory after filtering by date.")
         return(list(file_info = data.frame(), missing_sessions = data.frame(), missing_raw_data_files = data.frame(), updated_raw_data_files = data.frame(), to_archive = data.frame()))
@@ -44,7 +45,7 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
         data.frame(logger_id = x[1], year_downloaded = x[2], model = tools::file_path_sans_ext(paste(x[3:length(x)], collapse = "_")), id_year = paste(x[1], x[2], sep = "_"))
     })
     file_info <- do.call(rbind, file_info_list)
-    file_info <- data.frame(full_path = all_files, file_info)
+    file_info <- data.frame(full_path = all_files, file_info, file_details[, c("size", "mtime")], row.names = seq_along(all_files))
     file_info$extension <- tools::file_ext(all_files)
     file_info$filename <- basename(file_info$full_path)
 
@@ -217,12 +218,18 @@ push_db_activity <- function(import_directory = file.path(the$sea_track_folder, 
             }
         }
     }
-    log_info("Uploading missing files to archive")
+    log_info("Uploading missing/updated files to archive")
     # Upload missing files to archive
     archive_summary <- seatrackR::listFileArchive()
-    to_archive <- file_info[file_info$filename %in% archive_summary$filesNotInArchive, ]
+    # Get cases where the file is in the archive but has an older modification date or a different filesize
+    existing_files <- dplyr::inner_join(file_info, archive_summary$filesInArchive, by = "filename", suffix = c("_local", "_ftp"))
+    modified_files <- dplyr::filter(existing_files, (existing_files$mtime >= existing_files$date) & (existing_files$size_local != existing_files$size_ftp))
+    log_info("Uploading ", nrow(modified_files), " files that have been modified locally")
+    seatrackR::uploadFiles(modified_files$full_path, overwrite = TRUE)
 
-    seatrackR::uploadFiles(to_archive$full_path)
+    missing_files <- file_info[file_info$filename %in% archive_summary$filesNotInArchive$filename, ]
+    log_info("Uploading ", nrow(missing_files), " files that are missing from the archive")
+    seatrackR::uploadFiles(missing_files$full_path)
 }
 
 #' Load activity data from file

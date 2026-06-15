@@ -234,6 +234,7 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
 #' @param restart_times A data frame containing logger restart information.
 #' @param nonresponsive_list A list containing tibbles of unresponsive loggers for different manufacturers.
 #' The name of the list element should match the producer name in master_startup (e.g., "Lotek", "MigrateTech").
+#' @param version Metadata sheet version being handled
 #' @return A list consisting of two elements:
 #'  - `master_startup``: An updated dataframe containing the modified master import data frame.
 #'  - `nonresponsive_list`: An updated list containing the modified nonresponsive logger data frames.
@@ -243,14 +244,14 @@ modify_logger_status <- function(logger_id, new_data = list(), master_sheet = NU
 #' }
 #' @export
 #' @concept loggers
-handle_returned_loggers <- function(colony, master_startup, logger_returns, restart_times, nonresponsive_list = list()) {
+handle_returned_loggers <- function(colony, master_startup, logger_returns, restart_times, nonresponsive_list = list(), version = 2026) {
     if (nrow(logger_returns) == 0) {
         log_info("No logger returns to process.")
         return(list(master_startup = master_startup, nonresponsive_list = nonresponsive_list))
     }
 
     log_trace("Check returned loggers")
-    valid_status <- logger_returns$status != "No download attemted" & !is.na(logger_returns$status)
+    valid_status <- !logger_returns$status %in% c("No download attemted", "No download attempted") & !is.na(logger_returns$status)
     unhandled_loggers <- tibble()
     if (any(valid_status)) {
         all_updated_session_summary <- tibble()
@@ -307,69 +308,76 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
     log_trace("Handle restarts")
     if (nrow(restart_times) > 0) {
         added_sessions <- tibble()
-        for (i in seq_len(nrow(restart_times))) {
-            restart_info <- restart_times[i, ]
+        if (version == 2025) {
+            for (i in seq_len(nrow(restart_times))) {
+                restart_info <- restart_times[i, ]
 
-            logger_id <- restart_info$logger_id
-            return_restart <- logger_returns[logger_returns$logger_id == logger_id, ]
-            if (nrow(return_restart) == 0) {
-                log_warn(paste("Logger ID:", logger_id, "not present in logger returns. Cannot get full info for restart."))
-                next
+                logger_id <- restart_info$logger_id
+                return_restart <- logger_returns[logger_returns$logger_id == logger_id, ]
+                if (nrow(return_restart) == 0) {
+                    log_warn(paste("Logger ID:", logger_id, "not present in logger returns. Cannot get full info for restart."))
+                    next
+                }
+                downloader <- return_restart$`downloaded by`
+
+                logger_restart_datetime <- paste(restart_info$startdate_GMT, format(restart_info$starttime_GMT, "%H:%M:%S"))
+                logger_restart_datetime <- strptime(logger_restart_datetime, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
+
+                # Get full logger_info from database
+                db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info")) %>%
+                    dplyr::filter(logger_serial_no == {{ logger_id }}) %>%
+                    dplyr::select(logger_serial_no, logger_model, producer, production_year, project) %>%
+                    dplyr::mutate(logging_mode = NA, intended_species = NA, intended_location = NA) %>%
+                    dplyr::collect()
+
+                # Get full logger info from existing sheet
+                previous_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
+
+                if (nrow(db_sessions) == 0 && nrow(previous_sessions) == 0) {
+                    log_error(paste("Logger ID:", logger_id, "not present in master startup sheet or db. Cannot get full info for restart."))
+                    next
+                }
+                # Check this restart doesn't already exist in previous sessions
+                previous_session_logger_dates <- paste(previous_sessions$logger_serial_no, as.character(previous_sessions$starttime_gmt))
+                if (paste(logger_id, as.character(logger_restart_datetime)) %in% previous_session_logger_dates) {
+                    log_info(paste("Logger ID:", logger_id, "session starting at", logger_restart_datetime, " already in master sheet."))
+                    next
+                }
+                if (nrow(db_sessions) > 0) {
+                    previous_sessions <- previous_sessions
+                }
+                # generate new row
+                new_session <- tibble(
+                    logger_serial_no = logger_id,
+                    logger_model = previous_sessions$logger_model[1],
+                    producer = previous_sessions$producer[1],
+                    production_year = previous_sessions$production_year[1],
+                    project = previous_sessions$project[1],
+                    starttime_gmt = logger_restart_datetime,
+                    logging_mode = restart_info$`Logging mode`[1],
+                    started_by = downloader,
+                    started_where = colony,
+                    days_delayed = NA,
+                    programmed_gmt_time = NA,
+                    intended_species = restart_info$intended_species[1],
+                    intended_location = colony,
+                    intended_deployer = NA,
+                    shutdown_session = NA,
+                    field_status = NA,
+                    downloaded_by = NA,
+                    download_type = NA,
+                    download_date = NA,
+                    decomissioned = NA,
+                    shutdown_date = NA,
+                    comment = restart_info$comment[1],
+                )
+                added_sessions <- rbind(added_sessions, new_session)
             }
-            downloader <- return_restart$`downloaded by`
-
-            logger_restart_datetime <- paste(restart_info$startdate_GMT, format(restart_info$starttime_GMT, "%H:%M:%S"))
-            logger_restart_datetime <- strptime(logger_restart_datetime, format = "%Y-%m-%d %H:%M:%S", tz = "GMT")
-
-            # Get full logger_info from database
-            db_sessions <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info")) %>%
-                dplyr::filter(logger_serial_no == {{ logger_id }}) %>%
-                dplyr::select(logger_serial_no, logger_model, producer, production_year, project) %>%
-                dplyr::mutate(logging_mode = NA, intended_species = NA, intended_location = NA) %>%
-                dplyr::collect()
-
-            # Get full logger info from existing sheet
-            previous_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
-
-            if (nrow(db_sessions) == 0 && nrow(previous_sessions) == 0) {
-                log_error(paste("Logger ID:", logger_id, "not present in master startup sheet or db. Cannot get full info for restart."))
-                next
-            }
-            # Check this restart doesn't already exist in previous sessions
-            previous_session_logger_dates <- paste(previous_sessions$logger_serial_no, as.character(previous_sessions$starttime_gmt))
-            if (paste(logger_id, as.character(logger_restart_datetime)) %in% previous_session_logger_dates) {
-                log_info(paste("Logger ID:", logger_id, "session starting at", logger_restart_datetime, " already in master sheet."))
-                next
-            }
-            if (nrow(db_sessions) > 0) {
-                previous_sessions <- previous_sessions
-            }
-            # generate new row
-            new_session <- tibble(
-                logger_serial_no = logger_id,
-                logger_model = previous_sessions$logger_model[1],
-                producer = previous_sessions$producer[1],
-                production_year = previous_sessions$production_year[1],
-                project = previous_sessions$project[1],
-                starttime_gmt = logger_restart_datetime,
-                logging_mode = restart_info$`Logging mode`[1],
-                started_by = downloader,
-                started_where = colony,
-                days_delayed = NA,
-                programmed_gmt_time = NA,
-                intended_species = restart_info$intended_species[1],
-                intended_location = colony,
-                intended_deployer = NA,
-                shutdown_session = NA,
-                field_status = NA,
-                downloaded_by = NA,
-                download_type = NA,
-                download_date = NA,
-                decomissioned = NA,
-                shutdown_date = NA,
-                comment = restart_info$comment[1],
-            )
-            added_sessions <- rbind(added_sessions, new_session)
+        } else if (version == 2026) {
+            # New 2026 handling
+            # Just append rows
+            return_restarts <- logger_returns[logger_returns$`stored or sent to?` == "redeployed", ]
+            added_sessions <- restart_times[restart_times$logger_serial_no %in% return_restarts$logger_id, ]
         }
         log_success("Adding ", nrow(added_sessions), " new sessions from restarts.")
         if (nrow(added_sessions) > 0) {
@@ -377,8 +385,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
             log_success("New sessions:\n", paste(capture.output(print(added_sessions_summary, n = nrow(added_sessions_summary)))[c(-1, -3)], collapse = "\n"))
         }
 
-
-        master_startup <- rbind(master_startup, added_sessions)
+        master_startup <- dplyr::bind_rows(master_startup, added_sessions)
     }
 
     # HANDLE UNRESPONSIVES

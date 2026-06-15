@@ -26,6 +26,8 @@ gls_calibrate_all(
 \item{rerun_existing_plots}{Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is FALSE.}
 
 \item{n_workers}{Integer specifying the number of worker processes to use for parallel processing. Default is 4.}
+
+\item{new_filter_settings}{Logical indicating whether to force creation of a new filter settings files for each species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings files will be overwritten.}
 }
 \value{
 None. The function saves the prepared calibration data to the specified output directory.

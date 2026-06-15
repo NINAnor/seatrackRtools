@@ -8,6 +8,8 @@ push_db_import_collections(db_import_collections, dry_run = FALSE)
 }
 \arguments{
 \item{db_import_collections}{A list of DBImportCollection objects.}
+
+\item{dry_run}{Logical indicating whether to perform a dry run (default is FALSE). If TRUE, no data will be written to the database.}
 }
 \description{
 Function to push multiple DBImportCollection objects to the database. Each collection is processed in turn using the \code{push_db_import_collection} function.

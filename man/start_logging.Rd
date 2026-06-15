@@ -20,11 +20,11 @@ start_logging(
 
 \item{silent}{Boolean. If FALSE, logger will not log that it has start logging.}
 
+\item{log_index}{Integer specifying the index of the logger to configure. Default is 1.}
+
 \item{log_level}{The logging level. Default is logger::INFO.}
 
 \item{file_safe}{Boolean. If TRUE, uses a file-safe appender that handles file writing errors gracefully.}
-
-\item{log_namespace}{A character string specifying the namespace for the logger. Default is "global".}
 }
 \value{
 None

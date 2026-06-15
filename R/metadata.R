@@ -147,7 +147,7 @@ load_master_import <- function(colony = NULL, file_path = NULL, use_stored = TRU
         production_year = 1,
         project = 0,
         starttime_gmt = 3,
-        logging_mode = 1,
+        logging_mode = 0,
         started_by = 0,
         started_where = 0,
         days_delayed = 1,
@@ -223,7 +223,6 @@ load_all_master_import <- function(combine = TRUE, skip = c(), distinct = TRUE, 
             return(all_sheets[[which(all_paths_distinct == current_path)]])
         })
         names(all_sheets) <- all_colony
-
     } else {
         names(all_sheets) <- all_colony_distinct
     }
@@ -319,7 +318,7 @@ get_location_unprocessed <- function(location) {
         return(NULL)
     }
     unprocessed_files_list <- lapply(location_unprocessed_dir, function(unprocessed_dir) {
-        list.files(file.path(locations_path, unprocessed_dir), pattern = "^[^~].*\\.xlsx$", full.names = TRUE)
+        list.files(file.path(locations_path, unprocessed_dir), pattern = "^[^~].*\\.xls?x?m$", full.names = TRUE)
     })
     unprocessed_files <- unlist(unprocessed_files_list)
     if (length(unprocessed_files) == 0) {
@@ -346,14 +345,22 @@ get_location_unprocessed <- function(location) {
 #' @concept metadata
 handle_partner_metadata <- function(colony, new_metadata, master_import, nonresponsive_list = LoadedWBCollection$new()) {
     log_info_all(paste("Handle partner metadata", new_metadata$path, "\n for", colony, master_import$path))
-    if (!all(c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES") %in% names(new_metadata$data))) {
-        stop("new_metadata must contain the sheets: ENCOUNTER DATA, LOGGER RETURNS, RESTART TIMES")
+    if (new_metadata$version == "2025") {
+        required_sheets <- c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES")
+    } else if (new_metadata$version == "2026") {
+        required_sheets <- c("ENCOUNTER DATA", "LOGGER RETURNS", "LOGGER STARTUPS")
     }
+    if (!all(required_sheets %in% names(new_metadata$data))) {
+        stop(glue::glue("new_metadata must contain the sheets: {paste(required_sheets, collapse = ", ")}"))
+    }
+
     if (!all(c("METADATA", "STARTUP_SHUTDOWN") %in% names(master_import$data))) {
         stop("master_import must contain the sheets: METADATA, STARTUP_SHUTDOWN")
     }
 
-
+    if (new_metadata$version == "2026") {
+        # Handle adding extra logger startups
+    }
 
     log_info("Add missing sessions from start up files")
     updated_loggers <- add_loggers_from_startup(master_import, new_metadata)
@@ -365,17 +372,23 @@ handle_partner_metadata <- function(colony, new_metadata, master_import, nonresp
     master_import$data$`STARTUP_SHUTDOWN` <- master_import$data$`STARTUP_SHUTDOWN`[!duplicated(logger_id_date), ]
 
     log_info("Append encounter data")
-    updated_metadata <- append_encounter_data(master_import$data$METADATA, new_metadata$data$`ENCOUNTER DATA`)
+    updated_metadata <- append_encounter_data(master_import$data$METADATA, new_metadata$data$`ENCOUNTER DATA`, new_metadata$version)
 
     master_import$data$METADATA <- updated_metadata
 
     log_info("Update sessions from logger returns")
+    if (new_metadata$version == "2025") {
+        restart_sheet <- new_metadata$data$`RESTART TIMES`
+    } else if (new_metadata$version == "2026") {
+        restart_sheet <- new_metadata$data$`LOGGER STARTUPS`
+    }
     updated_sessions <- handle_returned_loggers(
         colony,
         master_import$data$`STARTUP_SHUTDOWN`,
         new_metadata$data$`LOGGER RETURNS`,
-        new_metadata$data$`RESTART TIMES`,
-        nonresponsive_list
+        restart_sheet,
+        nonresponsive_list,
+        new_metadata$version
     )
 
     master_import$data$`STARTUP_SHUTDOWN` <- updated_sessions$master_startup
@@ -429,8 +442,49 @@ load_partner_metadata <- function(file_path) {
     }
     # Peak at file to ascertain version
 
-    # Desired sheets (V1)
-    sheets <- c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES")
+    wb <- openxlsx2::wb_load(file_path)
+    if ("sheet_metadata" %in% wb$get_sheet_names()) {
+        sheet_metadata <- openxlsx2::wb_to_df(wb, "sheet_metadata")
+        version <- sheet_metadata$version
+    } else {
+        version <- "2025"
+    }
+
+    if (version == "2025") {
+        # Desired sheets (pre 2026)
+        sheets <- c("ENCOUNTER DATA", "LOGGER RETURNS", "RESTART TIMES")
+        restart_sheet_types <- c(
+            logger_id = 0,
+            logger_model = 0,
+            startdate_GMT = 2,
+            starttime_GMT = 3,
+            `Logging mode` = 0,
+            intended_species = 0,
+            comment = 0
+        )
+    } else if (version == "2026") {
+        # Desired sheets (2026)
+        sheets <- c("ENCOUNTER DATA", "LOGGER RETURNS", "LOGGER STARTUPS")
+        restart_sheet_types <- c(
+            logger_serial_no = 0,
+            logger_model = 0,
+            producer = 0,
+            production_year = 1,
+            project = 0,
+            starttime_gmt = 3,
+            logging_mode = 0,
+            started_by = 0,
+            started_where = 0,
+            days_delayed = 1,
+            programmed_gmt_time = 3,
+            intended_species = 0,
+            intended_location = 0,
+            intended_deployer = 0,
+            comment = 0
+        )
+    }
+
+
 
     # Skip the first row as it contains extra headers.
     metadata_list <- load_sheets_as_list(file_path, sheets, 1,
@@ -445,20 +499,12 @@ load_partner_metadata <- function(file_path) {
                 `stored or sent to?` = 0,
                 comment = 0
             ),
-            c(
-                logger_id = 0,
-                logger_model = 0,
-                startdate_GMT = 2,
-                starttime_GMT = 3,
-                `Logging mode` = 0,
-                intended_species = 0,
-                comment = 0
-            )
+            restart_sheet_types
         ),
         col_upper = list(
             c("logger_id_retrieved", "logger_id_deployed"),
             c("logger_id"),
-            c("logger_id")
+            c("logger_id", "logger_serial_no")
         )
     )
     if (any(is.na(as.Date(metadata_list$data$`ENCOUNTER DATA`$date)))) {

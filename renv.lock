@@ -7069,7 +7069,7 @@
     },
     "seatrackR": {
       "Package": "seatrackR",
-      "Version": "0.0.3.93",
+      "Version": "0.0.3.96",
       "Source": "GitHub",
       "Title": "Interface functions for the Seatrack database",
       "Authors@R": "c(person(given = \"Jens\",  family = \"Åström\",  email = \"jens.astrom@nina.no\",  role = c(\"aut\"), comment = c(ORCID = \"0000-0002-6114-0440\", note=\"Original creator\")), person(given = \"Julian\",  family = \"Evans\",  role = c(\"aut\", \"cre\"),  email = \"julian.evans@nina.no\"))",
@@ -7122,7 +7122,7 @@
       "RemoteUsername": "ninanor",
       "RemoteRepo": "seatrackR",
       "RemoteRef": "main",
-      "RemoteSha": "49f907af9baff3e24ffc8402a77e1bec5f3b79fd",
+      "RemoteSha": "3d33940650c49400abe17326d40a0b140515cc96",
       "Remotes": "seatrackR=github::NINAnor/NinaR"
     },
     "seatrackRgls": {
@@ -7180,7 +7180,7 @@
       "RemoteUsername": "ninanor",
       "RemoteRepo": "seatrackRgls",
       "RemoteRef": "main",
-      "RemoteSha": "78e6530e02e8cd104bad64564c9ad0547ded41be",
+      "RemoteSha": "57c20574b60f93aad1225bc02e5b648ef747481f",
       "Remotes": "SLisovski/GeoLight, distancetocoast=github::mdsumner/distancetocoast, GeoLocTools=github::bluegreen-labs/geoloctools"
     },
     "sessioninfo": {

@@ -9,7 +9,7 @@ correct_models(metadata, startups = NULL)
 \arguments{
 \item{metadata}{Metadata dataframe to correct}
 
-\item{startup}{Optional dataframe of logger startups to use for correction if database values are missing}
+\item{startups}{Optional dataframe of logger startups to use for correction if database values are missing}
 }
 \value{
 Corrected metadata dataframe

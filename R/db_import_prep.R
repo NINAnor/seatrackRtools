@@ -27,6 +27,9 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     metadata <- master_sheets$data$METADATA
     metadata <- metadata[order(metadata$date), ]
 
+    # Temporarily bring back scull until we fix the name
+    metadata <- dplyr::rename(metadata, scull = skull)
+
     metadata$ring_number <- as.character(metadata$ring_number)
 
     startup_shutdown <- master_sheets$data$STARTUP_SHUTDOWN

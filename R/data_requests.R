@@ -1,7 +1,9 @@
-get_col_from_list <- function(data_list, col_name) {
+get_col_from_list <- function(data_list, col_names) {
     for (curr_data in data_list) {
-        if (col_name %in% names(curr_data)) {
-            return(curr_data[[col_name]])
+        for (col_name in col_names){
+            if (col_name %in% names(curr_data)) {
+                return(curr_data[[col_name]])
+            }
         }
     }
     return(NULL)
@@ -108,7 +110,7 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
     })
 
     if (is.null(species)) {
-        species <- get_col_from_list(all_data_data_only, "species")
+        species <- get_col_from_list(all_data_data_only, c("species", "deployment_species"))
         if (!is.null(species)) {
             species <- unique(species)
         }
@@ -314,6 +316,8 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' @param species An optional string specifying the species to filter the data. If NULL, data for all species will be retrieved.
 #' @param colony An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.
 #' @param age_deployment An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".
+#' @param project An optional string specifying the project to filter the data. Defaults to "SEATRACK".
+#' @param exclude_embargoed A boolean indicating whether to exclude data that is currently under embargo. Defaults to TRUE.
 #' @param session_ID Optional list of strings specifying exact session IDs.
 #' @param export A boolean indicating whether to export the data package as a zip file. If FALSE, the function will return the data as a list instead.
 #' @param output_dir An optional string specifying the directory where the exported zip file will be saved.
@@ -335,6 +339,8 @@ data_request <- function(
     data_types = c("raw_data", "GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
     start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL,
     age_deployment = "A",
+    project = NULL,
+    exclude_embargoed = TRUE,
     session_ID = NULL,
     export = TRUE, output_dir = NULL,
     additional_notes = "", additional_data_files = list(), additional_files = list(), additional_data = list()) {
@@ -361,7 +367,7 @@ data_request <- function(
 
     if ("GLS_positional_data" %in% data_types) {
         log_info("Fetching GLS position data...")
-        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID)
+        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
         all_data$GLS_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
             description = "GLS Positional data"
@@ -370,7 +376,7 @@ data_request <- function(
 
     if ("IRMA_positional_data" %in% data_types) {
         log_info("Fetching IRMA position data...")
-        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = colony, sessionId = session_ID)
+        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
         all_data$IRMA_positional_data <- list(
             data = irma_pos[irma_pos$date_time >= start_date & irma_pos$date_time < end_date, ],
             description = "IRMA Positional data"
@@ -381,7 +387,7 @@ data_request <- function(
 
     if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% c(data_types, names(all_data)))) {
         log_info("Fetching individual data...")
-        individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL, age_at_deployment = age_deployment, species = species, session_id = session_ID)
+        individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL, age_at_deployment = age_deployment, species = species, session_id = session_ID, project = project, exclude_embargoed = exclude_embargoed)
 
         if ("individual_data" %in% data_types) {
             # Filter the individual information based on the data being returned
@@ -426,7 +432,7 @@ data_request <- function(
 
     if ("logger_info" %in% data_types) {
         log_info("Fetching logger data...")
-        logger_info <- seatrackR::getLoggerInfo()
+
 
         session_ids <- c()
         if ("GLS_positional_data" %in% names(all_data)) {
@@ -443,16 +449,12 @@ data_request <- function(
         }
 
         if (length(session_ids) > 0) {
-            logger_info <- logger_info[logger_info$session_id %in% unique(session_ids), ]
+            logger_info <- seatrackR::getLoggerInfo(session = session_ids, exclude_embargoed = exclude_embargoed)
         } else {
-            if (!is.null(colony)) {
-                logger_info <- logger_info[logger_info$colony %in% colony, ]
-            }
-            if (!is.null(species)) {
-                logger_info <- logger_info[logger_info$deployment_species %in% species, ]
-            }
+            logger_info <- seatrackR::getLoggerInfo(colony = colony, species = species, project = project, exclude_embargoed = exclude_embargoed)
+
             logger_info <- logger_info[logger_info$deployment_date >= start_date & (!is.na(logger_info$retrieval_date) & logger_info$retrieval_date < end_date), ]
-            # Should filter by age too in this fallback
+            session_ids <- unique(logger_info$session_id)
         }
         all_data$logger_info <- list(data = logger_info, description = "Logger info")
     }
@@ -464,7 +466,7 @@ data_request <- function(
     if (length(types) > 0) {
         activity_light_temp <- lapply(types, function(type) {
             log_info(paste0("Fetching ", type, " data..."))
-            recordings <- seatrackR::getRecordings(type = type, individId = unique(individuals$individ_id))
+            recordings <- seatrackR::getRecordings(type = type, sessionId = session_ids, exclude_embargoed = exclude_embargoed)
             recordings <- recordings[recordings$date_time >= start_date & recordings$date_time < end_date, ]
             return(list(data = recordings, description = descriptions[type]))
         })

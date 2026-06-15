@@ -32,6 +32,10 @@ gls_process_species_colony(
 \item{no_pos_only}{Logical indicating whether to include only loggers without position data in the database. Default is TRUE.}
 
 \item{filter_plots}{Logical indicating whether to export filter plots. Default is TRUE.}
+
+\item{skip_existing_files}{Logical indicating whether to skip processing for files that already have processed position data in the output directory. Default is TRUE.}
+
+\item{stop_on_error}{Logical indicating whether to stop processing if an error occurs. Default is FALSE, which means that the function will log the error and continue processing other files.}
 }
 \value{
 None. The function saves the processed position data to the specified output directory.

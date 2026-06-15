@@ -64,9 +64,9 @@ gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = FALSE, includ
 #' Prepare a seatrack species/colony combination for calibration
 #'
 #' Uses hard coded file paths to call gls_prepare_calibration. Filters metadata passed to gls_prepare_calibration by species/colony.
-#' @param import_directory Path to the directory containing GLS files.
 #' @param species Species name to filter metadata.
 #' @param colony Colony name to filter metadata.
+#' @param import_directory Path to the directory containing GLS files.
 #' @param no_pos_only Logical indicating whether to include only loggers without position data in the database. Default is TRUE.
 #' @param rerun_existing Logical indicating whether to rerun calibration for loggers that already have calibration data. Default is TRUE.
 #' @param include_existing Logical indicating whether to include existing calibration data in the final output. Default is TRUE.
@@ -77,8 +77,7 @@ gls_calibrate_all <- function(no_pos_only = TRUE, rerun_existing = FALSE, includ
 #' @export
 #' @concept gls_helper
 gls_calibrate_species_colony <- function(
-    import_directory = file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL"),
-    species = NULL, colony = NULL, no_pos_only = TRUE, rerun_existing = TRUE, include_existing = TRUE, filter_plots = FALSE, rerun_existing_plots = TRUE, new_filter_settings = FALSE) {
+    species = NULL, colony = NULL, import_directory = file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL"), no_pos_only = TRUE, rerun_existing = TRUE, include_existing = TRUE, filter_plots = FALSE, rerun_existing_plots = TRUE, new_filter_settings = FALSE) {
     log_info("Preparing calibration for species '", species, "' and colony '", colony, "'")
 
     existing_calibration_dir <- file.path(the$sea_track_folder, "Locations")

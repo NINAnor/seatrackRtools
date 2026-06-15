@@ -24,6 +24,8 @@ get_irma_from_onedrive(
 
 \item{colony}{An optional string specifying the colony to filter the data. If NULL, data for all colonies will be retrieved.}
 
+\item{session_ids}{Optional list of strings specifying exact session IDs to filter the data. If NULL, data for all sessions will be retrieved.}
+
 \item{age_deployment}{An optional string specifying the age class to filter the data. Possible values are "A" for adults and "C" for juveniles. Defaults to "A".}
 
 \item{release}{An optional string specifying the release of the IRMA data to retrieve. Defaults to "20241120".}

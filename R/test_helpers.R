@@ -32,7 +32,7 @@
 #' }
 #'
 #' @export
-#' @keyword internal
+#' @keywords internal
 connect_to_test_database <- function(
     username = "postgres",
     password = "postgres",
@@ -78,7 +78,7 @@ connect_to_test_database <- function(
 #' }
 #'
 #' @export
-#' @keyword internal
+#' @keywords internal
 skip_if_no_test_db <- function(message = "Test database not available") {
   con <- connect_to_test_database()
   
@@ -93,7 +93,7 @@ skip_if_no_test_db <- function(message = "Test database not available") {
 #' Generates a test partner metadata object with predefined encounter data, restart times, and return times. This function is useful for testing functions that require a partner metadata object without needing to read from an actual file.
 #' @return A list representing a test partner metadata object, containing encounter data, restart times, and return times.
 #' @export
-#' @keyword internal
+#' @keywords internal
 create_test_partner_metadata <- function() {
   list(
     data = list(
@@ -111,7 +111,7 @@ create_test_partner_metadata <- function() {
 #' Generates a test encounter data tibble for use in tests.
 #' @return A tibble representing test encounter data.
 #' @export
-#' @keyword internal
+#' @keywords internal
 create_test_encounter_data <- function() {
   encounter_data <- tibble(
     ring_number = c("R1", "R2"),
@@ -130,7 +130,7 @@ create_test_encounter_data <- function() {
 #' Generates a test encounter data tibble for use in tests.
 #' @return A tibble representing test encounter data.
 #' @export
-#' @keyword internal
+#' @keywords internal
 create_test_returns_sheet <- function() {
   tibble(
     logger_id = c("L1", "L2"),
@@ -147,7 +147,7 @@ create_test_returns_sheet <- function() {
 #' Generates a test restart sheet as a tibble for use in tests.
 #' @return A tibble representing a test restart sheet.
 #' @export
-#' @keyword internal
+#' @keywords internal
 create_test_restart_sheet <- function() {
   tibble(
     logger_id = c("L1", "L2"),
@@ -164,7 +164,7 @@ create_test_restart_sheet <- function() {
 #' Generates a test startup sheet as a tibble for use in tests.
 #' @return A tibble representing a test startup sheet.
 #' @export
-#' @keyword internal
+#' @keywords internal
 create_test_startup_data <- function(n_rows = 5) {
   tibble(
     logger_serial_no = paste0("L", seq_len(n_rows)),
@@ -197,7 +197,7 @@ create_test_startup_data <- function(n_rows = 5) {
 #' @param file_path Optional file path to save the generated workbook. If NULL, the workbook is not saved to disk.
 #' @return A list containing the workbook object and the data frames for metadata and startup sheets.
 #' @export
-#' @keyword internal
+#' @keywords internal
 create_test_master_import <- function(file_path = NULL) {
   wb <- openxlsx2::wb_workbook()
   wb$add_worksheet("METADATA")

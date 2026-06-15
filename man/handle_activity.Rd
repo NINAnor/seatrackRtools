@@ -10,6 +10,8 @@ handle_activity(file_info, recording_type, remove_existing = FALSE)
 \item{file_info}{A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.}
 
 \item{recording_type}{A list containing information about the recording type, including table_name, process_function, extensions, and argname.}
+
+\item{remove_existing}{A boolean indicating whether to remove existing data for the session_id from the database before uploading the new data. This can be useful if you want to replace existing data with updated data. Defaults to FALSE.}
 }
 \value{
 None. The function uploads the processed activity data to the SEATRACK database and logs the progress and any issues encountered during the process.
