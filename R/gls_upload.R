@@ -173,6 +173,8 @@ gls_import <- function(species = NULL, colony = NULL, chunk_size = 10, gls_direc
         }
         if (is.null(colony)) {
             colony_dir <- list.dirs(species_dir, recursive = FALSE, full.names = FALSE)
+        }else{
+            colony_dir <- colony
         }
         for (current_colony in colony_dir) {
             colony_dir_path <- file.path(species_dir, current_colony)

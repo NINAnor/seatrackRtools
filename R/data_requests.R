@@ -355,7 +355,7 @@ data_request <- function(
 
     # check colonies
     if (!is.null(colony)) {
-        available_colonies <- seatrackR::getColonies()$colony_int_name
+        available_colonies <- seatrackR::getColonies(allLocations = TRUE)$location_name
         missing_colony_bool <- !colony %in% available_colonies
         if (any(missing_colony_bool)) {
             missing_colonies <- paste(colony[missing_colony_bool], collapse = ", ")

@@ -232,7 +232,7 @@ gls_metadata <- function(import_directory, colony = NULL, species = NULL, id_yea
 #' @export
 #' @concept gls_helper
 gls_seatrack_colony_info <- function() {
-    all_colony_info <- seatrackR::getColonies()
-    all_colony_info <- data.frame(colony = all_colony_info$colony_int_name, col_lat = all_colony_info$lat, col_lon = all_colony_info$lon)
+    all_colony_info <- seatrackR::getColonies(allLocations = TRUE)
+    all_colony_info <- data.frame(colony = all_colony_info$location_name, col_lat = all_colony_info$lat, col_lon = all_colony_info$lon)
     return(all_colony_info)
 }
