@@ -22,3 +22,4 @@ app.log
 /seatrackRtools_app/
 /requested_data_packages/
 data_requests.R
+inst/shiny/web_metadata_app/data/

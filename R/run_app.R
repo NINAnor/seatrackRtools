@@ -18,6 +18,8 @@ run_app <- function(settings_path = file.path(getwd(), "seatrackRtools_app"), lo
 
 
 
+
+
 #' Set up logs for shiny app
 #' This function initializes logging for the Shiny app, creating separate log files for general logs, errors, and successes. It ensures that the specified log directory exists and starts logging with appropriate settings for each log type.
 #'
