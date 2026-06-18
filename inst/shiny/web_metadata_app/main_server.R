@@ -25,6 +25,12 @@ main_server <- function(id) {
             )
         )
 
+        species_df <- species_df[order(species_df$eng), ]
+
+        colonies <- readr::read_csv("data/SEATRACK database colonies.csv", show_col_types = FALSE)
+        colony_cols <- colonies$col
+        names(colony_cols) <- colonies$location_name
+
         ind <- readr::read_csv("data/SEATRACK database individual sexing data.csv", show_col_types = FALSE)
 
         log <- readr::read_csv("data/SEATRACK database individual event data.csv", show_col_types = FALSE)
@@ -32,9 +38,7 @@ main_server <- function(id) {
 
         pos <- readr::read_csv("data/SEATRACK database positional data available.csv", show_col_types = FALSE)
         pos_data_last_modification <- file.info("data/SEATRACK database positional data available.csv")$mtime
-        all_colonies <- unique(ind$colony)
-        colony_cols <- rainbow(length(all_colonies))
-        names(colony_cols) <- all_colonies
+
 
         data_req_summary <- dat_req_server("data_request", species_df)
         gls_summary <- pos_summary_server("gls_summary", pos, pos_data_last_modification, log, species_df, "GLS")

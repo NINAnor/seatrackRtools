@@ -53,6 +53,10 @@ reference:
     desc: Functions to load and handle data from the field planning sheet
     contents:
       - has_concept("field_planning")
+  - title: Website metadata app
+    desc: Functions relating to the updating and publishing of the website metadata app
+    contents:
+      - has_concept("web_metadata_app")
   - title: Annual report
   - subtitle: Appendix table createion
     desc: Functions to create and export annual report appendix tables

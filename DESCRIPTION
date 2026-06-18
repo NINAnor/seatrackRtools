@@ -41,7 +41,8 @@ Imports:
     progressr,
     arrow,
     ncdf4,
-    pdftools
+    pdftools,
+    rsconnect
 Suggests: 
     knitr,
     rmarkdown,

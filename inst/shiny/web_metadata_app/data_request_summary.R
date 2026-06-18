@@ -28,7 +28,8 @@ dat_req_server <- function(id, species_df) {
             dat_req$`Study species`[i] <- stringr::str_c(sort(species_i), collapse = ", ")
         }
         dat_req <- dat_req[, c("ID", "Principal Investigator", "Project title", "Study species", "Study area", "ECR project", "data request", "aim")]
-
+        dat_req$`data request` <- as.Date(dat_req$`data request`, format = "%d/%m/%Y")
+        dat_req <- dat_req[order(dat_req$ID, decreasing = TRUE), ]
 
         output$dict <- renderUI(p(HTML(stringr::str_c(paste(species_df$abrv, species_df$eng, sep = " - "), collapse = ", "))))
 

@@ -1,11 +1,6 @@
 library(shiny)
-# library(shinydashboard)
 library(ggplot2)
-# library(readr)
-# library(lubridate)
-# library(stringr)
-# library(RColorBrewer)
-# library(dplyr)
+library(dplyr)
 
 source("main_server.R")
 source("main_ui.R")

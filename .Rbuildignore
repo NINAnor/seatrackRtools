@@ -21,3 +21,5 @@ test_script.R
 ^data_requests.R$
 ^requested_data_packages.R$
 ^seatrackRtools_app$
+^inst/shiny/web_metadata_app/data/.+$
+rsconnect/
