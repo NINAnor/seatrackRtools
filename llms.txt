@@ -248,6 +248,20 @@ Functions to load and handle data from the field planning sheet
 - [`get_field_plan()`](https://ninanor.github.io/seatrackRtools/reference/get_field_plan.md)
   : Read and process the field plan Excel sheet
 
+## Website metadata app
+
+Functions relating to the updating and publishing of the website
+metadata app
+
+- [`build_and_deploy_metada_app()`](https://ninanor.github.io/seatrackRtools/reference/build_and_deploy_metada_app.md)
+  : Get and prepare data for the SEATRACK metadata Shiny app.
+- [`deploy_web_metadata_app()`](https://ninanor.github.io/seatrackRtools/reference/deploy_web_metadata_app.md)
+  : Deploy the SEATRACK metadata Shiny app to shinyapps.io.
+- [`get_web_metadata_data()`](https://ninanor.github.io/seatrackRtools/reference/get_web_metadata_data.md)
+  : Get and prepare data for the SEATRACK metadata Shiny app.
+- [`run_web_metadata_app()`](https://ninanor.github.io/seatrackRtools/reference/run_web_metadata_app.md)
+  : Run the Shiny app for visualising SEATRACK metadata.
+
 ## Annual report
 
 ### Appendix table createion

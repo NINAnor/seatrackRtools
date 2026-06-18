@@ -17,6 +17,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/add_loggers_from_startup.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/append_encounter_data.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/append_to_nonresponsive.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/build_and_deploy_metada_app.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/check_db_metadata_import.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/check_deployment_db.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/check_retrieval_db.html</loc></url>
@@ -34,6 +35,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/create_test_returns_sheet.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/create_test_startup_data.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/data_request.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/deploy_web_metadata_app.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/end_logger_session.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/export_appendix_table_excel.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/export_check_calibration.html</loc></url>
@@ -59,6 +61,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_raw_data_prev_session_excel.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_startup_paths.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_unfinished_session.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/get_web_metadata_data.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/gls_calibrate_all.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/gls_calibrate_file.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/gls_calibrate_species_colony.html</loc></url>
@@ -115,6 +118,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/push_startup.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/run_ColonyRepr.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/run_app.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/run_web_metadata_app.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/save_all_modified.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/save_master_sheet.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/save_nonresponsive.html</loc></url>
