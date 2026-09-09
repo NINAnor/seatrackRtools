@@ -121,6 +121,8 @@ Functions to load logger data
 
 - [`end_logger_session()`](https://ninanor.github.io/seatrackRtools/reference/end_logger_session.md)
   : Modify logger status to end a session
+- [`get_logger_from_db()`](https://ninanor.github.io/seatrackRtools/reference/get_logger_from_db.md)
+  : Find logger instances in database
 - [`get_logger_from_metadata()`](https://ninanor.github.io/seatrackRtools/reference/get_logger_from_metadata.md)
   : Find logger instances in files
 - [`get_unfinished_session()`](https://ninanor.github.io/seatrackRtools/reference/get_unfinished_session.md)
@@ -148,6 +150,8 @@ Functions to load and update non-responsive sheets
   : Get all nonresponsive loggers and export
 - [`save_nonresponsive()`](https://ninanor.github.io/seatrackRtools/reference/save_nonresponsive.md)
   : Save multiple nonresponsive logger sheets to Excel files
+- [`set_reconstructed()`](https://ninanor.github.io/seatrackRtools/reference/set_reconstructed.md)
+  : Set reconstructed download type for nonresponsive loggers
 
 ### Startup metadata functions
 
@@ -155,8 +159,15 @@ Functions to load and update startup sheets
 
 - [`add_loggers_from_startup()`](https://ninanor.github.io/seatrackRtools/reference/add_loggers_from_startup.md)
   : Attempt to add logger from startup sheets
+- [`choose_startup_to_add()`](https://ninanor.github.io/seatrackRtools/reference/choose_startup_to_add.md)
+  : Choose the appropriate startup row to add to the master startup data
+  frame
+- [`get_can_dummy_models()`](https://ninanor.github.io/seatrackRtools/reference/get_can_dummy_models.md)
+  : Get logger models that can have dummy start times
 - [`get_startup_paths()`](https://ninanor.github.io/seatrackRtools/reference/get_startup_paths.md)
   : Get paths to all startup Excel files
+- [`search_startup_files()`](https://ninanor.github.io/seatrackRtools/reference/search_startup_files.md)
+  : Search for logger instances in startup files
 - [`set_comments()`](https://ninanor.github.io/seatrackRtools/reference/set_comments.md)
   : Set or append comments in the master_startup data frame
 - [`set_master_startup_value()`](https://ninanor.github.io/seatrackRtools/reference/set_master_startup_value.md)
@@ -372,8 +383,6 @@ Functions for managing data requests in the database.
   table](https://ninanor.github.io/seatrackRtools/articles/appendix_table.md):
 - [Handling
   loggers](https://ninanor.github.io/seatrackRtools/articles/handling_loggers.md):
-- [Example
-  script](https://ninanor.github.io/seatrackRtools/articles/introduction.md):
 - [Nonresponsive
   loggers](https://ninanor.github.io/seatrackRtools/articles/nonresponsive_loggers.md):
 - [GLS

@@ -9,7 +9,7 @@ issues.
 ## Usage
 
 ``` r
-add_loggers_from_startup(master_import, new_metadata)
+add_loggers_from_startup(master_import, new_metadata, can_dummy_models = NULL)
 ```
 
 ## Arguments
@@ -21,6 +21,12 @@ add_loggers_from_startup(master_import, new_metadata)
 - new_metadata:
 
   Loaded filled metadata sheet.
+
+- can_dummy_models:
+
+  Optional data frame of models that can be used to create dummy start
+  times. If NULL, the function will retrieve the list of models from the
+  database.
 
 ## Value
 

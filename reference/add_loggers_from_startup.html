@@ -24,7 +24,6 @@ Incorrectly formatted datetime columns can also lead to issues."></head><body>
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/appendix_table.html">Appendix table</a></li>
     <li><a class="dropdown-item" href="../articles/handling_loggers.html"> Handling loggers</a></li>
-    <li><a class="dropdown-item" href="../articles/introduction.html">Example script</a></li>
     <li><a class="dropdown-item" href="../articles/nonresponsive_loggers.html"> Nonresponsive loggers</a></li>
     <li><a class="dropdown-item" href="../articles/seatrack_gls.html">GLS workflow</a></li>
   </ul></li>
@@ -51,7 +50,7 @@ Incorrectly formatted datetime columns can also lead to issues.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_loggers_from_startup</span><span class="op">(</span><span class="va">master_import</span>, <span class="va">new_metadata</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">add_loggers_from_startup</span><span class="op">(</span><span class="va">master_import</span>, <span class="va">new_metadata</span>, can_dummy_models <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -64,6 +63,10 @@ Incorrectly formatted datetime columns can also lead to issues.</p>
 
 <dt id="arg-new-metadata">new_metadata<a class="anchor" aria-label="anchor" href="#arg-new-metadata"></a></dt>
 <dd><p>Loaded filled metadata sheet.</p></dd>
+
+
+<dt id="arg-can-dummy-models">can_dummy_models<a class="anchor" aria-label="anchor" href="#arg-can-dummy-models"></a></dt>
+<dd><p>Optional data frame of models that can be used to create dummy start times. If NULL, the function will retrieve the list of models from the database.</p></dd>
 
 </dl></div>
     <div class="section level2">

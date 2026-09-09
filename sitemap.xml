@@ -4,7 +4,6 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/articles/appendix_table.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/articles/handling_loggers.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/articles/index.html</loc></url>
-<url><loc>https://ninanor.github.io/seatrackRtools/articles/introduction.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/articles/nonresponsive_loggers.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/articles/seatrack_gls.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/authors.html</loc></url>
@@ -24,6 +23,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/check_shutdown_db.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/check_startups_active_db.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/check_startups_db.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/choose_startup_to_add.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/connect_to_test_database.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/correct_models.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/create_appendix_table_ft.html</loc></url>
@@ -46,6 +46,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/find_raw_data.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_activity_db_sessions.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_all_locations.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/get_can_dummy_models.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_clean_field_plan.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_event_table_df.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_event_table_ft.html</loc></url>
@@ -53,6 +54,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_history_table.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_irma_from_onedrive.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_location_unprocessed.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/get_logger_from_db.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_logger_from_metadata.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_master_import_path.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_master_import_paths.html</loc></url>
@@ -122,10 +124,12 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/save_all_modified.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/save_master_sheet.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/save_nonresponsive.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/search_startup_files.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/seatrackRtools-package.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/set_comments.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/set_master_import_paths.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/set_master_startup_value.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/set_reconstructed.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/set_sea_track_folder.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/setup_app_logs.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/skip_if_no_test_db.html</loc></url>
