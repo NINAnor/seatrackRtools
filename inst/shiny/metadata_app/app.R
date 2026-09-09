@@ -18,6 +18,7 @@ source("manage_db_upload_metadata.R")
 source("manage_db_upload_recordings.R")
 source("mod_dt_tabs.R")
 source("connect_db.R")
+source("manage_metadata_startups.R")
 
 plan(multisession)
 

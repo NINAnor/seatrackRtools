@@ -30,6 +30,66 @@ get_logger_from_metadata <- function(logger_id, all_master_import_list = NULL) {
     return(search_result_nonull)
 }
 
+#' Find logger instances in database
+#'
+#' This function tries to find a logger ID in the database. It returns a data frame with the logger information.
+#'
+#' @param logger_id logger ID of desired logger
+#' @return data frame with logger information
+#' @concept loggers
+#' @export
+get_logger_from_db <- function(logger_id) {
+    search_result <- seatrackR::getSessionInfo(logger_serial_no = logger_id)
+    search_result <- dplyr::mutate(search_result,
+        started_by = rep(NA, nrow(search_result)),
+        started_where = rep(NA, nrow(search_result)),
+        days_delayed = rep(NA, nrow(search_result)),
+        programmed_gmt_time = rep(NA, nrow(search_result)),
+        intended_deployer = rep(NA, nrow(search_result)),
+        shutdown_session = !active,
+        field_status = rep(NA, nrow(search_result)),
+        downloaded_by = rep(NA, nrow(search_result)),
+        download_date = shutdown_date,
+        decomissioned = rep(NA, nrow(search_result)),
+        comment = rep(NA, nrow(search_result))
+    )
+
+    new_search_result <- dplyr::select(search_result,
+        logger_serial_no,
+        logger_model,
+        producer,
+        production_year,
+        project,
+        starttime_gmt = logger_start_time,
+        logging_mode,
+        started_where,
+        days_delayed,
+        programmed_gmt_time,
+        intended_species = species,
+        intended_location = colony,
+        shutdown_session,
+        field_status,
+        downloaded_by,
+        download_type,
+        download_date,
+        decomissioned,
+        shutdown_date,
+        session_id,
+        active
+    )
+    if (nrow(new_search_result) > 0) {
+        search_result_list <- lapply(1:nrow(new_search_result), function(x) {
+            current_row <- new_search_result[x, ]
+            list(path = "database", session = current_row$session_id, data = dplyr::select(current_row, -session_id, -active), open = current_row$active)
+        })
+    } else {
+        search_result_list <- list()
+    }
+
+
+    return(search_result_list)
+}
+
 #' Find a logger's unfinished session in the master startup data frame
 #'
 #' This function finds the unfinished session for a given logger in the master startup data frame.
@@ -375,12 +435,15 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
             }
         } else if (version == 2026) {
             # New 2026 handling
-            # Just append rows
+            # Just append (non-duplicate rows)
             return_restarts <- logger_returns[logger_returns$`stored or sent to?` == "redeployed", ]
-            added_sessions <- restart_times[restart_times$logger_serial_no %in% return_restarts$logger_id, ]
+            missing_sessions <- restart_times[!paste(restart_times$logger_serial_no, restart_times$starttime_gmt) %in%
+                paste(master_startup$logger_serial_no, master_startup$starttime_gmt), ]
+            added_sessions <- missing_sessions[missing_sessions$logger_serial_no %in% return_restarts$logger_id, ]
         }
-        log_success("Adding ", nrow(added_sessions), " new sessions from restarts.")
+        
         if (nrow(added_sessions) > 0) {
+            log_success("Adding ", nrow(added_sessions), " new sessions from restarts.")
             added_sessions_summary <- added_sessions[, c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "intended_location")]
             log_success("New sessions:\n", paste(capture.output(print(added_sessions_summary, n = nrow(added_sessions_summary)))[c(-1, -3)], collapse = "\n"))
         }

@@ -4,7 +4,7 @@ connect_db_ui <- function(id) {
   actionButton(ns("login"), "Login to database")
 }
 
-connect_db_server <- function(id, busy = FALSE, test = FALSE, on_success = function() {}, on_fail = function(exception) {}, app_settings = list()) {
+connect_db_server <- function(id, busy = FALSE, test = FALSE, on_success = function() {}, on_fail = function(exception) {}, on_busy = function(busy){},  app_settings = list()) {
   ns <- NS(id)
   moduleServer(id, function(input, output, session) {
     observeEvent(busy(), {

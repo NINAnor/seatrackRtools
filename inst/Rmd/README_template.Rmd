@@ -157,7 +157,7 @@ knitr::include_graphics(image_path)
 `r knitr::knit(text = colony_list)`
 |
 | **Data responsible**:
-`r knitr::kable(params$data_responsible, col.names = c("Species", "Colony", "Responsible persons"))`
+`r knitr::kable(params$data_responsible, col.names = c("Colony", "Species", "Year", "Responsible persons"))`
 | ___________________________________________________________________________________________________
 ## Data use disclaimer
 | ___________________________________________________________________________________________________

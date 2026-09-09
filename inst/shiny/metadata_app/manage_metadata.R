@@ -25,6 +25,10 @@ manage_metadata_ui <- function(id) {
                 title = "Partner metadata",
                 manage_partner_metadata_ui(ns("partner"))
             ),
+            nav_panel(
+                title = "Add startups",
+                manage_startups_ui(ns("startup"))
+            ),
         )
     )
 }
@@ -85,6 +89,9 @@ manage_metadata_server <- function(id, busy, all_locations, unsaved) {
         manage_partner_metadata <- manage_partner_metadata_server(
             "partner", busy,
             all_locations, unsaved, current_location_idx, current_location_name, refresh_tables
+        )
+        manage_startups <- manage_startups_server(
+            "startup", busy, all_locations, unsaved, current_location_idx, current_location_name, refresh_tables
         )
 
         observeEvent(input$revert_master_btn, {

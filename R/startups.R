@@ -27,62 +27,16 @@ get_startup_paths <- function() {
     return(all_xlsx_list)
 }
 
-#' Attempt to add logger from startup sheets
+#' Search for logger instances in startup files
 #'
-#' This function attempts to add a logger to the master startup data frame from the startup sheets.
-#' Because the data quality of older startup sheets is variable, the function checks for column mismatches and skips these files.
-#' Incorrectly formatted datetime columns can also lead to issues.
+#' This function searches for logger instances in startup files based on the provided logger IDs and existing ID-date combinations.
 #'
-#' @param master_import Loaded Master startup file.
-#' @param new_metadata Loaded filled metadata sheet.
-#'
-#' @return A new version of the master startup data frame, with the logger added if succesful.
-#' @examples
-#' \dontrun{
-#' updated_master_startup <- add_loggers_from_startup_sheets(master_startup)
-#' }
+#' @param target_logger_ids A character vector of logger IDs to search for in the startup files.
+#' @param existing_id_date A character vector of existing logger ID-date combinations to avoid duplicates.
+#' @return A tibble containing the logger instances found in the startup files that are not already present in the existing ID-date combinations.
+#' @concept  startups
 #' @export
-#' @concept startups
-add_loggers_from_startup <- function(master_import, new_metadata) {
-    # Should rename this as it is now any model that is not vital to have a correct start time
-    gps_models <- c("W30A9-SEA", "PicoFix_GEO_mini3", "PicoFix_GEO_mini2", "PicoFix_GEO_mini2", "NanoFix_GEO_GPS", "picoFix_GEO_mini3", "OrniTrack15", "OrniTrack10", "Ornitrack-15", "Ornitrack10") # Should be in database
-
-
-    db_models <- tryCatch(
-        {
-            models <- seatrackR::getLoggerModels()
-            models$model[!c(models$producer %in% c("Lotek", "BAS", "Biotrack"))]
-        },
-        error = function(e) {
-            log_warn("No database connection from which to get models")
-            return(c())
-        }
-    )
-    gps_models <- c(gps_models, db_models)
-
-    partner_metadata <- new_metadata$data$`ENCOUNTER DATA`
-    partner_restarts <- new_metadata$data$`RESTART TIMES`
-
-    master_startup <- master_import$data$`STARTUP_SHUTDOWN`
-    master_metadata <- master_import$data$METADATA
-    partner_logger_data_retrieved <- partner_metadata[
-        !is.na(partner_metadata$logger_id_retrieved),
-        c("date", "logger_id_retrieved", "logger_model_retrieved")
-    ]
-    names(partner_logger_data_retrieved) <- c("date", "logger_id", "model")
-    partner_logger_data_retrieved$deployed <- FALSE
-    partner_logger_data_deployed <- partner_metadata[
-        !is.na(partner_metadata$logger_id_deployed),
-        c("date", "logger_id_deployed", "logger_model_deployed")
-    ]
-    names(partner_logger_data_deployed) <- c("date", "logger_id", "model")
-    partner_logger_data_deployed$deployed <- TRUE
-    partner_logger_data <- rbind(partner_logger_data_deployed, partner_logger_data_retrieved)
-
-    partner_logger_ids <- unique(partner_logger_data$logger_id)
-
-
-
+search_startup_files <- function(target_logger_ids, existing_id_date, master_startup) {
     # Force imported classes
     master_classes <- sapply(master_startup, function(variable) paste(class(variable), collapse = "/"))
     excel_classes <- master_classes
@@ -94,8 +48,8 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
     excel_classes_numeric <- as.numeric(excel_classes)
     names(excel_classes_numeric) <- names(excel_classes)
 
-    log_trace("Checking for new loggers in startup files")
-    master_logger_id_date <- paste(master_startup$logger_serial_no, as.character(master_startup$starttime_gmt))
+
+
     startup_paths <- get_startup_paths()
     all_startups <- tibble()
     for (startup_path in startup_paths) {
@@ -162,7 +116,7 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
         # Filter to only include rows where the logger has been handled
         startup_file <- startup_file[
             !is.na(startup_file$logger_serial_no) &
-                startup_file$logger_serial_no %in% partner_logger_ids,
+                startup_file$logger_serial_no %in% target_logger_ids,
         ]
 
         if (nrow(startup_file) == 0) {
@@ -170,7 +124,7 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
         }
         startup_logger_id_date <- paste(startup_file$logger_serial_no, as.character(startup_file$starttime_gmt))
         # get logger ID/date combinations that do not appear in master_startup
-        new_logger_indices <- which(!startup_logger_id_date %in% master_logger_id_date)
+        new_logger_indices <- which(!startup_logger_id_date %in% existing_id_date)
         if (length(new_logger_indices) > 0) {
             new_loggers <- startup_file[new_logger_indices, ]
 
@@ -182,219 +136,315 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
         }
     }
 
-    # Generate startups from restarts?
+    return(all_startups)
+}
 
+get_can_dummy_models <- function() {
+    can_dummy_models <- tryCatch(
+        {
+            models <- seatrackR::getLoggerModels()
+            models[!models$producer %in% c("Lotek", "BAS", "Biotrack") | !models$logger_type == "GLS", ]
+        },
+        error = function(e) {
+            log_error("No database connection from which to get models")
+            stop("Connect to database to get logger details")
+        }
+    )
+    return(can_dummy_models)
+}
+
+choose_startup_to_add<-function(logger_partner_logger_data, all_startups, master_import, can_dummy_models = NULL){
+    if(is.null(can_dummy_models)){
+        can_dummy_models <- get_can_dummy_models()
+    }
+    
+    master_startup <- master_import$data$`STARTUP_SHUTDOWN`
+    master_metadata <- master_import$data$METADATA
+
+    # logger_partner_logger_data should have the following columns c("date", "logger_id", "model", "deployed")
+    logger_id <- logger_partner_logger_data$logger_id
+    logger_model <- logger_partner_logger_data$model
+    if (nrow(all_startups) > 0) {
+        startup_rows <- all_startups[all_startups$logger_serial_no == logger_id, ]
+    } else {
+        startup_rows <- tibble()
+    }
+
+    # Find the required deployment date
+    deployment_date <- logger_partner_logger_data$date[logger_partner_logger_data$deployed]
+    if (length(deployment_date) == 0) {
+        # check master metadata
+        deployment_date <- master_metadata$date[master_metadata$logger_id_deployed == logger_id]
+        deployment_date <- deployment_date[length(deployment_date)]
+    }
+    retrieval_date <- logger_partner_logger_data$date[!logger_partner_logger_data$deployed]
+
+
+    # Check for existing sessions first
+    if (nrow(startup_rows) == 0 || all(is.na(startup_rows$starttime_gmt))) {
+        critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id)
+        if (!critical) {
+            return(NULL)
+        }
+    }
+
+    can_dummy <- tolower(gsub("[^a-zA-Z0-9]", "", logger_model)) %in% tolower(gsub("[^a-zA-Z0-9]", "", can_dummy_models$model))
+
+    if (can_dummy && ((nrow(startup_rows) == 0) || (
+        (!length(deployment_date) == 0 && !is.na(deployment_date)) &&
+            all(difftime(deployment_date, startup_rows$starttime_gmt, "days") > 365)) ||
+        (all(is.na(startup_rows$starttime_gmt))))) {
+        if (!length(deployment_date) == 0 && !is.na(deployment_date)) {
+            log_trace("Create dummy start time")
+            dummy_start <- as.POSIXct(deployment_date, tz = "GMT")
+            if (nrow(startup_rows) > 0) {
+                startup_row <- startup_rows[1, ]
+                startup_row$starttime_gmt <- dummy_start
+log_warn(glue::glue("Created dummy start time for {logger_id}, using information in start up sheets."))
+                return(startup_row)
+            } else {
+                # Check if a session exists already in the master startup
+
+                existing_startup_idx <- which(master_startup$logger_serial_no == logger_id & is.na(master_startup$starttime_gmt))
+                # try and get logger information from database
+
+                logger_info <- tryCatch(
+                    {
+                        logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
+                        logger_info <- dplyr::filter(logger_info, logger_serial_no == !!logger_id)
+                        if (nrow(logger_info) == 1) {
+                            logger_info <- logger_info[, 1]
+                            log_trace(paste("Got logger info from database for logger", logger_id, ":", logger_model))
+                        } else {
+                            model_info <- can_dummy_models[tolower(gsub("[^a-zA-Z0-9]", "", can_dummy_models$model)) == tolower(gsub("[^a-zA-Z0-9]", "", logger_model)), ]
+                            logger_info <- data.frame(logger_model = model_info$model, producer = model_info$producer, production_year = format(dummy_start, "%Y"))
+                        }
+                        logger_info
+                    },
+                    error = function(e) {
+                        log_trace(paste("Unable to get logger information from database for logger", logger_id, ":", e))
+                        return(NULL)
+                    }
+                )
+                if (is.null(logger_info)) {
+                    logger_info <- list(logger_model = logger_model, producer = NA, production_year = NA)
+                }
+
+                if (length(existing_startup_idx) == 0) {
+                    startup_row <- tibble(
+                        logger_serial_no = logger_id,
+                        logger_model = logger_info$logger_model,
+                        producer = logger_info$producer,
+                        production_year = logger_info$production_year,
+                        project = "SEATRACK",
+                        starttime_gmt = dummy_start,
+                        logging_mode = NA,
+                        started_by = NA,
+                        started_where = NA,
+                        days_delayed = NA,
+                        programmed_gmt_time = NA,
+                        intended_species = NA,
+                        intended_location = NA,
+                        intended_deployer = NA,
+                        shutdown_session = NA,
+                        field_status = NA,
+                        downloaded_by = NA,
+                        download_type = NA,
+                        download_date = NA,
+                        decomissioned = NA,
+                        shutdown_date = NA,
+                        comment = "dummy start time"
+                    )
+                    log_warn(glue::glue("Created dummy start time for {logger_id}. Note that some mandatory values will still need to be filled in."))
+                    return(startup_row)
+                } else {
+                    log_warn("Logger already existing master startup, but with no start time")
+                }
+            }
+        } else {
+            log_warn("No deployment date, cannot create dummy start time")
+        }
+    }
+
+    # If no start up times were found at all
+    if (nrow(startup_rows) == 0) {
+        check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id)
+        return(NULL)
+    }
+
+    # If a start up time that is greater than this already exists in the startup sheet, we should not add this - check db too?
+    existing_startups <- master_startup$starttime_gmt[master_startup$logger_serial_no == logger_id]
+    if (length(existing_startups) > 0) {
+        if (all(is.na(existing_startups))) {
+            # have to consider reuse of GPS loggers at some point - probably check if that session is closed.
+            return(NULL)
+        }
+        startup_rows <- startup_rows[!is.na(startup_rows$starttime_gmt) & startup_rows$starttime_gmt > max(existing_startups), ]
+        if (nrow(startup_rows) == 0) {
+            check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id)
+            return(NULL)
+        }
+    }
+
+
+
+    # Check if the start time is sensible
+    if (any(!is.na(startup_rows$starttime_gmt)) && ((!is.na(deployment_date) && !length(deployment_date) == 0) || (!is.na(retrieval_date) && !length(retrieval_date) == 0))) {
+        if (any(!is.na(startup_rows$programmed_gmt_time))) {
+            start_time <- startup_rows$programmed_gmt_time
+        } else {
+            start_time <- startup_rows$starttime_gmt
+        }
+        if (!is.na(deployment_date)) {
+            startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & as.Date(start_time) >= (deployment_date - (6 * 30)) & !is.na(start_time), ]
+        } else if (!is.na(retrieval_date)) {
+            startup_rows <- startup_rows[as.Date(start_time) < retrieval_date & !is.na(start_time), ]
+        }
+
+        if (nrow(startup_rows) == 0) {
+            critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id)
+            if (critical) {
+                log_warn(paste("No suitable start up time found for logger ID:", logger_id, "deployed on", deployment_date))
+            }
+            return(NULL)
+        }
+    }
+
+    if (nrow(startup_rows) == 1) {
+        return(startup_rows)
+    }
+
+    # filter by intended location
+    if (any(partner_metadata$colony %in% startup_rows$intended_location)) {
+        startup_rows <- startup_rows[startup_rows$intended_location %in% partner_metadata$colony, ]
+    } else {
+        log_info(paste("Could not resolve multiple startups for logger ID:", logger_id, "using intended location"))
+    }
+
+    if (nrow(startup_rows) == 1) {
+        return(startup_rows)
+    }
+
+    # # use recovery date as deployment date
+    # if (length(deployment_date) == 0 || is.na(deployment_date)) {
+    #     deployment_date <- partner_logger_data$date[!partner_logger_data$deployed & partner_logger_data$logger_id == logger_id]
+    # }
+
+    if (length(deployment_date) == 0 || is.na(deployment_date)) {
+        # Could try and look at intended location?
+
+        critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id)
+
+        log_warn(paste("Could not resolve multiple startups for logger ID:", logger_id, "due to lack of a deployment date"))
+
+        return(NULL)
+    }
+    if (any(!is.na(startup_rows$programmed_gmt_time))) {
+        start_time <- startup_rows$programmed_gmt_time
+    } else {
+        start_time <- startup_rows$starttime_gmt
+    }
+    # make sure we only consider dates in the past
+    startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & !is.na(as.Date(start_time)), ]
+
+    if (nrow(startup_rows) == 1) {
+        return(startup_rows)
+    } else if (nrow(startup_rows) == 0) {
+        critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id)
+        if (critical) {
+            log_warn(paste("Could not resolve multiple startups for logger ID:", logger_id, ", no start times found before deployment date of", deployment_date))
+        }
+        return(NULL)
+    }
+
+    if (any(!is.na(startup_rows$programmed_gmt_time))) {
+        start_time <- startup_rows$programmed_gmt_time
+    } else {
+        start_time <- startup_rows$starttime_gmt
+    }
+
+    # For each startup row, calculate the difference in the deployment date and the startup time
+    time_diffs <- difftime(deployment_date, start_time, units = "days")
+    startup_row <- startup_rows[which(time_diffs == min(time_diffs))[1], ]
+    return(startup_row)
+    
+}
+
+#' Attempt to add logger from startup sheets
+#'
+#' This function attempts to add a logger to the master startup data frame from the startup sheets.
+#' Because the data quality of older startup sheets is variable, the function checks for column mismatches and skips these files.
+#' Incorrectly formatted datetime columns can also lead to issues.
+#'
+#' @param master_import Loaded Master startup file.
+#' @param new_metadata Loaded filled metadata sheet.
+#'
+#' @return A new version of the master startup data frame, with the logger added if succesful.
+#' @examples
+#' \dontrun{
+#' updated_master_startup <- add_loggers_from_startup_sheets(master_startup)
+#' }
+#' @export
+#' @concept startups
+add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_models = NULL) {
+    if(is.null(can_dummy_models)){
+        can_dummy_models <- get_can_dummy_models()
+    }
+    
+    partner_metadata <- new_metadata$data$`ENCOUNTER DATA`
+    partner_return_data <- new_metadata$data$`LOGGER RETURNS`
+
+    # if (new_metadata$version == "2025") {
+    #     partner_restarts <- new_metadata$data$`RESTART TIMES`
+    # } else if (new_metadata$version == "2026") {
+    #     partner_restarts <- new_metadata$data$`LOGGER STARTUPS`
+    # }
+
+    master_startup <- master_import$data$`STARTUP_SHUTDOWN`
+    master_metadata <- master_import$data$METADATA
+    partner_logger_data_retrieved <- partner_metadata[
+        !is.na(partner_metadata$logger_id_retrieved),
+        c("date", "logger_id_retrieved", "logger_model_retrieved")
+    ]
+    names(partner_logger_data_retrieved) <- c("date", "logger_id", "model")
+    partner_logger_data_retrieved$deployed <- FALSE
+    partner_logger_data_deployed <- partner_metadata[
+        !is.na(partner_metadata$logger_id_deployed),
+        c("date", "logger_id_deployed", "logger_model_deployed")
+    ]
+    names(partner_logger_data_deployed) <- c("date", "logger_id", "model")
+    partner_logger_data_deployed$deployed <- TRUE
+    partner_logger_data_not_used <- partner_return_data[
+        grep("Not used", partner_return_data$status, fixed = TRUE),
+        c("download / stop_date", "logger_id", "logger model")
+    ]
+    names(partner_logger_data_not_used) <- c("date", "logger_id", "model")
+    partner_logger_data_not_used$deployed <- FALSE
+
+    partner_logger_data <- rbind(partner_logger_data_deployed, partner_logger_data_retrieved, partner_logger_data_not_used)
+
+    partner_logger_ids <- unique(partner_logger_data$logger_id)
+
+    log_trace("Checking for new loggers in startup files")
+    master_logger_id_date <- paste(master_startup$logger_serial_no, as.character(master_startup$starttime_gmt))
+
+
+    all_startups <- search_startup_files(partner_logger_ids, master_logger_id_date, master_startup)
+
+    if (new_metadata$version == "2026") {
+        all_startups <- dplyr::bind_rows(all_startups, new_metadata$data$`LOGGER STARTUPS`)
+    }
 
     new_loggers <- tibble()
     for (logger_id in partner_logger_ids) {
         logger_partner_logger_data <- partner_logger_data[partner_logger_data$logger_id == logger_id, ]
         logger_partner_logger_data <- logger_partner_logger_data[1, ] # loggers deployed or retrieved multiple times should be handled by restart
-        logger_model <- logger_partner_logger_data$model
-        if (nrow(all_startups) > 0) {
-            startup_rows <- all_startups[all_startups$logger_serial_no == logger_id, ]
-        } else {
-            startup_rows <- tibble()
+
+        new_startup <- choose_startup_to_add(logger_partner_logger_data, all_startups, master_import, can_dummy_models)
+        if(!is.null(new_startup)){
+            new_loggers <- rbind(new_loggers, new_startup)
         }
 
-        # Find the required deployment date
-        deployment_date <- logger_partner_logger_data$date[logger_partner_logger_data$deployed]
-        if (length(deployment_date) == 0) {
-            # check master metadata
-            deployment_date <- master_metadata$date[master_metadata$logger_id_deployed == logger_id]
-            deployment_date <- deployment_date[length(deployment_date)]
-        }
-        retrieval_date <- logger_partner_logger_data$date[!logger_partner_logger_data$deployed]
-
-
-        # Check for existing sessions first
-        if (nrow(startup_rows) == 0 || all(is.na(startup_rows$starttime_gmt))) {
-            critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
-            if (!critical) {
-                next
-            }
-        }
-
-        can_dummy <- tolower(gsub("[^a-zA-Z0-9]", "", logger_model)) %in% tolower(gsub("[^a-zA-Z0-9]", "", gps_models))
-
-        if (can_dummy && ((nrow(startup_rows) == 0) || (all(is.na(startup_rows$starttime_gmt))))) {
-            if (!length(deployment_date) == 0 && !is.na(deployment_date)) {
-                log_trace("Create dummy start time")
-                dummy_start <- as.POSIXct(deployment_date, tz = "GMT")
-                if (nrow(startup_rows) > 0) {
-                    startup_row <- startup_rows[1, ]
-                    startup_row$starttime_gmt <- dummy_start
-                    new_loggers <- rbind(new_loggers, startup_row)
-                    log_warn(glue::glue("Created dummy start time for {logger_id}, using information in start up sheets."))
-                    next
-                } else {
-                    # Check if a session exists already in the master startup
-
-                    existing_startup_idx <- which(master_startup$logger_serial_no == logger_id & is.na(master_startup$starttime_gmt))
-                    # try and get logger information from database
-
-                    logger_info <- tryCatch(
-                        {
-                            logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
-                            logger_info <- dplyr::filter(logger_info, logger_serial_no == !!logger_id)
-                            if (nrow(logger_info) == 1) {
-                                logger_info <- logger_info[, 1]
-                                log_trace(paste("Got logger info from database for logger", logger_id, ":", logger_model))
-                                logger_info
-                            } else {
-                                log_trace(paste("No logger information/ambiguous logger information found in database for logger", logger_id))
-                                NULL
-                            }
-                        },
-                        error = function(e) {
-                            log_trace(paste("Unable to get logger information from database for logger", logger_id, ":", e))
-                            return(NULL)
-                        }
-                    )
-                    if (is.null(logger_info)) {
-                        logger_info <- list(logger_model = logger_model, producer = NA, production_year = NA, project = NA)
-                    }
-
-                    if (length(existing_startup_idx) == 0) {
-                        startup_row <- tibble(
-                            logger_serial_no = logger_id,
-                            logger_model = logger_info$logger_model,
-                            producer = logger_info$producer,
-                            production_year = logger_info$production_year,
-                            project = logger_info$project,
-                            starttime_gmt = dummy_start,
-                            logging_mode = NA,
-                            started_by = NA,
-                            started_where = NA,
-                            days_delayed = NA,
-                            programmed_gmt_time = NA,
-                            intended_species = NA,
-                            intended_location = NA,
-                            intended_deployer = NA,
-                            shutdown_session = NA,
-                            field_status = NA,
-                            downloaded_by = NA,
-                            download_type = NA,
-                            download_date = NA,
-                            decomissioned = NA,
-                            shutdown_date = NA,
-                            comment = "dummy start time"
-                        )
-                        log_warn(glue::glue("Created dummy start time for {logger_id}. Note that some mandatory values will still need to be filled in."))
-                        new_loggers <- rbind(new_loggers, startup_row)
-                        next
-                    } else {
-                        log_warn("Logger already existing master startup, but with no start time")
-                    }
-                }
-            } else {
-                log_warn("No deployment date, cannot create dummy start time")
-            }
-        }
-
-        # If no start up times were found at all
-        if (nrow(startup_rows) == 0) {
-            check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
-            next
-        }
-
-        # If a start up time that is greater than this already exists in the startup sheet, we should not add this - check db too?
-        existing_startups <- master_startup$starttime_gmt[master_startup$logger_serial_no == logger_id]
-        if (length(existing_startups) > 0) {
-            if (all(is.na(existing_startups))) {
-                # have to consider reuse of GPS loggers at some point - probably check if that session is closed.
-                next
-            }
-            startup_rows <- startup_rows[!is.na(startup_rows$starttime_gmt) & startup_rows$starttime_gmt > max(existing_startups), ]
-            if (nrow(startup_rows) == 0) {
-                check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
-                next
-            }
-        }
-
-
-
-        # Check if the start time is sensible
-        if (any(!is.na(startup_rows$starttime_gmt)) && ((!is.na(deployment_date) && !length(deployment_date) == 0) || (!is.na(retrieval_date) && !length(retrieval_date) == 0))) {
-            if (any(!is.na(startup_rows$programmed_gmt_time))) {
-                start_time <- startup_rows$programmed_gmt_time
-            } else {
-                start_time <- startup_rows$starttime_gmt
-            }
-            if (!is.na(deployment_date)) {
-                startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & as.Date(start_time) >= (deployment_date - (6 * 30)) & !is.na(start_time), ]
-            } else if (!is.na(retrieval_date)) {
-                startup_rows <- startup_rows[as.Date(start_time) < retrieval_date & !is.na(start_time), ]
-            }
-
-            if (nrow(startup_rows) == 0) {
-                critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
-                if (critical) {
-                    log_warn(paste("No suitable start up time found for logger ID:", logger_id, "deployed on", deployment_date))
-                }
-                next
-            }
-        }
-
-        if (nrow(startup_rows) == 1) {
-            new_loggers <- rbind(new_loggers, startup_rows)
-            next
-        }
-
-        # filter by intended location
-        if (any(partner_metadata$colony %in% startup_rows$intended_location)) {
-            startup_rows <- startup_rows[startup_rows$intended_location %in% partner_metadata$colony, ]
-        } else {
-            log_info(paste("Could not resolve multiple startups for logger ID:", logger_id, "using intended location"))
-        }
-
-        if (nrow(startup_rows) == 1) {
-            new_loggers <- rbind(new_loggers, startup_rows)
-            next
-        }
-
-        # # use recovery date as deployment date
-        # if (length(deployment_date) == 0 || is.na(deployment_date)) {
-        #     deployment_date <- partner_logger_data$date[!partner_logger_data$deployed & partner_logger_data$logger_id == logger_id]
-        # }
-
-        if (length(deployment_date) == 0 || is.na(deployment_date)) {
-            # Could try and look at intended location?
-
-            critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
-
-            log_warn(paste("Could not resolve multiple startups for logger ID:", logger_id, "due to lack of a deployment date"))
-
-            next
-        }
-        if (any(!is.na(startup_rows$programmed_gmt_time))) {
-            start_time <- startup_rows$programmed_gmt_time
-        } else {
-            start_time <- startup_rows$starttime_gmt
-        }
-        # make sure we only consider dates in the past
-        startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & !is.na(as.Date(start_time)), ]
-
-        if (nrow(startup_rows) == 1) {
-            new_loggers <- rbind(new_loggers, startup_rows)
-            next
-        } else if (nrow(startup_rows) == 0) {
-            critical <- check_critical_missing(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts)
-            if (critical) {
-                log_warn(paste("Could not resolve multiple startups for logger ID:", logger_id, ", no start times found before deployment date of", deployment_date))
-            }
-            next
-        }
-
-        if (any(!is.na(startup_rows$programmed_gmt_time))) {
-            start_time <- startup_rows$programmed_gmt_time
-        } else {
-            start_time <- startup_rows$starttime_gmt
-        }
-
-        # For each startup row, calculate the difference in the deployment date and the startup time
-        time_diffs <- difftime(deployment_date, start_time, units = "days")
-        startup_row <- startup_rows[which(time_diffs == min(time_diffs))[1], ]
-        new_loggers <- rbind(new_loggers, startup_row)
     }
     # For each logger ID,
     # If there are multiple instances of that logger being started,
@@ -413,7 +463,7 @@ add_loggers_from_startup <- function(master_import, new_metadata) {
     return(master_startup)
 }
 
-check_critical_missing <- function(startup_rows, logger_partner_logger_data, master_startup, logger_id, partner_restarts) {
+check_critical_missing <- function(startup_rows, logger_partner_logger_data, master_startup, logger_id) {
     if (nrow(startup_rows) == 0) {
         sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
         event_type <- ifelse(any(logger_partner_logger_data$deployed), "deployed", "retrieved")
@@ -433,10 +483,11 @@ check_critical_missing <- function(startup_rows, logger_partner_logger_data, mas
             } else if (nrow(valid_open_sessions > 0)) {
                 # If the event falls in an open session...
                 # Ideally only one
-                if (nrow(valid_open_sessions == 1)) {
+                if (nrow(valid_open_sessions) == 1) {
                     # If this is a deployment, this should be fine due to the time check
                     if (!any(logger_partner_logger_data$deployed)) {
                         # Otherwise, there is no guaruntee this is the correct session
+                        print(valid_open_sessions)
                         log_info(paste(
                             "Logger ID", logger_id, "was retrieved on", logger_partner_logger_data$date, "but no startup was added. \n",
                             "This falls into a single open session started on", strftime(valid_open_sessions$starttime_gmt), ". The retrieval may belong to this open session"

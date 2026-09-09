@@ -49,7 +49,7 @@ manage_logger_ui <- function(id) {
 
 manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_name) {
     moduleServer(id, function(input, output, session) {
-        search_results <- reactiveVal(list())
+        search_results <- reactiveVal(list(local_results = list(), db_results = list()))
         ns <- NS(id)
         btn_obs_list <- list()
 
@@ -81,7 +81,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
                 search_results()
             },
             {
-                if (length(search_results()) == 0) {
+                if (length(search_results()$local_results) == 0) {
                     shinyjs::hideElement("edit_session_buttons")
                     output$search_result <- renderUI({
                         h4("No results found")
@@ -90,9 +90,9 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
                 }
 
                 all_result <- search_results()
-
-                open_result <- all_result[sapply(all_result, function(x) x$open)]
-                closed_result <- all_result[!sapply(all_result, function(x) x$open)]
+                print(all_result)
+                open_result <- all_result$local_results[sapply(all_result$local_results, function(x) x$open)]
+                closed_result <- all_result$local_results[!sapply(all_result$local_results, function(x) x$open)]
 
                 if (length(open_result) > 1) {
                     open_session_warning <- strong("MULTIPLE OPEN SESSIONS FOUND")
@@ -124,30 +124,34 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
             }
             busy(TRUE)
             log_info(paste("Searching for logger", input$logger_search))
-            logger_search_result <- get_logger_from_metadata(input$logger_search, all_locations())
+            logger_search_result_local <- get_logger_from_metadata(input$logger_search, all_locations())
+            # logger_search_result_db <- get_logger_from_db(input$logger_search)
+            logger_search_result_db <- list() # For now until can implement a clean way of displaying both.
 
-
-            if (length(logger_search_result) > 0) {
-                log_info(paste("Logger", input$logger_search, "found"))
-                logger_search_result_distinct <- list()
-                seen_paths <- c()
-                for (result in logger_search_result) {
-                    if (!result$path %in% seen_paths) {
-                        logger_search_result_distinct <- c(logger_search_result_distinct, list(result))
-                        seen_paths <- c(seen_paths, result$path)
+            if (length(logger_search_result_local) > 0 || length(logger_search_result_db) > 0) {
+                if (length(logger_search_result_local) > 0) {
+                    log_info(paste("Logger", input$logger_search, "found"))
+                    logger_search_result_distinct <- list()
+                    seen_paths <- c()
+                    for (result in logger_search_result_local) {
+                        if (!result$path %in% seen_paths) {
+                            logger_search_result_distinct <- c(logger_search_result_distinct, list(result))
+                            seen_paths <- c(seen_paths, result$path)
+                        }
                     }
+                    print(logger_search_result_distinct)
+
+                    logger_search_result_local <- lapply(logger_search_result_distinct, function(x) {
+                        x$open <- is.na(x$data$download_date) & is.na(x$data$shutdown_date)
+                        return(x)
+                    })
                 }
-                print(logger_search_result_distinct)
 
-                logger_search_result <- lapply(logger_search_result_distinct, function(x) {
-                    x$open <- is.na(x$data$download_date) & is.na(x$data$shutdown_date)
-                    return(x)
-                })
 
-                search_results(logger_search_result)
+                search_results(list(local_results = logger_search_result_local, db_results = logger_search_result_db))
             } else {
-                log_info(paste("Logger", input$logger_search, "not found in master startups"))
-                search_results(list())
+                log_info(paste("Logger", input$logger_search, "not found in master startups or database"))
+                search_results(list(local_results = list(), db_results = list()))
             }
             busy(FALSE)
         }
@@ -169,7 +173,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
                                 btn_obs_list[[x$btn_name]] <<- observeEvent(input[[x$btn_name]], {
                                     all_result <- search_results()
                                     locations <- all_locations()
-                                    open_result <- all_result[sapply(all_result, function(x) x$open)][[1]]
+                                    open_result <- all_result$local_results[sapply(all_result$local_results, function(x) x$open)][[1]]
                                     end_session_result <- end_logger_session(open_result$data$logger_serial_no, x$btn_type, downloaded_by = user_full_name(), comment = input$logger_close_comment, master_sheet = locations[[open_result$list_index]])
 
                                     new_locations <- modify_master_import_in_list(locations, end_session_result$master_sheet)
@@ -194,7 +198,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
 
 
 display_sessions <- function(sessions, title = "") {
-    selected_cols <- c("logger_serial_no", "logger_model", "production_year", "download_type", "download_date", "shutdown_date", "comment")
+    selected_cols <- c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "download_type", "download_date", "shutdown_date", "comment")
     if (length(sessions) == 0) {
         return(list())
     } else {
