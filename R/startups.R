@@ -139,6 +139,12 @@ search_startup_files <- function(target_logger_ids, existing_id_date, master_sta
     return(all_startups)
 }
 
+#' Get logger models that can have dummy start times
+#'
+#' This function retrieves logger models that are eligible for creating dummy start times. It filters out specific producers and logger types that are not suitable for dummy start times.
+#'
+#' @return A data frame containing logger models that can have dummy start times.
+#' @concept startups
 get_can_dummy_models <- function() {
     can_dummy_models <- tryCatch(
         {
@@ -153,6 +159,18 @@ get_can_dummy_models <- function() {
     return(can_dummy_models)
 }
 
+#' Choose the appropriate startup row to add to the master startup data frame
+#'
+#' This function selects the most appropriate startup row from the provided startup rows based on the logger's deployment date and other criteria. It handles cases where multiple startup rows exist for a logger and ensures that the selected row is suitable for adding to the master startup data frame.
+#'
+#' @param logger_partner_logger_data A data frame containing logger information from the partner metadata, including deployment and retrieval dates.
+#' @param all_startups A data frame containing all startup rows for the logger, filtered from the startup files.
+#' @param master_import The loaded master import object.
+#' @param can_dummy_models Optional data frame of models that can be used to create dummy start times. If NULL, the function will retrieve the list of models from the database.
+#'
+#' @return A single startup row that is deemed appropriate for adding to the master startup data frame, or NULL if no suitable row is found.
+#' @concept startups
+#' @export
 choose_startup_to_add<-function(logger_partner_logger_data, all_startups, master_import, can_dummy_models = NULL){
     if(is.null(can_dummy_models)){
         can_dummy_models <- get_can_dummy_models()
@@ -378,6 +396,7 @@ log_warn(glue::glue("Created dummy start time for {logger_id}, using information
 #'
 #' @param master_import Loaded Master startup file.
 #' @param new_metadata Loaded filled metadata sheet.
+#' @param can_dummy_models Optional data frame of models that can be used to create dummy start times. If NULL, the function will retrieve the list of models from the database.
 #'
 #' @return A new version of the master startup data frame, with the logger added if succesful.
 #' @examples

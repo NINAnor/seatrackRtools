@@ -7,6 +7,12 @@
 #' @return None. This function launches the Shiny app and does not return a value.
 #' @export
 #' @concept shiny_app
+#' @import bslib
+#' @import shiny
+#' @import shinyFiles
+#' @import shinybusy
+#' @import promises
+#' @import future
 run_app <- function(settings_path = file.path(getwd(), "seatrackRtools_app"), log_path = file.path(getwd(), "seatrackRtools_app", "logs"), test = FALSE) {
     # settings_path
 

@@ -191,7 +191,7 @@ head(master_import$data$METADATA)
 
 There are several steps to updating the master import sheet. Firstly checking startup files for missing logger sessions.
 ```{r missing loggers}
-updated_startup <- add_loggers_from_startup(master_import, partner_data)
+updated_startup <- add_loggers_from_startup(master_import, partner_data, data.frame())
 ```
 
 Then appending reported encounter data. 

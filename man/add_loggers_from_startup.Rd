@@ -4,12 +4,14 @@
 \alias{add_loggers_from_startup}
 \title{Attempt to add logger from startup sheets}
 \usage{
-add_loggers_from_startup(master_import, new_metadata)
+add_loggers_from_startup(master_import, new_metadata, can_dummy_models = NULL)
 }
 \arguments{
 \item{master_import}{Loaded Master startup file.}
 
 \item{new_metadata}{Loaded filled metadata sheet.}
+
+\item{can_dummy_models}{Optional data frame of models that can be used to create dummy start times. If NULL, the function will retrieve the list of models from the database.}
 }
 \value{
 A new version of the master startup data frame, with the logger added if succesful.
