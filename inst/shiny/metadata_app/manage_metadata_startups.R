@@ -141,17 +141,24 @@ manage_startups_server <- function(id, busy, all_locations, unsaved, current_loc
             if (nrow(all_startups) == 0) {
                 search_results(NULL)
                 busy(FALSE)
+                log_warn(paste("No new startup data found for logger", logger_id))
                 return()
             }
             logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
             logger_info <- dplyr::filter(logger_info, logger_serial_no == !!logger_id) %>% dplyr::collect()
+            if (nrow(logger_info) == 0) {
+                model <- ""
+            } else {
+                model <- logger_info$logger_model
+            }
 
-            logger_partner_logger_data <- data.frame(date = Sys.Date(), logger_id = logger_id, model = logger_info$logger_model, deployed = FALSE)
+            logger_partner_logger_data <- data.frame(date = Sys.Date(), logger_id = logger_id, model = model, deployed = FALSE, ignore_year = FALSE) # could add control
 
             new_startup <- choose_startup_to_add(logger_partner_logger_data, all_startups, all_locations()[[current_location_idx()]], dummy_models())
             if (is.null(new_startup)) {
                 busy(FALSE)
                 search_results(NULL)
+                log_warn(paste("No new startup data found for logger", logger_id))
                 return()
             }
 

@@ -36,7 +36,7 @@ get_startup_paths <- function() {
 #' @return A tibble containing the logger instances found in the startup files that are not already present in the existing ID-date combinations.
 #' @concept  startups
 #' @export
-search_startup_files <- function(target_logger_ids, existing_id_date, master_startup) {
+search_startup_files <- function(target_logger_ids, existing_id_date, master_startup, ignore_year = FALSE) {
     # Force imported classes
     master_classes <- sapply(master_startup, function(variable) paste(class(variable), collapse = "/"))
     excel_classes <- master_classes
@@ -313,7 +313,7 @@ log_warn(glue::glue("Created dummy start time for {logger_id}, using information
         } else {
             start_time <- startup_rows$starttime_gmt
         }
-        if (!is.na(deployment_date)) {
+        if (!is.na(deployment_date) && !logger_partner_logger_data$ignore_year) {
             startup_rows <- startup_rows[as.Date(start_time) <= deployment_date & as.Date(start_time) >= (deployment_date - (6 * 30)) & !is.na(start_time), ]
         } else if (!is.na(retrieval_date)) {
             startup_rows <- startup_rows[as.Date(start_time) < retrieval_date & !is.na(start_time), ]
@@ -412,6 +412,7 @@ add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_mode
     
     partner_metadata <- new_metadata$data$`ENCOUNTER DATA`
     partner_return_data <- new_metadata$data$`LOGGER RETURNS`
+    partner_metadata$ignore_year <- grepl("ignore_year", partner_metadata, fixed = TRUE)
 
     # if (new_metadata$version == "2025") {
     #     partner_restarts <- new_metadata$data$`RESTART TIMES`
@@ -421,24 +422,28 @@ add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_mode
 
     master_startup <- master_import$data$`STARTUP_SHUTDOWN`
     master_metadata <- master_import$data$METADATA
+
     partner_logger_data_retrieved <- partner_metadata[
         !is.na(partner_metadata$logger_id_retrieved),
-        c("date", "logger_id_retrieved", "logger_model_retrieved")
+        c("date", "logger_id_retrieved", "logger_model_retrieved", "ignore_year")
     ]
     names(partner_logger_data_retrieved) <- c("date", "logger_id", "model")
     partner_logger_data_retrieved$deployed <- FALSE
+
     partner_logger_data_deployed <- partner_metadata[
         !is.na(partner_metadata$logger_id_deployed),
-        c("date", "logger_id_deployed", "logger_model_deployed")
+        c("date", "logger_id_deployed", "logger_model_deployed", "ignore_year")
     ]
     names(partner_logger_data_deployed) <- c("date", "logger_id", "model")
     partner_logger_data_deployed$deployed <- TRUE
+
     partner_logger_data_not_used <- partner_return_data[
         grep("Not used", partner_return_data$status, fixed = TRUE),
         c("download / stop_date", "logger_id", "logger model")
     ]
     names(partner_logger_data_not_used) <- c("date", "logger_id", "model")
     partner_logger_data_not_used$deployed <- FALSE
+    partner_logger_data_not_used$ignore_year <- FALSE
 
     partner_logger_data <- rbind(partner_logger_data_deployed, partner_logger_data_retrieved, partner_logger_data_not_used)
 
@@ -487,13 +492,14 @@ check_critical_missing <- function(startup_rows, logger_partner_logger_data, mas
         sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
         event_type <- ifelse(any(logger_partner_logger_data$deployed), "deployed", "retrieved")
         if (nrow(sessions) > 0) {
+            sessions$start_time <- min(sessions$starttime_gmt, sessions$programmed_gmt_time, na.rm = TRUE)
             sessions$end_date <- sessions$shutdown_date
             sessions$end_date[is.na(sessions$end_date)] <- sessions$download_date[is.na(sessions$end_date)]
 
-            valid_open_sessions <- sessions[!is.na(sessions$starttime_gmt) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= as.Date(sessions$starttime_gmt) & is.na(sessions$end_date), ]
-            valid_closed_sessions <- sessions[!is.na(sessions$starttime_gmt) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= as.Date(sessions$starttime_gmt) & logger_partner_logger_data$date <= sessions$end_date & !is.na(sessions$end_date), ]
+            valid_open_sessions <- sessions[!is.na(sessions$start_time) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= as.Date(sessions$start_time) & is.na(sessions$end_date), ]
+            valid_closed_sessions <- sessions[!is.na(sessions$start_time) & !is.na(logger_partner_logger_data$date) & logger_partner_logger_data$date >= as.Date(sessions$start_time) & logger_partner_logger_data$date <= sessions$end_date & !is.na(sessions$end_date), ]
             if (any(logger_partner_logger_data$deployed)) {
-                valid_open_sessions <- valid_open_sessions[logger_partner_logger_data$date < (as.Date(valid_open_sessions$starttime_gmt) + (6 * 30)), ]
+                valid_open_sessions <- valid_open_sessions[logger_partner_logger_data$date < (as.Date(valid_open_sessions$start_time) + (6 * 30)), ]
             }
 
             if (nrow(valid_closed_sessions) > 0) {
