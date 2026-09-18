@@ -15,7 +15,7 @@ make_annual_report_tables <- function(
     field_year = c(as.numeric(format(Sys.Date(), "%Y"))),
     body_cell_width = 9,
     event_table_header_heights = c(100, 30),
-    export_dir = file.path(the$sea_track_folder, "Admin/01_Annual reports/Status_Report_for_funders_"), all_metadata = NULL, new_locations = NULL) {
+    export_dir = file.path(the$sea_track_folder, "Admin/01_Annual reports/Status_Report_for_funders_", all_metadata = NULL, new_locations = NULL)) {
     target_species <- c(
         "Atlantic puffin", "Brünnich's guillemot", "Common guillemot",
         "Little auk", "Razorbill", "Arctic tern", "Black-legged kittiwake", "Great skua",
@@ -24,6 +24,7 @@ make_annual_report_tables <- function(
     )
     juv_species <- c("Atlantic puffin", "Brünnich's guillemot", "Common guillemot", "Little auk", "Black-legged kittiwake", "Glaucous gull")
     gps_species <- c("Brünnich's guillemot", "Common guillemot", "Great skua", "Northern fulmar", "Northern gannet", "Glaucous gull", "Herring gull", "European shag", "Common eider")
+    # juv/gps could be pulled from db now
 
     export_dir <- file.path(paste0(export_dir, field_year), "tables")
     if (!dir.exists(export_dir)) {
@@ -43,11 +44,16 @@ make_annual_report_tables <- function(
     field_plan_sheet <- get_field_plan(full_field_plan_path)
 
     log_info("Checking field plan locations...")
+    # Better to add the new locations to the db first, pull ocean areas from db
     field_plan_sheet <- field_plan_check_locations(field_plan_sheet, new_locations)
 
     all_years <- c(2014:field_year)
 
     log_info("Cleaning field plan for all years...")
+    if (!"GPS assigned" %in% names(field_plan_sheet)) {
+        field_plan_sheet$`GPS assigned` <- 0
+    }
+
     all_clean_field_plan <- lapply(all_years, function(target_year) {
         log_info(paste("Cleaning field plan for year", target_year, "..."))
         field_plan_clean <- get_clean_field_plan(field_plan_sheet, TRUE, all_metadata, TRUE, target_year)
@@ -59,6 +65,8 @@ make_annual_report_tables <- function(
         field_plan_clean_lme <- field_plan_check_locations(dplyr::rename(field_plan_clean, "Colony" = Location, "Ocean area" = LME)) %>%
             dplyr::rename("Location" = Colony, "LME" = "Ocean area") %>%
             dplyr::select(!c(id, colony_nat_name))
+
+        field_plan_clean_lme <- dplyr::mutate(field_plan_clean_lme, Species = target_species[match(field_plan_clean_lme$Species, tolower(c(target_species)))])
 
         return(field_plan_clean_lme)
     })
@@ -92,6 +100,7 @@ make_annual_report_tables <- function(
     })
 
     current_field_summary <- dplyr::group_by(current_field_plan, Species) %>% summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE), planned = sum(planned, na.rm = TRUE), .groups = "drop")
+
     current_field_summary <- rbind(current_field_summary, data.frame(
         Species = "Total",
         retrieved = sum(current_field_summary$retrieved, na.rm = TRUE),

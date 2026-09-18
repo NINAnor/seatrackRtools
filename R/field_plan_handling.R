@@ -148,12 +148,18 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
 
         # Reference the remote table
         db_status <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_status"))
+        db_deployment <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
+        db_retrieval <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
+        db_dep_ret <- dplyr::union_all(dplyr::select(db_deployment, status_id, logger_id), dplyr::select(db_retrieval, status_id, logger_id))
+
         db_loggers <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
         db_status_filtered <- db_status %>%
-            dplyr::group_by(ring_number, logger_id) %>%
+            dplyr::group_by(info_id, logger_id) %>%
             dplyr::slice_min(status_date, n = 1, with_ties = FALSE) %>%
             dplyr::ungroup()
+        db_status_filtered <- dplyr::left_join(db_status_filtered, db_dep_ret, by = "status_id")
         db_status_filtered <- dplyr::left_join(db_status_filtered, db_loggers, by = "logger_id")
+
 
         # Perform the join in the database
         result <- dplyr::left_join(
@@ -240,6 +246,10 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
 
         db_deployments <- dplyr::filter(db_deployments, lubridate::year(deployment_date) %in% field_year)
         db_retrievals <- dplyr::filter(db_retrievals, lubridate::year(retrieval_date) %in% field_year)
+        db_dep_ret <- dplyr::union_all(dplyr::select(db_deployments, status_id, logger_id, session_id), dplyr::select(db_retrievals, status_id, logger_id, session_id))
+        db_status <- dplyr::left_join(db_status, db_dep_ret, by = "status_id")
+        db_status <- dplyr::left_join(db_status, db_loggers, by = "logger_id")
+
 
         log_info("Filtering database status to first record for each logger and ring number...")
         db_status_filtered <- db_status %>%

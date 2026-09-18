@@ -91,15 +91,34 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
 
                 all_result <- search_results()
                 print(all_result)
-                open_result <- all_result$local_results[sapply(all_result$local_results, function(x) x$open)]
-                closed_result <- all_result$local_results[!sapply(all_result$local_results, function(x) x$open)]
+                open_result <- lapply(all_result$local_results, function(result) {
+                    list(
+                        path = result$path,
+                        list_index = result$list_index,
+                        row_index = result$row_index[result$open],
+                        data = result$data[result$open, ]
+                    )
+                })
+                closed_result <- lapply(all_result$local_results, function(result) {
+                    list(
+                        path = result$path,
+                        list_index = result$list_index,
+                        row_index = result$row_index[!result$open],
+                        data = result$data[!result$open, ]
+                    )
+                })
+                print(closed_result)
 
-                if (length(open_result) > 1) {
+                n_open_results <- sum(sapply(open_result, function(x) {
+                    nrow(x$data)
+                }))
+
+                if (n_open_results > 1) {
                     open_session_warning <- strong("MULTIPLE OPEN SESSIONS FOUND")
                 } else {
                     open_session_warning <- c()
                 }
-                if (length(open_result) == 1) {
+                if (n_open_results == 1) {
                     shinyjs::showElement("edit_session_buttons")
                 } else {
                     shinyjs::hideElement("edit_session_buttons")
@@ -125,6 +144,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
             busy(TRUE)
             log_info(paste("Searching for logger", input$logger_search))
             logger_search_result_local <- get_logger_from_metadata(input$logger_search, all_locations())
+            print(logger_search_result_local)
             # logger_search_result_db <- get_logger_from_db(input$logger_search)
             logger_search_result_db <- list() # For now until can implement a clean way of displaying both.
 
@@ -173,7 +193,15 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
                                 btn_obs_list[[x$btn_name]] <<- observeEvent(input[[x$btn_name]], {
                                     all_result <- search_results()
                                     locations <- all_locations()
-                                    open_result <- all_result$local_results[sapply(all_result$local_results, function(x) x$open)][[1]]
+                                    open_result <- lapply(all_result$local_results, function(result) {
+                                        list(
+                                            path = result$path,
+                                            list_index = result$list_index,
+                                            row_index = result$row_index[result$open][1],
+                                            data = result$data[result$open, ][1, ]
+                                        )
+                                    })[[1]]
+
                                     end_session_result <- end_logger_session(open_result$data$logger_serial_no, x$btn_type, downloaded_by = user_full_name(), comment = input$logger_close_comment, master_sheet = locations[[open_result$list_index]])
 
                                     new_locations <- modify_master_import_in_list(locations, end_session_result$master_sheet)
@@ -199,7 +227,10 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
 
 display_sessions <- function(sessions, title = "") {
     selected_cols <- c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "download_type", "download_date", "shutdown_date", "comment")
-    if (length(sessions) == 0) {
+    n_sessions <- sum(sapply(sessions, function(x) {
+        nrow(x$data)
+    }))
+    if (n_sessions == 0) {
         return(list())
     } else {
         session_display <- tagList(

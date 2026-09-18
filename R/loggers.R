@@ -16,18 +16,13 @@ get_logger_from_metadata <- function(logger_id, all_master_import_list = NULL) {
         import_sheet <- all_master_import_list[[i]]
         logger_idx <- which(import_sheet$data$STARTUP_SHUTDOWN$logger_serial_no == logger_id)
         if (length(logger_idx) > 0) {
-            data_list <- lapply(logger_idx, function(logger_idx_i) {
-                import_sheet$data$STARTUP_SHUTDOWN[logger_idx_i, ]
-            })
-            return(lapply(seq_len(length(data_list)), function(j) {
-                list(path = import_sheet$path, data = data_list[[j]], list_index = i, row_index = logger_idx[j])
-            }))
+            data <- import_sheet$data$STARTUP_SHUTDOWN[logger_idx, ]
+            return(list(path = import_sheet$path, data = data, list_index = i, row_index = logger_idx))
         }
     })
-    search_result <- do.call(c, search_result)
-    search_result_nonull <- search_result[which(!sapply(search_result, is.null))]
-    # search_result_nodups <- search_result_nonull[which(!duplicated(sapply(search_result_nonull, function(x) x$path)))]
-    return(search_result_nonull)
+    search_result <- search_result[!sapply(search_result, is.null)]
+
+    return(search_result)
 }
 
 #' Find logger instances in database
