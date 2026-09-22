@@ -3,6 +3,7 @@
 #' This function processes the field plan data by selecting relevant columns, renaming them, calculating deployment and retrieval success rates,
 #' and merging with historical data to compute previous deployments. A connection to the SEATRACK database is required.
 #' @param field_plan_sheet A data frame containing the raw field plan data
+#' @param target_species Vector of species names to use in correcting the different ways partners might write species
 #' @param use_master_sheets A boolean indicating whether to use master sheets to calculate success.
 #' @param all_locations An optional data frame containing all location metadata from the master import, if not provided this will be imported.
 #' @param use_db A boolean indicating whether to use the database to calculate success.
@@ -16,7 +17,7 @@
 #' }
 #' @export
 #' @concept field_planning
-get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, all_locations = NULL, use_db = TRUE, field_year = c(as.numeric(format(Sys.Date(), "%Y")))) {
+get_clean_field_plan <- function(field_plan_sheet, target_species = NULL, use_master_sheets = FALSE, all_locations = NULL, use_db = TRUE, field_year = c(as.numeric(format(Sys.Date(), "%Y")))) {
     # classify models
     gps_models <- c(
         "NanoFix_GEO_mini",
@@ -240,8 +241,6 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
         db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
         db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
         db_logger_info <- dplyr::tbl(con, dbplyr::in_schema("loggers", "logger_info"))
-        db_deployments <- dplyr::left_join(db_deployments, db_logger_info, by = "logger_id")
-        db_retrievals <- dplyr::left_join(db_retrievals, db_logger_info, by = "logger_id")
         db_status <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_status"))
 
         db_deployments <- dplyr::filter(db_deployments, lubridate::year(deployment_date) %in% field_year)
@@ -299,6 +298,48 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
         field_plan_clean$source[valid_db_bool] <- "database"
     }
 
+    field_plan_clean <- dplyr::mutate(field_plan_clean, Species = target_species[match(tolower(field_plan_clean$Species), tolower(c(target_species)))])
+
+    best_source <- function(variable) {
+        if (any(variable == "database")) {
+            return("database")
+        } else if (any(variable == "metadata")) {
+            return("metadata")
+        }
+        return("reported")
+    }
+
+    # collapse to avoid duplicates driven by variations in species names
+
+    get_lme <- function(location) {
+        location_lme <- field_plan_clean$LME[field_plan_clean$Location == location]
+        location_lme_valid <- location_lme[!is.na(location_lme)]
+
+        if (length(location_lme_valid) == 0) {
+            return(NA)
+        }
+
+        return(location_lme_valid[1])
+    }
+
+    field_plan_clean <- dplyr::rowwise(field_plan_clean) %>% dplyr::mutate(LME = get_lme(Location))
+
+    field_plan_clean <- dplyr::group_by(field_plan_clean, LME, Location, Species, age, logger_type) %>%
+        dplyr::summarise(
+            source = best_source(source),
+            planned = sum(planned, na.rm = TRUE),
+            deployed = sum(deployed, na.rm = TRUE),
+            retrieved = sum(retrieved, na.rm = TRUE),
+            deployed_reported = sum(deployed_reported, na.rm = TRUE),
+            retrieved_reported = sum(retrieved_reported, na.rm = TRUE),
+            deployed_metadata = sum(deployed_metadata, na.rm = TRUE),
+            retrieved_metadata = sum(retrieved_metadata, na.rm = TRUE),
+            deployed_db = sum(deployed_metadata, na.rm = TRUE),
+            retrieved_db = sum(retrieved_metadata, na.rm = TRUE),
+        ) %>%
+        dplyr::ungroup() %>%
+        dplyr::relocate(names(field_plan_clean))
+
     # Deployment success
     field_plan_clean$dep_success <- field_plan_clean$deployed / field_plan_clean$planned
 
@@ -312,7 +353,7 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
     history_table_groups <- group_by(history_table, colony, deployment_species, age, logger_type)
     history_table_summary <- summarise(history_table_groups, prev_deployed = n(), .groups = "drop")
 
-    field_plan_clean <- left_join(field_plan_clean, history_table_summary, by = join_by(
+    field_plan_clean <- dplyr::left_join(field_plan_clean, history_table_summary, by = join_by(
         Location == colony,
         Species == deployment_species,
         age == age,
@@ -328,6 +369,8 @@ get_clean_field_plan <- function(field_plan_sheet, use_master_sheets = FALSE, al
     field_plan_clean <- field_plan_clean[, reorder_vector]
 
     field_plan_clean <- field_plan_clean[(!is.na(field_plan_clean$planned) & field_plan_clean$planned > 0) | (!is.na(field_plan_clean$retrieved) & field_plan_clean$retrieved > 0) | (!is.na(field_plan_clean$deployed) & field_plan_clean$deployed > 0), ]
+
+
 
     return(field_plan_clean)
 }
@@ -492,14 +535,14 @@ field_plan_check_locations <- function(field_plan_sheet, new_locations = NULL) {
 
     if (any(is.na(field_plan_sheet$`Ocean area`))) {
         # First double check this colony doesn't appear elsewhere
-        with_lme <- dplyr::filter(field_plan_sheet, !is.na(field_plan_sheet$`Ocean area`)) %>%
+        with_lme <- dplyr::filter(field_plan_sheet, !is.na(`Ocean area`)) %>%
             dplyr::select(Colony, "Ocean area") %>%
             dplyr::distinct()
-        field_plan_sheet$`Ocean area`[is.na(field_plan_sheet$`Ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(field_plan_sheet$`Ocean area`)), with_lme, by = "Colony", multiple = "first")$`Ocean area.y`
+        field_plan_sheet$`Ocean area`[is.na(field_plan_sheet$`Ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(`Ocean area`)), with_lme, by = "Colony", multiple = "first")$`Ocean area.y`
 
         polygons <- dplyr::tbl(con, dbplyr::in_schema("areas", "polygons"))
 
-        missing_lme <- dplyr::filter(field_plan_sheet, is.na(field_plan_sheet$`Ocean area`)) %>%
+        missing_lme <- dplyr::filter(field_plan_sheet, is.na(`Ocean area`)) %>%
             dplyr::select(Colony, lat, lon) %>%
             dplyr::distinct()
 
@@ -516,7 +559,7 @@ field_plan_check_locations <- function(field_plan_sheet, new_locations = NULL) {
                 AND a.group = 'LME66'
             ")) %>% dplyr::collect()
 
-        field_plan_sheet$`Ocean area`[is.na(field_plan_sheet$`Ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(field_plan_sheet$`Ocean area`)), result, by = "Colony", multiple = "first")$name
+        field_plan_sheet$`Ocean area`[is.na(field_plan_sheet$`Ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(`Ocean area`)), result, by = "Colony", multiple = "first")$name
     }
 
     field_plan_sheet <- field_plan_sheet[!is.na(field_plan_sheet$lat), ]

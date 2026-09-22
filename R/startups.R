@@ -335,8 +335,8 @@ log_warn(glue::glue("Created dummy start time for {logger_id}, using information
     }
 
     # filter by intended location
-    if (any(partner_metadata$colony %in% startup_rows$intended_location)) {
-        startup_rows <- startup_rows[startup_rows$intended_location %in% partner_metadata$colony, ]
+    if (any(logger_partner_logger_data$colony %in% startup_rows$intended_location)) {
+        startup_rows <- startup_rows[startup_rows$intended_location %in% logger_partner_logger_data$colony, ]
     } else {
         log_info(paste("Could not resolve multiple startups for logger ID:", logger_id, "using intended location"))
     }
@@ -427,16 +427,16 @@ add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_mode
 
     partner_logger_data_retrieved <- partner_metadata[
         !is.na(partner_metadata$logger_id_retrieved),
-        c("date", "logger_id_retrieved", "logger_model_retrieved", "ignore_year")
+        c("date", "logger_id_retrieved", "logger_model_retrieved", "colony", "ignore_year")
     ]
-    names(partner_logger_data_retrieved) <- c("date", "logger_id", "model", "ignore_year")
+    names(partner_logger_data_retrieved) <- c("date", "logger_id", "model", "colony", "ignore_year")
     partner_logger_data_retrieved$deployed <- FALSE
 
     partner_logger_data_deployed <- partner_metadata[
         !is.na(partner_metadata$logger_id_deployed),
-        c("date", "logger_id_deployed", "logger_model_deployed", "ignore_year")
+        c("date", "logger_id_deployed", "logger_model_deployed", "colony", "ignore_year")
     ]
-    names(partner_logger_data_deployed) <- c("date", "logger_id", "model", "ignore_year")
+    names(partner_logger_data_deployed) <- c("date", "logger_id", "model", "colony", "ignore_year")
     partner_logger_data_deployed$deployed <- TRUE
 
     partner_logger_data_not_used <- partner_return_data[
@@ -444,6 +444,7 @@ add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_mode
         c("download / stop_date", "logger_id", "logger model")
     ]
     names(partner_logger_data_not_used) <- c("date", "logger_id", "model")
+    partner_logger_data_not_used$colony <- NA
     partner_logger_data_not_used$ignore_year <- FALSE
     partner_logger_data_not_used$deployed <- FALSE
 

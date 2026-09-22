@@ -15,7 +15,9 @@ make_annual_report_tables <- function(
     field_year = c(as.numeric(format(Sys.Date(), "%Y"))),
     body_cell_width = 9,
     event_table_header_heights = c(100, 30),
-    export_dir = file.path(the$sea_track_folder, "Admin/01_Annual reports/Status_Report_for_funders_", all_metadata = NULL, new_locations = NULL)) {
+    export_dir = file.path(the$sea_track_folder, "Admin/01_Annual reports/Status_Report_for_funders_"), 
+    all_metadata = NULL, 
+    new_locations = NULL) {
     target_species <- c(
         "Atlantic puffin", "Brünnich's guillemot", "Common guillemot",
         "Little auk", "Razorbill", "Arctic tern", "Black-legged kittiwake", "Great skua",
@@ -56,17 +58,16 @@ make_annual_report_tables <- function(
 
     all_clean_field_plan <- lapply(all_years, function(target_year) {
         log_info(paste("Cleaning field plan for year", target_year, "..."))
-        field_plan_clean <- get_clean_field_plan(field_plan_sheet, TRUE, all_metadata, TRUE, target_year)
+        field_plan_clean <- get_clean_field_plan(field_plan_sheet, target_species, TRUE, all_metadata, TRUE, target_year)
         if (target_year != field_year) {
             field_plan_clean <- field_plan_clean[field_plan_clean$source != "reported", ]
         }
         field_plan_clean$year <- target_year
         # Try to get ocean areas
-        field_plan_clean_lme <- field_plan_check_locations(dplyr::rename(field_plan_clean, "Colony" = Location, "Ocean area" = LME)) %>%
+        field_plan_clean_lme <- field_plan_check_locations(
+            dplyr::rename(field_plan_clean, "Colony" = Location, "Ocean area" = LME)) %>%
             dplyr::rename("Location" = Colony, "LME" = "Ocean area") %>%
             dplyr::select(!c(id, colony_nat_name))
-
-        field_plan_clean_lme <- dplyr::mutate(field_plan_clean_lme, Species = target_species[match(field_plan_clean_lme$Species, tolower(c(target_species)))])
 
         return(field_plan_clean_lme)
     })
@@ -79,7 +80,7 @@ make_annual_report_tables <- function(
     # Table 1
     log_info("Generating table 1...")
     ## Assemble table 1
-    phases <- list(phase_1 = c(2014:2018), phase_2 = c(2019:2022), phase_3 = c(2023:2025))
+    phases <- list(phase_1 = c(2014:2018), phase_2 = c(2019:2022), phase_3 = c(2023:2026))
 
     phase_summaries <- lapply(phases, function(current_phase) {
         phase_summary <- lapply(current_phase, function(target_year) {
@@ -96,7 +97,7 @@ make_annual_report_tables <- function(
         phase_summary_med <- dplyr::group_by(phase_summary, Species) %>%
             dplyr::summarise(med_deployed = median(deployed, na.rm = TRUE)) %>%
             left_join(dplyr::group_by(phase_summary, Species) %>% summarise(med_retrieved = median(retrieved, na.rm = TRUE)), by = "Species")
-        phase_summary_med <- phase_summary_med[match(tolower(c(target_species, "Total")), tolower(phase_summary_med$Species)), ]
+        phase_summary_med <- phase_summary_med[match(c(target_species, "Total"), phase_summary_med$Species), ]
     })
 
     current_field_summary <- dplyr::group_by(current_field_plan, Species) %>% summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE), planned = sum(planned, na.rm = TRUE), .groups = "drop")
@@ -405,10 +406,10 @@ make_annual_report_tables <- function(
 
     # Tables 7, 8, A1, A2
     appendix_tables <- list(
-        list(table = "appendix_1_2025", type = "GLS", age = "A"),
-        list(table = "table_8_2025", type = "GLS", age = "C"),
-        list(table = "table_7_2025", type = "GPS-GSM", age = "A"),
-        list(table = "appendix_2_2025", type = "GPS", age = "A")
+        list(table = paste("appendix_1_", field_year), type = "GLS", age = "A"),
+        list(table = paste("table_8_", field_year), type = "GLS", age = "C"),
+        list(table = paste("table_7_", field_year), type = "GPS-GSM", age = "A"),
+        list(table = paste("appendix_2_", field_year), type = "GPS", age = "A")
     )
     for (i in seq_along(appendix_tables)) {
         current_table <- appendix_tables[[i]]

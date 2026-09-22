@@ -100,6 +100,7 @@ get_event_table_ft <- function(current_field_plan, name, target_species, event_t
     event_table_ft <- bg(event_table_ft, i = 2, j = 1, bg = table_bg$header, part = "header")
     # Colour cells by success
     bg_cols <- success_col_func(unlist(as.vector(event_table_success)))
+
     text_cols <- rep("black", length(bg_cols))
     text_cols[bg_cols == "#EF3F27"] = "white"
 
@@ -219,7 +220,7 @@ get_event_table_df <- function(current_field_plan, target_species, event_type = 
         total_df
     )
     target_event_lme <- target_event_lme[match(tolower(c(target_species, "Total")), tolower(target_event_lme$Species)), ]
-
+    target_event_lme$Species[is.na(target_event_lme$Species)] <- c(target_species, "Total")[is.na(target_event_lme$Species)]
     target_event_lme <- dplyr::mutate(target_event_lme,
         `n_site_-_Total` = rowSums(dplyr::select(target_event_lme, dplyr::starts_with("n_site")), na.rm = TRUE),
         `n_event_-_Total` = rowSums(dplyr::select(target_event_lme, dplyr::starts_with("n_event")), na.rm = TRUE),
