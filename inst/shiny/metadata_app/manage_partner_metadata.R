@@ -9,9 +9,10 @@ manage_partner_metadata_ui <- function(id) {
                 NULL,
                 selectize = TRUE
             ),
-            col_widths = c(6, 3),
+            col_widths = c(6, 3, 3),
             fillable = FALSE,
             actionButton(ns("update_master_btn"), "Update master metadata from partner data"),
+            actionButton(ns("reload_partner_btn"), "Reload partner metadata"),
         ),
         br(),
         mod_dt_tabs_ui(ns("viewer"))
@@ -28,9 +29,11 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
             if (busy()) {
                 shinyjs::disable("update_master_btn")
                 shinyjs::disable("select_metadata_file")
+                shinyjs::disable("reload_partner_btn")
             } else {
                 shinyjs::enable("update_master_btn")
                 shinyjs::enable("select_metadata_file")
+                shinyjs::enable("reload_partner_btn")
             }
         })
 
@@ -44,6 +47,7 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
                     shinyjs::show("select_metadata_file")
                     shinyjs::show("viewer")
                     shinyjs::show("update_master_btn")
+                    shinyjs::show("reload_partner_btn")
                     updateSelectInput(inputId = "select_metadata_file", choices = choices)
 
                     current_metadata_path(input$select_metadata_file)
@@ -56,6 +60,7 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
                     shinyjs::hide("select_metadata_file")
                     shinyjs::hide("viewer")
                     shinyjs::hide("update_master_btn")
+                    shinyjs::hide("reload_partner_btn")
 
                     # Clearing choices does not change selection - so trigger these manually
                     current_metadata_path(NA)
@@ -77,8 +82,9 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
             }
         })
 
-        observeEvent(current_metadata_path(), {
-            if (!is.na(current_metadata_path()) & current_metadata_path() != "") {
+
+        reload_partner_metadata <- function() {
+            if (!is.na(current_metadata_path()) && current_metadata_path() != "") {
                 partner_metadata <- tryCatch(
                     {
                         load_partner_metadata(current_metadata_path())
@@ -96,6 +102,10 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
             } else {
                 current_metadata(NULL)
             }
+        }
+
+        observeEvent(list(current_metadata_path(), input$reload_partner_btn), {
+            reload_partner_metadata()
         })
 
         observeEvent(current_metadata(),
@@ -113,35 +123,38 @@ manage_partner_metadata_server <- function(id, busy, all_locations, unsaved, cur
 
         observeEvent(input$update_master_btn, {
             busy(TRUE)
-            tryCatch({
-            locations <- all_locations()
-
-            partner_result <- tryCatch(
+            tryCatch(
                 {
-                    handle_partner_metadata(
-                        colony = current_location_name(),
-                        new_metadata = current_metadata(),
-                        master_import = all_locations()[[current_location_idx()]]
+                    locations <- all_locations()
+
+                    partner_result <- tryCatch(
+                        {
+                            handle_partner_metadata(
+                                colony = current_location_name(),
+                                new_metadata = current_metadata(),
+                                master_import = all_locations()[[current_location_idx()]]
+                            )
+                        },
+                        error = function(e) {
+                            log_error(paste("ERROR: ", e), namespace = "error")
+                            return(NULL)
+                        }
                     )
+                    if (is.null(partner_result)) {
+                        busy(FALSE)
+                        return()
+                    }
+
+                    new_locations <- modify_master_import_in_list(locations, partner_result$master_import)
+
+                    all_locations(new_locations)
+                    unsaved(TRUE)
+                    refresh_tables()
                 },
                 error = function(e) {
-                    log_error(paste("ERROR: ", e), namespace = "error")
-                    return(NULL)
+                    log_error(paste("ERROR", e), namespace = "error")
                 }
             )
-            if (is.null(partner_result)) {
-                busy(FALSE)
-                return()
-            }
-
-            new_locations <- modify_master_import_in_list(locations, partner_result$master_import)
-
-            all_locations(new_locations)
-            unsaved(TRUE)
-            refresh_tables()
-            }, error = function(e) {
-                log_error(paste("ERROR", e), namespace = "error")
-            })
             busy(FALSE)
         })
 
