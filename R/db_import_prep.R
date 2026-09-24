@@ -1,9 +1,3 @@
-check_startup_rows <- function(startup_shutdown) {
-    if (nrow(startup_shutdown) == 0) {
-        stop("No valid sessions! Cannot proceed with database import.")
-    }
-}
-
 #' Prepare master sheet for database import
 #'
 #' This function prepares the master import sheet for database import by processing the metadata and startup/shutdown information.
@@ -14,15 +8,7 @@ check_startup_rows <- function(startup_shutdown) {
 #' @export
 #' @concept db_import_prep
 prepare_master_sheet_for_db <- function(master_sheets) {
-    # check morph
-    fix_num_col <- function(num_col) {
-        if (!is.numeric(num_col)) {
-            num_col <- gsub(",", ".", num_col, fixed = TRUE)
-            num_col <- gsub("[^0-9.]", "", num_col)
-            num_col <- as.numeric(num_col)
-        }
-        return(num_col)
-    }
+    seatrackR:::checkCon()
     log_info_all(paste("Prepare", master_sheets$path, "for database upload"))
     metadata <- master_sheets$data$METADATA
     metadata <- metadata[order(metadata$date), ]
@@ -32,340 +18,82 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         metadata <- dplyr::rename(metadata, scull = skull)
     }
 
+    # Check colony
+    metadata <- check_metadata_colony(metadata)
+
     metadata$ring_number <- as.character(metadata$ring_number)
 
     startup_shutdown <- master_sheets$data$STARTUP_SHUTDOWN
-    # remove cases with no startup date. For some loggers, this should be inferred from the deployment date. This can happen here.
-
-    original_count <- nrow(startup_shutdown)
-
-
-
-    # Check shutdowns
-    problem_shutdown <- startup_shutdown[is.na(startup_shutdown$starttime_gmt), ]
-    if (nrow(problem_shutdown) > 0) {
-        startup_shutdown <- startup_shutdown[!is.na(startup_shutdown$starttime_gmt), ]
-        log_warn(paste("Removed ", original_count - nrow(startup_shutdown), " rows with no startup date."))
-
-        row_summary <- problem_shutdown[, c("logger_serial_no", "starttime_gmt", "download_date", "shutdown_date")]
-        log_warn("The following rows have no startup date and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-    }
-    check_startup_rows(startup_shutdown)
     startup_shutdown <- startup_shutdown[order(startup_shutdown$starttime_gmt), ]
 
-    valid_sex <- c("male", "female", "unknown", NA)
-    sex_alias <- data.frame(db_name = c("male", "female", "unknown"), alias = c("m", "f", "u"))
-
-    # check euring code
-    problem_ring_bool <- is.na(metadata$ring_number) | is.na(metadata$euring_code)
-    if (sum(problem_ring_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_ring_bool), " rows with missing ring number or euring code."))
-        row_summary <- metadata[problem_ring_bool, c("date", "ring_number", "euring_code")]
-        log_warn("The following rows have missing ring number or euring code and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!problem_ring_bool, ]
-    }
-    # Check people
-
-    db_names <- dplyr::pull(seatrackR::getNames(), "name")
-    startup_shutdown$started_by <- gsub("/", "_", startup_shutdown$started_by, fixed = TRUE)
-    startup_shutdown$intended_deployer <- gsub("/", "_", startup_shutdown$intended_deployer, fixed = TRUE)
-    metadata$data_responsible <- gsub("/", "_", metadata$data_responsible, fixed = TRUE)
-
-    startup_shutdown$started_by <- gsub(" & ", "_", startup_shutdown$started_by, fixed = TRUE)
-    startup_shutdown$intended_deployer <- gsub(" & ", "_", startup_shutdown$intended_deployer, fixed = TRUE)
-    metadata$data_responsible <- gsub(" & ", "_", metadata$data_responsible, fixed = TRUE)
-
-    startup_shutdown$started_by <- gsub(" _ ", "_", startup_shutdown$started_by, fixed = TRUE)
-    startup_shutdown$intended_deployer <- gsub(" _ ", "_", startup_shutdown$intended_deployer, fixed = TRUE)
-    metadata$data_responsible <- gsub(" _ ", "_", metadata$data_responsible, fixed = TRUE)
-
-    # Startup not so important, can try and simplify it
-    startup_shutdown$started_by <- sapply(startup_shutdown$started_by, function(x) {
-        names <- trimws(strsplit(x, "_")[[1]])
-        preferred <- names[names %in% c(db_names)]
-        if (length(preferred) > 0) preferred[1] else x
-    })
-    problem_names_bool <- !startup_shutdown$started_by %in% c(NA, db_names)
-    if (sum(problem_names_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_names_bool), " rows with invalid started_by names."))
-        row_summary <- startup_shutdown[problem_names_bool, c("logger_serial_no", "starttime_gmt", "started_by")]
-        log_warn("The following rows have invalid started_by value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        startup_shutdown <- startup_shutdown[!problem_names_bool, ]
-    }
-    problem_names_bool <- !startup_shutdown$intended_deployer %in% c(NA, db_names)
-    if (sum(problem_names_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_names_bool), " rows with invalid intended_deployer names."))
-        row_summary <- startup_shutdown[problem_names_bool, c("logger_serial_no", "starttime_gmt", "intended_deployer")]
-        log_warn("The following rows have invalid intended_deployer value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        startup_shutdown <- startup_shutdown[!problem_names_bool, ]
-    }
-
+    # Check shutdowns
+    startup_shutdown <- check_shutdown(startup_shutdown)
     check_startup_rows(startup_shutdown)
 
-    problem_names_bool <- !metadata$data_responsible %in% db_names
-    if (sum(problem_names_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_names_bool), " rows with invalid data_responsible names."))
-        row_summary <- metadata[problem_names_bool, c("date", "ring_number", "data_responsible", "logger_id_deployed", "logger_id_retrieved")]
-        log_warn("The following rows have invalid data_responsible value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!problem_names_bool, ]
-    }
+    # Check euring code
+    metadata <- check_euring_code(metadata)
 
-
+    # Check people
+    startup_shutdown <- check_people_startup_shutdown(startup_shutdown)
+    metadata <- check_people_metadata(metadata)
 
     # Check sex
-    metadata$sex <- tolower(metadata$sex)
-    invalid_sex_bool <- !metadata$sex %in% valid_sex
-    if (sum(invalid_sex_bool) > 0) {
-        metadata$sex[invalid_sex_bool] <- sex_alias$db_name[match(metadata$sex[invalid_sex_bool], sex_alias$alias)]
-        invalid_sex_bool <- !metadata$sex %in% valid_sex
-        problem_sex <- metadata[invalid_sex_bool, ]
-        if (nrow(problem_sex) > 0) {
-            metadata <- metadata[!invalid_sex_bool, ]
-            log_warn(paste("Removed ", nrow(problem_sex), " rows with invalid sex."))
-            row_summary <- problem_sex[, c("date", "ring_number", "sex", "logger_id_deployed", "logger_id_retrieved")]
-            log_warn("The following rows have invalid sex value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        }
-        metadata <- metadata[!invalid_sex_bool, ]
-    }
+    metadata <- check_sex_metadata(metadata)
 
     # Check sexing method
 
-    # check hatching success/breeding success
+    # fix hatching success/breeding success
     metadata$hatching_success <- as.logical(metadata$hatching_success)
     metadata$breeding_success <- as.logical(metadata$breeding_success)
-
     metadata$chicks <- fix_num_col(metadata$chicks)
     metadata$eggs <- fix_num_col(metadata$eggs)
 
-    lat_lon_cols <- c("colony_latitude", "colony_longitude", "nest_latitude", "nest_longitude")
-    for (col in lat_lon_cols) {
-        # If column exists
-        if (col %in% names(metadata)) {
-            # Remove non-numeric characters and convert to numeric
-            metadata[[col]] <- as.numeric(gsub("[^0-9.-]", "", metadata[[col]]))
-        }
-    }
+    # Fix lat/lon
+    metadata <- fix_metadata_latlon(metadata)
 
     # check breeding stage
-    db_breeding_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "breeding_stages"))
-    valid_breeding_stages <- dplyr::pull(db_breeding_table, "breeding_stage")
-    invalid_breeding_bool <- !is.na(metadata$breeding_stage) & !metadata$breeding_stage %in% valid_breeding_stages
-    if (sum(invalid_breeding_bool) > 0) {
-        problem_breed <- metadata[invalid_breeding_bool, ]
-        log_warn(paste("Removed ", nrow(problem_breed), " rows with invalid breeding stages."))
-        row_summary <- problem_breed[, c("date", "ring_number", "breeding_stage", "logger_id_deployed", "logger_id_retrieved")]
-        log_warn("The following rows have invalid breeding_stage value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!invalid_breeding_bool, ]
-    }
+    metadata <- check_metadata_breeding_stage(metadata)
 
-
+    # Fix morph
     metadata$tarsus <- fix_num_col(metadata$tarsus)
     metadata$scull <- fix_num_col(metadata$scull)
     metadata$weight <- fix_num_col(metadata$weight)
     metadata$wing <- fix_num_col(metadata$weight)
 
-    # check back_on_nest
-    back_on_nest <- metadata$back_on_nest
-    back_on_nest[back_on_nest == "yes"] <- TRUE
-    back_on_nest[back_on_nest == "no"] <- FALSE
-    metadata$back_on_nest <- as.logical(back_on_nest)
+    # fix back_on_nest
+    metadata <- fix_metadata_back_on_nest(metadata)
 
-    # check eggs
+    # fix eggs
     metadata$eggs <- fix_num_col(metadata$eggs)
 
-    # Check colony
-    db_colonies <- seatrackR::getColonies()$colony_int_name
-    problem_colony_bool <- !metadata$colony %in% db_colonies
-    if (sum(problem_colony_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_colony_bool), " rows with invalid colony names."))
-        row_summary <- metadata[problem_colony_bool, c("date", "ring_number", "colony", "logger_id_deployed", "logger_id_retrieved")]
-        log_warn("The following rows have invalid colony value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!problem_colony_bool, ]
-    }
-
-    db_locs <- seatrackR::getColonies(allLocations = TRUE)$location_name
-    problem_colony_bool <- !metadata$colony %in% db_locs
-    if (sum(problem_colony_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_colony_bool), " rows with invalid location names."))
-        row_summary <- metadata[problem_colony_bool, c("date", "ring_number", "colony", "logger_id_deployed", "logger_id_retrieved")]
-        log_warn("The following rows have invalid location value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!problem_colony_bool, ]
-    }
-
-    # Check mounting types
-    metadata$logger_mount_method[!is.na(metadata$logger_mount_method)] <- tolower(metadata$logger_mount_method[!is.na(metadata$logger_mount_method)])
-
-    db_mounting_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "mounting_types"))
-    valid_mountings <- dplyr::pull(db_mounting_table, "logger_mount_method")
-    invalid_mounting_bool <- !is.na(metadata$logger_mount_method) & !metadata$logger_mount_method %in% valid_mountings
-    if (sum(invalid_mounting_bool) > 0) {
-        problem_mount <- metadata[invalid_mounting_bool, ]
-        log_warn(paste("Removed ", nrow(problem_mount), " rows with invalid mounting types."))
-        row_summary <- problem_mount[, c("date", "ring_number", "logger_mount_method", "logger_id_deployed", "logger_id_retrieved")]
-        log_warn("The following rows have invalid mounting value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!invalid_mounting_bool, ]
-    }
+    # check mounting types
+    metadata <- check_metadata_mounting(metadata)
 
     # check species
-    db_species <- seatrackR::getSpecies()$species_name_eng
-    startup_shutdown$intended_species <- gsub(" adults", "", startup_shutdown$intended_species)
-    startup_shutdown$intended_species <- gsub(" chicks", "", startup_shutdown$intended_species)
-
-    problem_species_bool <- !startup_shutdown$intended_species %in% c(db_species, NA)
-    if (sum(problem_species_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_species_bool), " rows with invalid species."))
-        row_summary <- startup_shutdown[problem_species_bool, c("starttime_gmt", "logger_serial_no", "intended_species")]
-        log_warn("The following rows have invalid species value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        startup_shutdown <- startup_shutdown[!problem_species_bool, ]
-    }
+    startup_shutdown <- check_startup_species(startup_shutdown)
     check_startup_rows(startup_shutdown)
 
-    problem_species_bool <- !metadata$species %in% db_species
-    if (sum(problem_species_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_species_bool), " rows with invalid species."))
-        row_summary <- metadata[problem_species_bool, c("date", "ring_number", "species", "logger_id_deployed", "logger_id_retrieved")]
-        log_warn("The following rows have invalid species value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!problem_species_bool, ]
-    }
+    metadata <- check_metadata_species(metadata)
 
     # Check species mismatch
-    species_ring <- dplyr::distinct(metadata, species, ring_number)
-    problem_rings <- species_ring$ring_number[duplicated(species_ring$ring_number)]
-    if (length(problem_rings) > 0) {
-        problem_rings_bool <- metadata$ring_number %in% problem_rings
-        log_warn(paste("Removed ", sum(problem_rings_bool), " rows with species/ring number mismatch."))
-        row_summary <- metadata[problem_rings_bool, c("date", "ring_number", "species")]
-        log_warn("The following rows have species/ring number mismatch and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        metadata <- metadata[!problem_rings_bool, ]
-    }
+    metadata <- check_metadata_species_match(metadata)
 
     # Check logger model ID
-    db_logger_model <-
-        data.frame(
-            logger_serial_no = c(metadata$logger_id_deployed, metadata$logger_id_retrieved, startup_shutdown$logger_serial_no),
-            logger_model = c(metadata$logger_model_deployed, metadata$logger_model_retrieved, startup_shutdown$logger_model)
-        )
-    db_logger_model <- db_logger_model[!is.na(db_logger_model$logger_serial_no), ]
-    db_logger_model <- dplyr::distinct(db_logger_model)
+    logger_fix_result <- fix_logger_models(metadata, startup_shutdown)
+    metadata <- logger_fix_result$metadata
+    startup_shutdown <- logger_fix_result$startup_shutdown
 
-    logger_model_bool <- check_db_metadata_import(db_logger_model, "loggers.logger_info")
-    missing_logger_models <- db_logger_model[logger_model_bool, ]
-
-    # Ignore cases where the logger model is not in the database at all
-    db_logger <- data.frame(logger_serial_no = missing_logger_models$logger_serial_no)
-    logger_exists_bool <- check_db_metadata_import(db_logger, "loggers.logger_info")
-    mismatch_logger_models <- missing_logger_models[!logger_exists_bool, ]
-    if (nrow(mismatch_logger_models) > 0) {
-        # Correct these
-        db_true_logger_model <- get_db_metadata_import(data.frame(logger_serial_no = unique(mismatch_logger_models$logger_serial_no)), "loggers.logger_info", additional_db_col_names = c("logger_model", "production_year"))
-        n_mismatch <- nrow(db_true_logger_model)
-        if (n_mismatch > 0) {
-            model_summary <- tibble::as_tibble(db_true_logger_model)
-            ambiguity_loggers <- unique(model_summary$logger_serial_no[duplicated(model_summary$logger_serial_no)])
-            n_ambiguity <- length(ambiguity_loggers)
-            if (n_ambiguity > 0) {
-                ambiguity_loggers_summary <- model_summary[model_summary$logger_serial_no %in% ambiguity_loggers, ]
-                log_warn(
-                    glue::glue("{n_ambiguity} logger serial numbers have a mismatch between the master sheet. \n However, there are multiple different logger models for these serial numbers in the database."), "\n",
-                    paste(capture.output(print(ambiguity_loggers_summary, n = nrow(ambiguity_loggers_summary)))[c(-1, -3)], collapse = "\n")
-                )
-                log_warn("These cannot be corrected from the database. Master metadata must be updated to resolve this ambiguity.")
-            }
-            model_summary <- model_summary[!model_summary$logger_serial_no %in% ambiguity_loggers, ]
-
-            model_summary$md_logger_model <- missing_logger_models$logger_model[match(model_summary$logger_serial_no, missing_logger_models$logger_serial_no)]
-            model_summary <- model_summary[model_summary$md_logger_model != model_summary$logger_model | is.na(model_summary$md_logger_model), ]
-            log_warn(glue::glue("{n_mismatch} logger deployments/retrievals had a mismatch between the master sheet and the database."), "\n", paste(capture.output(print(model_summary, n = nrow(model_summary)))[c(-1, -3)], collapse = "\n"))
-            log_warn("Database value will be used. Consider updating master metadata")
-
-            metadata$logger_model_retrieved[metadata$logger_id_retrieved %in% db_true_logger_model$logger_serial_no] <- db_true_logger_model$logger_model[match(metadata$logger_id_retrieved[metadata$logger_id_retrieved %in% db_true_logger_model$logger_serial_no], db_true_logger_model$logger_serial_no)]
-            metadata$logger_model_deployed[metadata$logger_id_deployed %in% db_true_logger_model$logger_serial_no] <- db_true_logger_model$logger_model[match(metadata$logger_id_deployed[metadata$logger_id_deployed %in% db_true_logger_model$logger_serial_no], db_true_logger_model$logger_serial_no)]
-            startup_shutdown$logger_model[startup_shutdown$logger_serial_no %in% db_true_logger_model$logger_serial_no] <- db_true_logger_model$logger_model[match(startup_shutdown$logger_serial_no[startup_shutdown$logger_serial_no %in% db_true_logger_model$logger_serial_no], db_true_logger_model$logger_serial_no)]
-            startup_shutdown$production_year[startup_shutdown$logger_serial_no %in% db_true_logger_model$logger_serial_no] <- db_true_logger_model$production_year[match(startup_shutdown$logger_serial_no[startup_shutdown$logger_serial_no %in% db_true_logger_model$logger_serial_no], db_true_logger_model$logger_serial_no)]
-        }
-    }
-
-    # Check for invalid logger models and producers
-    db_model_producer <- seatrackR::getLoggerModels()
-
-    # Check for logger models that don't exist in the database
-    problem_logger_models <- unique(startup_shutdown$logger_model[!startup_shutdown$logger_model %in% db_model_producer$model])
-
-    n_problem_logger_models <- length(problem_logger_models)
-    if (n_problem_logger_models > 0) {
-        # Try a case insensitive match of these models
-        correct_case <- db_model_producer$model[match(tolower(problem_logger_models), tolower(db_model_producer$model))]
-        fixable <- data.frame(md_model = problem_logger_models[!is.na(correct_case)], db_model = correct_case[!is.na(correct_case)])
-
-        metadata$logger_model_retrieved[metadata$logger_model_retrieved %in% fixable$md_model] <- fixable$db_model[match(metadata$logger_model_retrieved[metadata$logger_model_retrieved %in% fixable$md_model], fixable$md_model)]
-        metadata$logger_model_deployed[metadata$logger_model_deployed %in% fixable$md_model] <- fixable$db_model[match(metadata$logger_model_deployed[metadata$logger_model_deployed %in% fixable$md_model], fixable$md_model)]
-        startup_shutdown$logger_model[startup_shutdown$logger_model %in% fixable$md_model] <- fixable$db_model[match(startup_shutdown$logger_model[startup_shutdown$logger_model %in% fixable$md_model], fixable$md_model)]
-
-        problem_logger_models <- problem_logger_models[!problem_logger_models %in% fixable$md_model]
-    }
-
-    n_problem_logger_models <- length(problem_logger_models)
-    if (n_problem_logger_models > 0) {
-        id_problem_startups <- startup_shutdown$logger_model %in% problem_logger_models
-        missing_model_summary <- startup_shutdown[id_problem_startups, c("logger_serial_no", "logger_model", "starttime_gmt")]
-        log_warn(glue::glue("{nrow(missing_model_summary)} logging sessions have logger models not present in database."), "\n", paste(capture.output(print(missing_model_summary, n = nrow(missing_model_summary)))[c(-1, -3)], collapse = "\n"))
-        startup_shutdown <- startup_shutdown[!id_problem_startups, ]
-    }
-
-    startup_shutdown$producer <- db_model_producer$producer[match(startup_shutdown$logger_model, db_model_producer$model)]
-
-    # Check for remaining model mismatch
-    db_logger_model <-
-        data.frame(
-            logger_serial_no = c(metadata$logger_id_deployed, metadata$logger_id_retrieved, startup_shutdown$logger_serial_no),
-            logger_model = c(metadata$logger_model_deployed, metadata$logger_model_retrieved, startup_shutdown$logger_model)
-        )
-    db_logger_model <- db_logger_model[!is.na(db_logger_model$logger_serial_no), ]
-
-
-
-    problem_logger_models_bool <- sapply(unique(db_logger_model$logger_serial_no), function(logger_serial_no) {
-        length(unique(db_logger_model$logger_model[db_logger_model$logger_serial_no == logger_serial_no])) > 1
-    })
-
-    problem_logger_ids <- unique(db_logger_model$logger_serial_no)[problem_logger_models_bool]
-    problem_logger_model_string <- sapply(problem_logger_ids, function(logger_serial_no) {
-        logger_model_string <- unique(db_logger_model$logger_model[db_logger_model$logger_serial_no == logger_serial_no])
-        logger_model_strings <- sapply(logger_model_string, function(x) {
-            glue::glue("'{x}'")
-        })
-        paste0(logger_serial_no, ": ", paste(logger_model_strings, collapse = ", "))
-    })
-    if (length(problem_logger_ids) > 0) {
-        log_warn(paste0("The following logger serial numbers have multiple different logger models in the master sheet. This could cause a database error.:\n", paste(problem_logger_model_string, collapse = "\n")))
-    }
-
-    # Check production_year
-    problem_production_year_bool <- is.na(startup_shutdown$production_year) | startup_shutdown$production_year < 1900 | startup_shutdown$production_year > as.numeric(format(Sys.Date(), "%Y"))
-    if (sum(problem_production_year_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_production_year_bool), " rows with invalid production year."))
-        row_summary <- startup_shutdown[problem_production_year_bool, c("logger_serial_no", "logger_model", "production_year", "starttime_gmt")]
-        log_warn("The following rows have invalid production year and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        startup_shutdown <- startup_shutdown[!problem_production_year_bool, ]
-    }
+    startup_shutdown <- check_startup_prod_year(startup_shutdown)
 
     # check download status
-
-    startup_shutdown$download_type <- translate_logger_status(startup_shutdown$download_type)
-    # Theoretically no other download statuses should be allowed, but perhaps check?
-    db_download_status <- translate_logger_status(list_valid_only = TRUE)
-    problem_download_bool <- !startup_shutdown$download_type %in% c(db_download_status) & (!is.na(startup_shutdown$download_date) | !is.na(startup_shutdown$shutdown_date))
-    if (sum(problem_download_bool) > 0) {
-        log_warn(paste("Removed ", sum(problem_download_bool), " rows with invalid download status."))
-        row_summary <- startup_shutdown[problem_download_bool, c("starttime_gmt", "logger_serial_no", "download_type")]
-        log_warn("The following rows have invalid download_type value and will not be handled", ":\n", paste(capture.output(print(row_summary, n = nrow(row_summary)))[c(-1, -3)], collapse = "\n"))
-        startup_shutdown <- startup_shutdown[!problem_download_bool, ]
-    }
+    startup_shutdown <- check_startup_download(startup_shutdown)
     check_startup_rows(startup_shutdown)
 
     # check retrieval type
 
+    # Order startups
     startup_shutdown <- startup_shutdown[order(startup_shutdown$starttime_gmt), ]
+
     # combine download/shutdown
     startup_shutdown$download_date[is.na(startup_shutdown$download_date)] <- startup_shutdown$shutdown_date[is.na(startup_shutdown$download_date)]
 
@@ -405,41 +133,6 @@ prepare_master_sheet_for_db <- function(master_sheets) {
     db_to_open_only <- startup_new[is.na(startup_new$download_date), ]
     log_info(nrow(db_to_open_only), " sessions to open")
 
-    # neither db_to_close or db_to_open_only should have any duplicates. Remove these and warn the user
-    # # THIS SHOULDN'T REALLY HAPPEN - but it does!
-    # duplicate_to_close_loggers <- unique(paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model)[duplicated(paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model))])
-    # if (length(duplicate_to_close_loggers) > 0) {
-    #     log_warn(
-    #         "The following logger serial numbers have multiple close entries in the import sheet that cannot be added to the database: "
-    #     )
-
-    #     for (duplicate_logger in duplicate_to_close_loggers) {
-    #         duplicate_summary <- db_to_close_only[paste(db_to_close_only$logger_serial_no, db_to_close_only$logger_model) == duplicate_logger, c("logger_serial_no", "starttime_gmt", "download_date")]
-    #         log_warn(duplicate_logger, ":\n", paste(capture.output(print(duplicate_summary, n = nrow(duplicate_summary)))[c(-1, -3)], collapse = "\n"))
-    #     }
-
-    #     db_to_close_only <- db_to_close_only[!db_to_close_only$logger_serial_no %in% duplicate_to_close_loggers, ]
-    #     log_warn("These sessions will not be added to the database. Check if these sessions can be closed in the master import sheet.")
-    # }
-    # # WOULD SUGGEST MULTIPLE OPEN SESSIONS IN THE DB - this can happen! Or overlapping sessions within the master sheet
-
-    # duplicate_to_open_loggers <- unique(db_to_open_only$logger_serial_no[duplicated(paste(db_to_open_only$logger_serial_no, db_to_open_only$logger_model))])
-    # if (length(duplicate_to_open_loggers) > 0) {
-    #     log_warn(
-    #         "The following logger serial numbers have multiple open startup entries in the import sheet that cannot be added to the database: ",
-    #         paste(duplicate_to_open_loggers, collapse = ", ")
-    #     )
-
-    #     for (duplicate_logger in duplicate_to_open_loggers) {
-    #         duplicate_summary <- db_to_open_only[db_to_open_only$logger_serial_no == duplicate_logger, c("logger_serial_no", "starttime_gmt", "download_date")]
-    #         log_warn(duplicate_logger, ":\n", paste(capture.output(print(duplicate_summary, n = nrow(duplicate_summary)))[c(-1, -3)], collapse = "\n"))
-    #     }
-
-    #     db_to_open_only <- db_to_open_only[!db_to_open_only$logger_serial_no %in% duplicate_to_open_loggers, ]
-
-    #     log_warn("These sessions will not be added to the database. Check if these sessions can be closed in the master import sheet.")
-    # }
-
     # Combine all db IDs from these three dataframes
     all_db_ids <- paste(
         c(
@@ -476,8 +169,6 @@ prepare_master_sheet_for_db <- function(master_sheets) {
         log_info(glue::glue("Reinserting {length(deployment_retrieval_ids)} sessions due to missing deployments and retrievals"))
         db_to_open_and_close <- rbind(db_to_open_and_close, startup_shutdown[startup_shutdown_id %in% deployment_retrieval_ids, ])
     }
-
-
 
     # batch open closed sessions
     db_to_open_and_close_list <- list()
