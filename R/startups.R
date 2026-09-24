@@ -452,6 +452,8 @@ add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_mode
 
     partner_logger_ids <- unique(partner_logger_data$logger_id)
 
+    partner_logger_data <- partner_logger_data[order(partner_logger_data$date), ]
+
     log_trace("Checking for new loggers in startup files")
     master_logger_id_date <- paste(master_startup$logger_serial_no, as.character(master_startup$starttime_gmt))
 
@@ -465,13 +467,14 @@ add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_mode
     new_loggers <- tibble()
     for (logger_id in partner_logger_ids) {
         logger_partner_logger_data <- partner_logger_data[partner_logger_data$logger_id == logger_id, ]
-        logger_partner_logger_data <- logger_partner_logger_data[1, ] # loggers deployed or retrieved multiple times should be handled by restart
+        for (i in seq_len(nrow(logger_partner_logger_data))) {
+            logger_partner_logger_data <- logger_partner_logger_data[i, ]
 
-        new_startup <- choose_startup_to_add(logger_partner_logger_data, all_startups, master_import, can_dummy_models)
-        if(!is.null(new_startup)){
-            new_loggers <- rbind(new_loggers, new_startup)
+            new_startup <- choose_startup_to_add(logger_partner_logger_data, all_startups, master_import, can_dummy_models)
+            if(!is.null(new_startup)){
+                new_loggers <- rbind(new_loggers, new_startup)
+            }
         }
-
     }
     # For each logger ID,
     # If there are multiple instances of that logger being started,
