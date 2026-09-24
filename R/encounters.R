@@ -33,6 +33,9 @@ append_encounter_data <- function(master_metadata, encounter_data, version = 202
         # Rename scull
         master_metadata <- dplyr::rename(master_metadata, skull = scull)
     }
+    if ("scull" %in% names(encounter_data) && !"scull" %in% names(master_metadata)) {
+        encounter_data <- dplyr::rename(encounter_data, skull = scull)
+    }
 
     # remove invalid rows from encounter_data
     encounter_data <- encounter_data[!is.na(encounter_data$date), ]
@@ -51,6 +54,7 @@ append_encounter_data <- function(master_metadata, encounter_data, version = 202
     if (any(encounter_data$date <= as.Date("1000-01-01"))) {
         stop("Date format was loaded incorrectly. Check excel column type.")
     }
+
 
 
     # Throw an error if there are any columns in encounter_data that are not in master_metadata
