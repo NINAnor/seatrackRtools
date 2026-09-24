@@ -92,6 +92,7 @@ get_logger_from_db <- function(logger_id) {
 #' @param master_startup A data frame containing the master startup and shutdown information.
 #' @param logger_id A character string specifying the logger ID.
 #' @param logger_download_stop_date A Date object specifying the reported download/stop date of the logger.
+#' @param verbose A logical value indicating whether to print messages about the search process. Default is TRUE.
 #'
 #' @return A list containing the index of the unfinished session and the session data frame, or NULL if no unfinished session is found.
 #' @examples
@@ -100,7 +101,7 @@ get_logger_from_db <- function(logger_id) {
 #' }
 #' @export
 #' @concept loggers
-get_unfinished_session <- function(master_startup, logger_id, logger_download_stop_date) {
+get_unfinished_session <- function(master_startup, logger_id, logger_download_stop_date, verbose = TRUE) {
     # Find session in master_startup
     # Get logger ID unfinished sessions
 
@@ -108,7 +109,9 @@ get_unfinished_session <- function(master_startup, logger_id, logger_download_st
     unfinished_indices <- which(unfinished_bool)
     master_startup_unfinished <- master_startup[unfinished_indices, ]
     if (nrow(master_startup_unfinished) == 0) {
-        log_warn(paste0("No unfinished session found for logger ID: ", logger_id, "."))
+        if(verbose){
+            log_warn(paste0("No unfinished session found for logger ID: ", logger_id, "."))
+        }
         logger_sessions <- master_startup[master_startup$logger_serial_no == logger_id, ]
         return(list(index = NULL, session = logger_sessions[order(logger_sessions$download_date), ][nrow(logger_sessions), ]))
     } else if (nrow(master_startup_unfinished) >= 1) {
@@ -171,9 +174,13 @@ get_unfinished_session <- function(master_startup, logger_id, logger_download_st
             master_startup_unfinished <- master_startup[unfinished_indices, ]
         }
     }
-    log_success(paste("Found unfinished session for logger ID:", logger_id, logger_download_stop_date))
-    unfinished_summary <- master_startup_unfinished[, c("logger_serial_no", "starttime_gmt", "intended_species", "intended_location")]
-    log_success("Unfinished session:\n", paste(capture.output(print(unfinished_summary, n = nrow(unfinished_summary)))[c(-1, -3)], collapse = "\n"))
+
+    
+    if(verbose){
+        unfinished_summary <- master_startup_unfinished[, c("logger_serial_no", "starttime_gmt", "intended_species", "intended_location")]
+        log_success(paste("Found unfinished session for logger ID:", logger_id, logger_download_stop_date))
+        log_success("Unfinished session:\n", paste(capture.output(print(unfinished_summary, n = nrow(unfinished_summary)))[c(-1, -3)], collapse = "\n"))
+    }
     return(list(index = unfinished_indices, session = master_startup_unfinished))
 }
 
@@ -318,7 +325,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
 
             logger_download_stop_date <- logger_returns$`download / stop_date`[i]
 
-            unfinished_session_result <- get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
+            unfinished_session_result <- get_unfinished_session(master_startup, logger_id, logger_download_stop_date, verbose = FALSE)
             if (is.null(unfinished_session_result) || is.null(unfinished_session_result$index)) {
                 log_info(paste("Skipping logger ID:", logger_id, "due to unresolved unfinished session. This may indicate an error or that this session has already been ended."))
                 last_master_session <- data.frame(last_status = as.character(NA), last_download = as.Date(NA))
@@ -338,6 +345,9 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
                 logger_download_stop_date <- Sys.Date()
             } else if (logger_status == "Not used" && is.na(logger_download_stop_date) && logger_id %in% restart_times$logger_id) {
                 logger_download_stop_date <- as.Date(restart_times$startdate_GMT[restart_times$logger_id == logger_id])
+            }else{
+                log_warn(paste("Skipping logger ID:", logger_id, "due to lack of download/shutdown date."))
+                next
             }
 
             master_startup <- set_master_startup_value(master_startup, unfinished_index, "download_type", logger_status)
