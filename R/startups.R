@@ -446,7 +446,7 @@ add_loggers_from_startup <- function(master_import, new_metadata, can_dummy_mode
     names(partner_logger_data_not_used) <- c("date", "logger_id", "model")
     partner_logger_data_not_used$colony <- NA
     partner_logger_data_not_used$ignore_year <- FALSE
-    partner_logger_data_not_used$deployed <- FALSE
+    partner_logger_data_not_used$deployed <- TRUE # Bit of a hack?
 
     partner_logger_data <- rbind(partner_logger_data_deployed, partner_logger_data_retrieved, partner_logger_data_not_used)
 
