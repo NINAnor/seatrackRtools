@@ -345,7 +345,7 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
                 logger_download_stop_date <- Sys.Date()
             } else if (logger_status == "Not used" && is.na(logger_download_stop_date) && logger_id %in% restart_times$logger_id) {
                 logger_download_stop_date <- as.Date(restart_times$startdate_GMT[restart_times$logger_id == logger_id])
-            }else{
+            }else if(is.na(logger_download_stop_date)){
                 log_warn(paste("Skipping logger ID:", logger_id, "due to lack of download/shutdown date."))
                 next
             }

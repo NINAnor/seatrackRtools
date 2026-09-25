@@ -43,7 +43,7 @@ db_recordings_server <- function(id, busy, all_locations, unsaved) {
             for (i in current_choices()) {
                 tryCatch(
                     {
-                        push_db_activity
+                        push_db_activity()
                     },
                     error = function(e) {
                         log_error(paste("ERROR", e), namespace = "error")

@@ -177,6 +177,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
         }
 
         buttons_to_generate <- list(
+            list(btn_name = "set_failed_btn", btn_label = "Failed", btn_type = "Failed"),
             list(btn_name = "set_unused_btn", btn_label = "Unused", btn_type = "Not used"),
             list(btn_name = "set_nonresponsive_btn", btn_label = "Nonresponsive", btn_type = "Nonresponsive"),
             list(btn_name = "set_downloaded_btn", btn_label = "Downloaded", btn_type = "Succesfully downloaded")
@@ -214,7 +215,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
                             actionButton(paste("main", id, x$btn_name, sep = "-"), x$btn_label)
                         }),
                         list(textInput(paste("main", id, "logger_close_comment", sep = "-"), NULL, "", placeholder = "Add comment.."),
-                            col_widths = breakpoints(xs = c(2, 2, 2, 5)),
+                            col_widths = breakpoints(xs = c(2, 2, 2, 2, 5)),
                             fill = TRUE
                         )
                     ),
