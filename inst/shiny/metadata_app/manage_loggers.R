@@ -92,26 +92,41 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
                 all_result <- search_results()
                 print(all_result)
                 open_result <- lapply(all_result$local_results, function(result) {
-                    list(
-                        path = result$path,
-                        list_index = result$list_index,
-                        row_index = result$row_index[result$open],
-                        data = result$data[result$open, ]
-                    )
+                    data <- result$data[result$open, ]
+                    if (nrow(data) > 0) {
+                        return(
+                            list(
+                                path = result$path,
+                                list_index = result$list_index,
+                                row_index = result$row_index[result$open],
+                                data = data
+                            )
+                        )
+                    }
                 })
+                open_result <- open_result[!sapply(open_result, is.null)]
                 closed_result <- lapply(all_result$local_results, function(result) {
-                    list(
-                        path = result$path,
-                        list_index = result$list_index,
-                        row_index = result$row_index[!result$open],
-                        data = result$data[!result$open, ]
-                    )
+                    data <- result$data[!result$open, ]
+                    if (nrow(data) > 0) {
+                        return(
+                            list(
+                                path = result$path,
+                                list_index = result$list_index,
+                                row_index = result$row_index[!result$open],
+                                data = data
+                            )
+                        )
+                    }
                 })
-                print(closed_result)
+                closed_result <- closed_result[!sapply(closed_result, is.null)]
 
-                n_open_results <- sum(sapply(open_result, function(x) {
-                    nrow(x$data)
-                }))
+
+                n_open_results <- 0
+                if (length(open_result) > 0) {
+                    n_open_results <- sum(sapply(open_result, function(x) {
+                        nrow(x$data)
+                    }))
+                }
 
                 if (n_open_results > 1) {
                     open_session_warning <- strong("MULTIPLE OPEN SESSIONS FOUND")
@@ -195,13 +210,20 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
                                     all_result <- search_results()
                                     locations <- all_locations()
                                     open_result <- lapply(all_result$local_results, function(result) {
-                                        list(
-                                            path = result$path,
-                                            list_index = result$list_index,
-                                            row_index = result$row_index[result$open][1],
-                                            data = result$data[result$open, ][1, ]
-                                        )
-                                    })[[1]]
+                                        data <- result$data[result$open, ]
+                                        if (nrow(data) > 0) {
+                                            return(
+                                                list(
+                                                    path = result$path,
+                                                    list_index = result$list_index,
+                                                    row_index = result$row_index[result$open],
+                                                    data = data
+                                                )
+                                            )
+                                        }
+                                    })
+                                    open_result <- open_result[!sapply(open_result, is.null)][[1]]
+
 
                                     end_session_result <- end_logger_session(open_result$data$logger_serial_no, x$btn_type, downloaded_by = user_full_name(), comment = input$logger_close_comment, master_sheet = locations[[open_result$list_index]])
 
@@ -228,9 +250,12 @@ manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_nam
 
 display_sessions <- function(sessions, title = "") {
     selected_cols <- c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "download_type", "download_date", "shutdown_date", "comment")
-    n_sessions <- sum(sapply(sessions, function(x) {
-        nrow(x$data)
-    }))
+    n_sessions <- 0
+    if (length(sessions) > 0) {
+        n_sessions <- sum(sapply(sessions, function(x) {
+            nrow(x$data)
+        }))
+    }
     if (n_sessions == 0) {
         return(list())
     } else {
