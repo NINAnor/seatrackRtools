@@ -4,7 +4,12 @@
 \alias{get_unfinished_session}
 \title{Find a logger's unfinished session in the master startup data frame}
 \usage{
-get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
+get_unfinished_session(
+  master_startup,
+  logger_id,
+  logger_download_stop_date,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{master_startup}{A data frame containing the master startup and shutdown information.}
@@ -12,6 +17,8 @@ get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
 \item{logger_id}{A character string specifying the logger ID.}
 
 \item{logger_download_stop_date}{A Date object specifying the reported download/stop date of the logger.}
+
+\item{verbose}{A logical value indicating whether to print messages about the search process. Default is TRUE.}
 }
 \value{
 A list containing the index of the unfinished session and the session data frame, or NULL if no unfinished session is found.

@@ -4,7 +4,12 @@
 \alias{search_startup_files}
 \title{Search for logger instances in startup files}
 \usage{
-search_startup_files(target_logger_ids, existing_id_date, master_startup)
+search_startup_files(
+  target_logger_ids,
+  existing_id_date,
+  master_startup,
+  ignore_year = FALSE
+)
 }
 \arguments{
 \item{target_logger_ids}{A character vector of logger IDs to search for in the startup files.}

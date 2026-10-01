@@ -9,7 +9,8 @@ get_activity_db_sessions(
   import_directory = file.path(the$sea_track_folder,
     "Database\\\\Imports_Logger data\\\\Raw logger data\\\\ALL"),
   compare_file_to_db = FALSE,
-  min_date = "2000-01-01"
+  min_date = "2000-01-01",
+  selected_files = NULL
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ get_activity_db_sessions(
 \item{compare_file_to_db}{A boolean indicating whether to compare the files in the import directory to the records in the database to identify files that may need to be re-uploaded. As this can be heavy, this defaults to FALSE.}
 
 \item{min_date}{A string representing the minimum modification date for files to be considered, in the format "YYYY-MM-DD". Defaults to "2000-01-01". Strongly reccomended when compare_file_to_db is TRUE to avoid comparing a large number of files that have not been modified recently.}
+
+\item{selected_files}{An optional vector of specific filenames to filter the files in the import directory. If provided, only files matching these names will be considered for processing.}
 }
 \value{
 A list containing the following elements:

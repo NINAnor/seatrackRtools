@@ -45,7 +45,7 @@ Imports:
     shinydashboard,
     shinyWidgets,
     ggplot2,
-    viridis
+    viridis,
     pdftools,
     rsconnect
 Suggests: 
