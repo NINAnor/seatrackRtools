@@ -569,7 +569,18 @@ get_irma_from_onedrive <- function(
     db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
 
     db_info <- dplyr::tbl(con, dbplyr::in_schema("individuals", "individ_status"))
-    db_deployments <- dplyr::left_join(db_deployments, db_info, dplyr::join_by("session_id", deployment_date == status_date), suffix = c("", ".status"))
+    db_people_through <- dplyr::tbl(con, dbplyr::in_schema("individuals", "status_people"))
+    db_people <- dplyr::tbl(con, dbplyr::in_schema("metadata", "people"))
+
+    db_data_responsible <- dplyr::left_join(db_people_through, db_people, by = "person_id") %>%
+        dplyr::group_by(status_id) %>%
+        dplyr::summarise(
+            data_responsible = stringr::str_flatten(full_name, collapse = "_")
+        )
+    db_info <- left_join(db_info, db_data_responsible, by = dplyr::join_by(id == status_id))
+
+
+    db_deployments <- dplyr::left_join(db_deployments, db_info, dplyr::join_by("status_id"), suffix = c("", ".status"))
     db_deployments <- dplyr::mutate(db_deployments,
         age_deployment = age,
         age2 = if_else(is.na(age), "NA", age),
