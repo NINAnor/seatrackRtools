@@ -1,0 +1,12 @@
+name: app_colony_repr
+title:
+username: larsursem
+account: larsursem
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 15971325
+bundleId: 11346337
+url: https://larsursem.shinyapps.io/app_colony_repr/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
