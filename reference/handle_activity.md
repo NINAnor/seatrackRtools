@@ -17,8 +17,8 @@ handle_activity(file_info, recording_type, remove_existing = FALSE)
 - file_info:
 
   A dataframe containing information about the file to be processed,
-  including session_id, filename, individ_id, deployment_date,
-  retrieval_date, full_path, and extension.
+  including session_id, filename, deployment_date, retrieval_date,
+  full_path, and extension.
 
 - recording_type:
 

@@ -104,6 +104,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/nonresponsive_from_master.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/parse_data_request_folder.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/parse_data_request_pdf.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/parse_migratetech_header.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/prep_SEATRACK_ColonyRepr.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/prepare_master_sheet_for_db.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/prepare_session_batch.html</loc></url>
@@ -119,6 +120,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/push_shutdowns.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/push_startup.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/run_ColonyRepr.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/run_ColonyRepr_app.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/run_app.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/run_web_metadata_app.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/save_all_modified.html</loc></url>

@@ -6,7 +6,12 @@ the provided logger IDs and existing ID-date combinations.
 ## Usage
 
 ``` r
-search_startup_files(target_logger_ids, existing_id_date, master_startup)
+search_startup_files(
+  target_logger_ids,
+  existing_id_date,
+  master_startup,
+  ignore_year = FALSE
+)
 ```
 
 ## Arguments

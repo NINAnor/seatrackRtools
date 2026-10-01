@@ -51,7 +51,8 @@ The function is designed to be flexible and can handle different types of activi
 <span>  import_directory <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">the</span><span class="op">$</span><span class="va">sea_track_folder</span>,</span>
 <span>    <span class="st">"Database\\Imports_Logger data\\Raw logger data\\ALL"</span><span class="op">)</span>,</span>
 <span>  compare_file_to_db <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  min_date <span class="op">=</span> <span class="st">"2000-01-01"</span></span>
+<span>  min_date <span class="op">=</span> <span class="st">"2000-01-01"</span>,</span>
+<span>  selected_files <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -69,6 +70,10 @@ The function is designed to be flexible and can handle different types of activi
 
 <dt id="arg-min-date">min_date<a class="anchor" aria-label="anchor" href="#arg-min-date"></a></dt>
 <dd><p>A string representing the minimum modification date for files to be considered for upload, in the format "YYYY-MM-DD". Defaults to "2000-01-01". Strongly reccomended when compare_file_to_db is TRUE to avoid comparing a large number of files that have not been modified recently.</p></dd>
+
+
+<dt id="arg-selected-files">selected_files<a class="anchor" aria-label="anchor" href="#arg-selected-files"></a></dt>
+<dd><p>An optional vector of specific filenames to filter the files in the import directory. If provided, only files matching these names will be considered for processing.</p></dd>
 
 </dl></div>
     <div class="section level2">

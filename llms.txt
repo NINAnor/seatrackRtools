@@ -234,6 +234,8 @@ Functions to import data into the Database
   : Load light data from file
 - [`load_temperature_data()`](https://ninanor.github.io/seatrackRtools/reference/load_temperature_data.md)
   : Load temperature data from file
+- [`parse_migratetech_header()`](https://ninanor.github.io/seatrackRtools/reference/parse_migratetech_header.md)
+  : Parse the header of a migratetech file
 
 ### Activity data upload functions
 
@@ -348,6 +350,8 @@ Functions to assist in working with the ColonyRepr-package
 - [`run_ColonyRepr()`](https://ninanor.github.io/seatrackRtools/reference/run_ColonyRepr.md)
   : Function to extract desired data from the SEATRACK database and
   fully run the colony representativeness analysis
+- [`run_ColonyRepr_app()`](https://ninanor.github.io/seatrackRtools/reference/run_ColonyRepr_app.md)
+  : Run the ColonyRepr shiny app
 
 ## Data request handling
 

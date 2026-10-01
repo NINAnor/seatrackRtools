@@ -10,6 +10,7 @@ A connection to the SEATRACK database is required.
 ``` r
 get_clean_field_plan(
   field_plan_sheet,
+  target_species = NULL,
   use_master_sheets = FALSE,
   all_locations = NULL,
   use_db = TRUE,
@@ -22,6 +23,11 @@ get_clean_field_plan(
 - field_plan_sheet:
 
   A data frame containing the raw field plan data
+
+- target_species:
+
+  Vector of species names to use in correcting the different ways
+  partners might write species
 
 - use_master_sheets:
 

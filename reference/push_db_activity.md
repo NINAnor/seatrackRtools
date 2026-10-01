@@ -15,7 +15,8 @@ push_db_activity(
   import_directory = file.path(the$sea_track_folder,
     "Database\\Imports_Logger data\\Raw logger data\\ALL"),
   compare_file_to_db = FALSE,
-  min_date = "2000-01-01"
+  min_date = "2000-01-01",
+  selected_files = NULL
 )
 ```
 
@@ -39,6 +40,12 @@ push_db_activity(
   "2000-01-01". Strongly reccomended when compare_file_to_db is TRUE to
   avoid comparing a large number of files that have not been modified
   recently.
+
+- selected_files:
+
+  An optional vector of specific filenames to filter the files in the
+  import directory. If provided, only files matching these names will be
+  considered for processing.
 
 ## Value
 

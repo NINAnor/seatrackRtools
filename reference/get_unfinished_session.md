@@ -6,7 +6,12 @@ master startup data frame.
 ## Usage
 
 ``` r
-get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
+get_unfinished_session(
+  master_startup,
+  logger_id,
+  logger_download_stop_date,
+  verbose = TRUE
+)
 ```
 
 ## Arguments
@@ -23,6 +28,11 @@ get_unfinished_session(master_startup, logger_id, logger_download_stop_date)
 
   A Date object specifying the reported download/stop date of the
   logger.
+
+- verbose:
+
+  A logical value indicating whether to print messages about the search
+  process. Default is TRUE.
 
 ## Value
 
