@@ -23,7 +23,7 @@ if(is.null(SEATRACK_shared_folder)){stop("...")}
 #Saturation curve data:
 
 # Find the path to the app directory inside the installed package
-app_path <- file.path(SEATRACK_shared_folder,"Projects","Colony_representativeness_Lars_2025", "App_data")
+app_path <- file.path(SEATRACK_shared_folder, "Projects", "Colony_representativeness_Lars_2025", "App_Colony_Repr", "App_data")
 
 the$seatrack_path
 
