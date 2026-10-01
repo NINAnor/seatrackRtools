@@ -8,11 +8,11 @@
 load_temperature_data <- function(file_info) {
     # load a light data file
     if (file_info$extension == "tem") {
-        light_data <- handle_temperature_lotek(file_info$full_path)
-    } else if (file_info$extension == "sst") {
-        light_data <- handle_temperature_migrate(file_info$full_path)
+        temp_data <- handle_temperature_lotek(file_info$full_path)
+    } else if (file_info$extension %in% c("sst", "deg")) {
+        temp_data <- handle_temperature_migrate(file_info$full_path)
     }
-    return(light_data)
+    return(temp_data)
 }
 
 #' Handle temperature data from Migrate logger
@@ -29,6 +29,19 @@ handle_temperature_migrate <- function(filepath) {
         return(NULL)
     }
 
+    header_result <- parse_migratetech_header(filepath)
+
+
+    file_extension <- tools::file_ext(filepath)
+    if (file_extension == "deg") {
+        if (!all(c("Tmin", "Tmax", "AvrgT") %in% header_result$data_header_vector)) {
+            return(list())
+        }
+        file <- file[, c(1, which(header_result$data_header_vector %in% c("Tmin", "Tmax", "AvrgT")))]
+        file$V5 <- NA
+    } else {
+        file <- file[, c(1, which(header_result$data_header_vector %in% c("wet min", "wet max", "wet mean", "num samples")))]
+    }
     # date format
     if (substr(file$V1[1], 3, 3) == ".") {
         file$V6 <- as.Date(substr(file$V1, 1, 10), "%d.%m.%Y")
@@ -56,11 +69,9 @@ handle_temperature_migrate <- function(filepath) {
     #######################
 
     # if ',' instead of '.' in column V2, correcting it!
-    if (length(grep(",", file$V2[1])) == 1) file$V2 <- as.numeric(str_replace(file$V2, ",", "."))
-    # format(as.numeric(temp_mt$V2), decimal.mark=".")
-    if (length(grep(",", file$V3[1])) == 1) file$V2 <- as.numeric(str_replace(file$V3, ",", "."))
-    if (length(grep(",", file$V4[1])) == 1) file$V2 <- as.numeric(str_replace(file$V4, ",", "."))
-    if (length(grep(",", file$V5[1])) == 1) file$V2 <- as.numeric(str_replace(file$V5, ",", "."))
+    for (i in 2:ncol(file)) {
+        file[, i] <- as.numeric(stringr::str_replace(file[, i], ",", "."))
+    }
 
     ## Error in temperature:
     # remove empty data rows from temperature

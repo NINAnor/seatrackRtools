@@ -24,14 +24,16 @@ load_immersion_data <- function(file_info) {
 #' @concept activity_db_prep
 handle_immersion_migrate <- function(filepath) {
     file <- read.table(filepath, sep = "\t", header = FALSE, fill = TRUE, skip = 20)
+
     if (nrow(file) < 5) {
         log_warn(glue::glue("{basename(filepath)} has too few lines."))
         return(NULL)
     }
 
-    if (ncol(file) == 5) {
-        file <- file %>% dplyr::select(1, 4)
-    }
+    header_result <- parse_migratetech_header(filepath)
+
+    file <- file[, c(1, which(header_result$data_header_vector == "Wets"))]
+
     colnames(file) <- c("V1", "V2")
 
     # date format
@@ -65,11 +67,6 @@ handle_immersion_migrate <- function(filepath) {
     # remove empty data rows from activity
     file <- file[!is.na(file$V2), ]
 
-    # remove logger data that exceed maximum possible value of conductivity
-    if (max(file$V2) > 480) {
-        log_warn(glue::glue("{basename(filepath)} has immersion values that exceed the maximum possible value of 480."))
-        return(NULL)
-    }
     # remove logger data that has only 0 values of conductivity
     if (max(file$V2) == 0) {
         log_warn(glue::glue("{basename(filepath)} has only 0 values of immersion."))
@@ -93,13 +90,7 @@ handle_immersion_migrate <- function(filepath) {
         date_time = lubridate::as_datetime(file$V1), conductivity = as.numeric(file$V2)
     )
 
-    if (max(file_final$conductivity) == 480) {
-        file_final$std_conductivity <- file_final$conductivity / 480
-    } else if (max(file_final$conductivity) == 50) {
-        file_final$std_conductivity <- file_final$conductivity / 50
-    } else {
-        file_final$std_conductivity <- file_final$conductivity / 20
-    }
+    file_final$std_conductivity <- file_final$conductivity / header_result$wet_number
 
     return(file_final)
 }
@@ -187,11 +178,6 @@ handle_immersion_lotek <- function(filepath) {
     # remove 'suspect' lines
     file <- file[file$V1 == "ok", ]
 
-    # remove logger data that exceed maximum possible value of immersed
-    if (max(file$V4) > 200) {
-        log_warn(glue::glue("{basename(filepath)} has immersion values that exceed the maximum possible value of 200."))
-        return(NULL)
-    }
     # remove logger data that has only 0 values of immersion
     # if(max(file$V4)==0) {file<-NULL}
     # remove logger data that has negative values of immersion

@@ -5,6 +5,7 @@
 #' @param import_directory The directory to scan for activity data files. Defaults to the "ALL" folder in the SeaTrack database imports directory.
 #' @param compare_file_to_db A boolean indicating whether to compare the files in the import directory to the records in the database to identify files that may need to be re-uploaded. As this can be heavy, this defaults to FALSE.
 #' @param min_date A string representing the minimum modification date for files to be considered, in the format "YYYY-MM-DD". Defaults to "2000-01-01". Strongly reccomended when compare_file_to_db is TRUE to avoid comparing a large number of files that have not been modified recently.
+#' @param selected_files An optional vector of specific filenames to filter the files in the import directory. If provided, only files matching these names will be considered for processing.
 #' @return A list containing the following elements:
 #' - file_info: A dataframe containing information about the available files in the import directory, including full path, logger ID, year downloaded, model, ID year, extension, and filename.
 #' - missing_sessions: A tibble summarizing the missing sessions in the database based on the available files in the import directory, including logger ID, year downloaded, and model.
@@ -13,7 +14,7 @@
 #' - missing_files: A list of dataframes for each recording type, containing information about the files that are expected to be in the database but are missing from both the database and the import directory, including session ID and filename.
 #' @export
 #' @concept activity_db_import
-get_activity_db_sessions <- function(recording_types, import_directory = file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL"), compare_file_to_db = FALSE, min_date = "2000-01-01") {
+get_activity_db_sessions <- function(recording_types, import_directory = file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL"), compare_file_to_db = FALSE, min_date = "2000-01-01", selected_files = NULL) {
     all_formats <- sapply(recording_types, function(recording_type) {
         if (length(recording_type$extensions) == 0) {
             return(NA)
@@ -30,9 +31,20 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
 
     log_info("Scan import directory for files...")
     all_files <- list.files(import_directory, pattern = all_formats_pattern, recursive = TRUE, full.names = TRUE)
+    if (!is.null(selected_files)) {
+        names_only <- tools::file_path_sans_ext(basename(all_files))
+        selected_pattern <- paste(selected_files[!is.na(selected_files)], collapse = "|")
+        match_indices <- grep(selected_pattern, names_only)
+        if (length(match_indices) == 0) {
+            log_info("No files found in import directory after filtering by name.")
+            return(list(file_info = data.frame(), missing_sessions = data.frame(), missing_raw_data_files = data.frame(), updated_raw_data_files = data.frame(), to_archive = data.frame()))
+        }
+        all_files <- all_files[match_indices]
+    }
     file_details <- file.info(all_files, extra_cols = FALSE)
     all_files <- all_files[as.Date(file_details$mtime) >= as.Date(min_date)]
     file_details <- file_details[as.Date(file_details$mtime) >= as.Date(min_date), ]
+
     if (length(all_files) == 0) {
         log_info("No files found in import directory after filtering by date.")
         return(list(file_info = data.frame(), missing_sessions = data.frame(), missing_raw_data_files = data.frame(), updated_raw_data_files = data.frame(), to_archive = data.frame()))
@@ -66,9 +78,12 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
     # Check which files are missing and log this
     missing_files <- dplyr::setdiff(file_info$filename, dplyr::pull(db_sessions, filename))
     missing_session_summary <- tibble::tibble(dplyr::distinct(file_info[file_info$filename %in% missing_files, c("logger_id", "year_downloaded", "model")]))
-    log_warn(
-        "There are ", length(missing_files), " files in the import directory that do not have a corresponding session in the database. \n"
-    )
+    if (length(missing_files) > 0) {
+        log_warn(
+            "There are ", length(missing_files), " files in the import directory that do not have a corresponding session in the database. \n"
+        )
+    }
+
 
     db_deployments <- dplyr::tbl(con, dbplyr::in_schema("loggers", "deployment"))
     db_retrievals <- dplyr::tbl(con, dbplyr::in_schema("loggers", "retrieval"))
@@ -81,7 +96,7 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
         missing_sessions <- dplyr::anti_join(db_sessions, dplyr::select(recording_table, session_id), by = "session_id")
         current_formats <- recording_type$extensions
         missing_sessions <- dplyr::filter(missing_sessions, file_basename %in% current_formats)
-        return_list <- list(dplyr::collect(dplyr::select(missing_sessions, session_id, individ_id, filename, deployment_date, retrieval_date)))
+        return_list <- list(dplyr::collect(dplyr::select(missing_sessions, session_id, filename, deployment_date, retrieval_date)))
         return(return_list)
     })
 
@@ -109,7 +124,7 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
                 dplyr::filter(filename %in% recording_file_info$filename) %>%
                 dplyr::semi_join(recording_table, by = "session_id")
 
-            existing_session_info <- dplyr::collect(dplyr::select(existing_sessions, session_id, individ_id, filename, deployment_date, retrieval_date, logger_serial_no))
+            existing_session_info <- dplyr::collect(dplyr::select(existing_sessions, session_id, filename, deployment_date, retrieval_date, logger_serial_no))
             recording_files <- dplyr::inner_join(existing_session_info, recording_file_info, by = "filename", suffix = c("", "y"))
 
             # For each session - open the file and get the first row. Compare this to the first row in the database. If they are different, add to list of files to re-upload
@@ -154,7 +169,7 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
 
             to_reupload_df <- do.call(rbind, to_reupload)
 
-            return_list <- list(dplyr::select(to_reupload_df, session_id, individ_id, filename, deployment_date, retrieval_date))
+            return_list <- list(dplyr::select(to_reupload_df, session_id, filename, deployment_date, retrieval_date))
             return(return_list)
         })
     } else {
@@ -173,18 +188,18 @@ get_activity_db_sessions <- function(recording_types, import_directory = file.pa
 #' @param import_directory The directory to scan for activity data files. Defaults to the "ALL" folder in the SeaTrack database imports directory.
 #' @param compare_file_to_db A boolean indicating whether to compare the files in the import directory to the records in the database to identify files that may need to be re-uploaded. As this can be heavy, this defaults to FALSE.
 #' @param min_date A string representing the minimum modification date for files to be considered for upload, in the format "YYYY-MM-DD". Defaults to "2000-01-01". Strongly reccomended when compare_file_to_db is TRUE to avoid comparing a large number of files that have not been modified recently.
+#' @param selected_files An optional vector of specific filenames to filter the files in the import directory. If provided, only files matching these names will be considered for processing.
 #' @return None. The function uploads the activity data to the SEATRACK database and logs the progress and any issues encountered during the process.
 #' @export
 #' @concept activity_db_import
-push_db_activity <- function(import_directory = file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL"), compare_file_to_db = FALSE, min_date = "2000-01-01") {
+push_db_activity <- function(import_directory = file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL"), compare_file_to_db = FALSE, min_date = "2000-01-01", selected_files = NULL) {
     recording_types <- list(
         accelerometer = list(table_name = "accelerometer_raw", process_function = NULL, extensions = c(), argname = "accelerationData"),
         activity = list(table_name = "activity_raw", process_function = load_immersion_data, extensions = c(".deg", ".act"), argname = "activityData"),
-        light = list(table_name = "light_raw", process_function = load_light_data, extensions = c(".lux", ".lig"), argname = "lightData"),
-        temperature = list(table_name = "temperature_raw", process_function = load_temperature_data, extensions = c(".sst", ".tem"), argname = "temperatureData")
+        light = list(table_name = "light_raw", process_function = load_light_data, extensions = c(".lux", ".lig"), argname = "lightData"), temperature = list(table_name = "temperature_raw", process_function = load_temperature_data, extensions = c(".sst", ".tem", ".deg"), argname = "temperatureData")
     )
 
-    available_files <- get_activity_db_sessions(recording_types = recording_types, compare_file_to_db = compare_file_to_db, min_date = min_date)
+    available_files <- get_activity_db_sessions(recording_types = recording_types, compare_file_to_db = compare_file_to_db, min_date = min_date, selected_files = selected_files)
     missing_raw_data_files <- available_files$missing_raw_data_files
     updated_raw_data_files <- available_files$updated_raw_data_files
     file_info <- available_files$file_info
@@ -235,7 +250,7 @@ push_db_activity <- function(import_directory = file.path(the$sea_track_folder, 
 #' Load activity data from file
 #'
 #' This function loads activity data from a specified file based on the recording type. It uses the appropriate processing function for the recording type to read the data, clips the data to the deployment and retrieval dates, and returns the clipped activity data as a dataframe. If there is an error in processing the file or if there is no data within the deployment and retrieval dates, it logs a warning and returns NULL.
-#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
+#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, deployment_date, retrieval_date, full_path, and extension.
 #' @param recording_type A list containing information about the recording type, including table_name, process_function, extensions, and argname.
 #' @return A dataframe containing the clipped activity data for the specified file and recording type, or NULL if there was an error in processing the file or if there is no data within the deployment and retrieval dates.
 #' @concept activity_db_import
@@ -258,7 +273,11 @@ load_activity <- function(file_info, recording_type) {
     if (is.null(activity_data)) {
         log_warn(glue::glue("{file_info$filename} cannot be loaded."))
         return(invisible())
+    }else if(any(class(activity_data) == "list")){
+        # Non critical
+        return(invisible())
     }
+
     log_trace("{file_info$filename} - Clip data")
     # Clip to deployment and retrieval dates
     clipped_activity_data <- dplyr::filter(activity_data, as.Date(date_time) > as.Date(file_info$deployment_date), as.Date(date_time) < as.Date(file_info$retrieval_date))
@@ -266,7 +285,7 @@ load_activity <- function(file_info, recording_type) {
         log_warn(glue::glue("{file_info$filename} has no data within the deployment and retrieval dates."))
         return(invisible())
     }
-    clipped_activity_data <- tibble(session_id = file_info$session_id, filename = file_info$filename, individ_id = file_info$individ_id, clipped_activity_data)
+    clipped_activity_data <- tibble(session_id = file_info$session_id, filename = file_info$filename, clipped_activity_data)
 
     return(clipped_activity_data)
 }
@@ -274,7 +293,7 @@ load_activity <- function(file_info, recording_type) {
 #' Handle activity data file
 #'
 #' This function processes a single activity data file based on the specified recording type. It reads the file, clips the data to the deployment and retrieval dates, and uploads the data to the SEATRACK database. It also handles error checking and logs the progress of the upload.
-#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, individ_id, deployment_date, retrieval_date, full_path, and extension.
+#' @param file_info A dataframe containing information about the file to be processed, including session_id, filename, deployment_date, retrieval_date, full_path, and extension.
 #' @param recording_type A list containing information about the recording type, including table_name, process_function, extensions, and argname.
 #' @param remove_existing A boolean indicating whether to remove existing data for the session_id from the database before uploading the new data. This can be useful if you want to replace existing data with updated data. Defaults to FALSE.
 #' @return None. The function uploads the processed activity data to the SEATRACK database and logs the progress and any issues encountered during the process.
@@ -294,7 +313,11 @@ handle_activity <- function(file_info, recording_type, remove_existing = FALSE) 
     if (is.null(clipped_activity_data)) {
         log_warn(glue::glue("{file_info$filename} will not be handled."))
         return(invisible())
+    }else if(any(class(clipped_activity_data) == "list")){
+        # Non critical
+        return(invisible())
     }
+
 
     clipped_data_list <- list(act_data = clipped_activity_data)
     names(clipped_data_list)[names(clipped_data_list) == "act_data"] <- recording_type$argname
@@ -340,7 +363,7 @@ handle_activity <- function(file_info, recording_type, remove_existing = FALSE) 
         tryCatch(
             {
                 seatrackR::uploadFiles(file_info$full_path, overwrite = remove_existing)
-                log_success(glue::glue("{file_info$filename} - uploaded to archive"))
+                log_success(glue::glue("{file_info$filename} - in archive"))
             },
             error = function(e) {
                 log_error(glue::glue("{file_info$filename} - Error in uploading to archive: {e$message}"))
