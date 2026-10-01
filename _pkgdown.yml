@@ -36,22 +36,32 @@ reference:
     contents:
       - has_concept("encounters")
   - title: Database import
-    desc: Functions to import master import data into the Database
-  - subtitle: Preperation
+    desc: Functions to import data into the Database
+  - subtitle: Metadata preperation functions
     contents:
       - has_concept("db_import_prep")
-  - subtitle: Import
+  - subtitle: Metadata upload functions
     contents:
       - has_concept("db_import")
+  - subtitle: Activity data preperation functions
+    contents:
+      - has_concept("activity_db_prep")      
+  - subtitle: Activity data upload functions
+    contents:
+      - has_concept("activity_db_import")  
   - title: Field planning sheet functions
     desc: Functions to load and handle data from the field planning sheet
     contents:
       - has_concept("field_planning")
+  - title: Website metadata app
+    desc: Functions relating to the updating and publishing of the website metadata app
+    contents:
+      - has_concept("web_metadata_app")
   - title: Annual report
   - subtitle: Appendix table createion
     desc: Functions to create and export annual report appendix tables
     contents:
-      - has_concept("appendix_table")
+      - has_concept("annual_report")
   - title: General utility functions
     contents:
       - has_concept("utility")
@@ -71,3 +81,4 @@ reference:
   - title: Data request handling
     desc: Functions for managing data requests in the database.
     contents: has_concept("data_requests")
+

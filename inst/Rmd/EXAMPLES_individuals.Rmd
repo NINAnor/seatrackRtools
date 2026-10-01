@@ -34,8 +34,8 @@ load_chunk <- knitr::knit_expand(text = c(
 Some examples on how to quickly explore your data about individual birds
 
 ```{r, ind_explore, echo=TRUE, message=TRUE}
-mylocs %>%
-    dplyr::group_by(colony, year_tracked, age_deployment) %>%
+individs %>%
+    dplyr::group_by(colony, year_tracked) %>%
     dplyr::summarise(n_birds_tracked = n_distinct(individ_id))
 ```
 

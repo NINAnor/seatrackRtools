@@ -9,9 +9,9 @@ main_ui <- function(id) {
     shinyjs::useShinyjs(),
     layout_columns(
 
-      titlePanel("SeaTrack Metadata Utility"),
+      titlePanel("SEATRACK Metadata Utility"),
       card(
-        card_header("Seatrack folder:"),
+        card_header("SEATRACK folder:"),
         folder_selector_ui(ns("folder"))
       ),
       card(
@@ -28,7 +28,7 @@ main_ui <- function(id) {
       ),
       card(
         card_header("Details:"),
-        textInput(ns("user_full_name"), "Your name"),
+        textInput(ns("user_full_name"), label = "Your name", updateOn = "blur"),
         connect_db_ui(ns("connect_db"))
       ),
       col_widths = c(2, 4, 3, 3),

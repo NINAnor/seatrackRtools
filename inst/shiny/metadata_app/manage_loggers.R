@@ -47,9 +47,9 @@ manage_logger_ui <- function(id) {
     )
 }
 
-manage_logger_server <- function(id, busy, all_locations, unsaved) {
+manage_logger_server <- function(id, busy, all_locations, unsaved, user_full_name) {
     moduleServer(id, function(input, output, session) {
-        search_results <- reactiveVal(list())
+        search_results <- reactiveVal(list(local_results = list(), db_results = list()))
         ns <- NS(id)
         btn_obs_list <- list()
 
@@ -81,7 +81,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved) {
                 search_results()
             },
             {
-                if (length(search_results()) == 0) {
+                if (length(search_results()$local_results) == 0) {
                     shinyjs::hideElement("edit_session_buttons")
                     output$search_result <- renderUI({
                         h4("No results found")
@@ -90,16 +90,50 @@ manage_logger_server <- function(id, busy, all_locations, unsaved) {
                 }
 
                 all_result <- search_results()
+                print(all_result)
+                open_result <- lapply(all_result$local_results, function(result) {
+                    data <- result$data[result$open, ]
+                    if (nrow(data) > 0) {
+                        return(
+                            list(
+                                path = result$path,
+                                list_index = result$list_index,
+                                row_index = result$row_index[result$open],
+                                data = data
+                            )
+                        )
+                    }
+                })
+                open_result <- open_result[!sapply(open_result, is.null)]
+                closed_result <- lapply(all_result$local_results, function(result) {
+                    data <- result$data[!result$open, ]
+                    if (nrow(data) > 0) {
+                        return(
+                            list(
+                                path = result$path,
+                                list_index = result$list_index,
+                                row_index = result$row_index[!result$open],
+                                data = data
+                            )
+                        )
+                    }
+                })
+                closed_result <- closed_result[!sapply(closed_result, is.null)]
 
-                open_result <- all_result[sapply(all_result, function(x) x$open)]
-                closed_result <- all_result[!sapply(all_result, function(x) x$open)]
 
-                if (length(open_result) > 1) {
+                n_open_results <- 0
+                if (length(open_result) > 0) {
+                    n_open_results <- sum(sapply(open_result, function(x) {
+                        nrow(x$data)
+                    }))
+                }
+
+                if (n_open_results > 1) {
                     open_session_warning <- strong("MULTIPLE OPEN SESSIONS FOUND")
                 } else {
                     open_session_warning <- c()
                 }
-                if (length(open_result) == 1) {
+                if (n_open_results == 1) {
                     shinyjs::showElement("edit_session_buttons")
                 } else {
                     shinyjs::hideElement("edit_session_buttons")
@@ -124,26 +158,41 @@ manage_logger_server <- function(id, busy, all_locations, unsaved) {
             }
             busy(TRUE)
             log_info(paste("Searching for logger", input$logger_search))
-            logger_search_result <- get_logger_from_metadata(input$logger_search, all_locations())
+            logger_search_result_local <- get_logger_from_metadata(input$logger_search, all_locations())
+            print(logger_search_result_local)
+            # logger_search_result_db <- get_logger_from_db(input$logger_search)
+            logger_search_result_db <- list() # For now until can implement a clean way of displaying both.
+
+            if (length(logger_search_result_local) > 0 || length(logger_search_result_db) > 0) {
+                if (length(logger_search_result_local) > 0) {
+                    log_info(paste("Logger", input$logger_search, "found"))
+                    logger_search_result_distinct <- list()
+                    seen_paths <- c()
+                    for (result in logger_search_result_local) {
+                        if (!result$path %in% seen_paths) {
+                            logger_search_result_distinct <- c(logger_search_result_distinct, list(result))
+                            seen_paths <- c(seen_paths, result$path)
+                        }
+                    }
+                    print(logger_search_result_distinct)
+
+                    logger_search_result_local <- lapply(logger_search_result_distinct, function(x) {
+                        x$open <- is.na(x$data$download_date) & is.na(x$data$shutdown_date)
+                        return(x)
+                    })
+                }
 
 
-            if (length(logger_search_result) > 0) {
-                log_info(paste("Logger", input$logger_search, "found"))
-                logger_search_result <- lapply(logger_search_result, function(x) {
-                    x$open <- is.na(x$data$download_date) & is.na(x$data$shutdown_date)
-                    return(x)
-                })
-
-
-                search_results(logger_search_result)
+                search_results(list(local_results = logger_search_result_local, db_results = logger_search_result_db))
             } else {
-                log_info(paste("Logger", input$logger_search, "not found in master startups"))
-                search_results(list())
+                log_info(paste("Logger", input$logger_search, "not found in master startups or database"))
+                search_results(list(local_results = list(), db_results = list()))
             }
             busy(FALSE)
         }
 
         buttons_to_generate <- list(
+            list(btn_name = "set_failed_btn", btn_label = "Failed", btn_type = "Failed"),
             list(btn_name = "set_unused_btn", btn_label = "Unused", btn_type = "Not used"),
             list(btn_name = "set_nonresponsive_btn", btn_label = "Nonresponsive", btn_type = "Nonresponsive"),
             list(btn_name = "set_downloaded_btn", btn_label = "Downloaded", btn_type = "Succesfully downloaded")
@@ -160,8 +209,23 @@ manage_logger_server <- function(id, busy, all_locations, unsaved) {
                                 btn_obs_list[[x$btn_name]] <<- observeEvent(input[[x$btn_name]], {
                                     all_result <- search_results()
                                     locations <- all_locations()
-                                    open_result <- all_result[sapply(all_result, function(x) x$open)][[1]]
-                                    end_session_result <- end_logger_session(open_result$data$logger_serial_no, x$btn_type, comment = input$logger_close_comment, master_sheet = locations[[open_result$list_index]])
+                                    open_result <- lapply(all_result$local_results, function(result) {
+                                        data <- result$data[result$open, ]
+                                        if (nrow(data) > 0) {
+                                            return(
+                                                list(
+                                                    path = result$path,
+                                                    list_index = result$list_index,
+                                                    row_index = result$row_index[result$open],
+                                                    data = data
+                                                )
+                                            )
+                                        }
+                                    })
+                                    open_result <- open_result[!sapply(open_result, is.null)][[1]]
+
+
+                                    end_session_result <- end_logger_session(open_result$data$logger_serial_no, x$btn_type, downloaded_by = user_full_name(), comment = input$logger_close_comment, master_sheet = locations[[open_result$list_index]])
 
                                     new_locations <- modify_master_import_in_list(locations, end_session_result$master_sheet)
 
@@ -173,7 +237,7 @@ manage_logger_server <- function(id, busy, all_locations, unsaved) {
                             actionButton(paste("main", id, x$btn_name, sep = "-"), x$btn_label)
                         }),
                         list(textInput(paste("main", id, "logger_close_comment", sep = "-"), NULL, "", placeholder = "Add comment.."),
-                            col_widths = breakpoints(xs = c(2, 2, 2, 5)),
+                            col_widths = breakpoints(xs = c(2, 2, 2, 2, 5)),
                             fill = TRUE
                         )
                     ),
@@ -185,8 +249,14 @@ manage_logger_server <- function(id, busy, all_locations, unsaved) {
 
 
 display_sessions <- function(sessions, title = "") {
-    selected_cols <- c("logger_serial_no", "logger_model", "production_year", "download_type", "download_date", "shutdown_date", "comment")
-    if (length(sessions) == 0) {
+    selected_cols <- c("logger_serial_no", "logger_model", "production_year", "starttime_gmt", "download_type", "download_date", "shutdown_date", "comment")
+    n_sessions <- 0
+    if (length(sessions) > 0) {
+        n_sessions <- sum(sapply(sessions, function(x) {
+            nrow(x$data)
+        }))
+    }
+    if (n_sessions == 0) {
         return(list())
     } else {
         session_display <- tagList(

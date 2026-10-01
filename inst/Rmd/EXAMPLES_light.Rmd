@@ -23,13 +23,19 @@ library(ggplot2) # for plotting
 
 
 ```{r, generate_light_path, echo = FALSE, message = FALSE}
-load_chunk <- knitr::knit_expand(text = c(
-    "```{r, load_light_files}",
+load_fake_chunk <- knitr::knit_expand(text = c(
+    "```{r, load_light_files_fake, eval = FALSE}",
     'light <- read_parquet(file.path(data_dir, "{{light_path}}"))',
+    "```"
+))
+load_chunk <- knitr::knit_expand(text = c(
+    "```{r, load_light_files, echo = FALSE, message = FALSE}",
+    'light <- read_parquet(file.path(data_dir, "{{light_path}}"), as_data_frame = FALSE) |> slice_head(n = 1000) |>  collect()',
     "```"))
 
 ```
 
+`r knitr::knit(text=load_fake_chunk)`
 `r knitr::knit(text=load_chunk)`
 
 

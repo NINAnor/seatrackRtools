@@ -1,7 +1,17 @@
-### GLS positional data
+### IRMA positional data
+
+#### Disclaimer
+
+We strongly recommend reading the report describing how the IRMA-dataset is generated [(Fauchald et al. 2019)](https://www.researchgate.net/profile/Arnaud-Tarroux-2/publication/334458632_Arctic-breeding_seabirds'_hotspots_in_space_and_time_-_A_methodological_framework_for_year-round_modelling_of_environmental_niche_and_abundance_using_light-logger_data/links/5d2c2ed292851cf44085033c/Arctic-breeding-seabirds-hotspots-in-space-and-time-A-methodological-framework-for-year-round-modelling-of-environmental-niche-and-abundance-using-light-logger-data.pdf). 
+Briefly, this dataset contains both original GLS-based positions and reconstructed IRMA-positions whenever there was a gap in the original positional dataset.  
+The goal of the IRMA-processing is to mitigate the biases introduced by non-random gaps in the dataset. It does so by filling those gaps with semi-random positions: these reconstructed positions thus depend on various parameters as well as on random processes (described in Fauchald et al. 2019). 
+The resulting tracks should therefore not be considered as actual tracks, but rather as plausible tracks given what information is available. 
+We do not encourage using these data in fine-scale, position- or individual-based movement analyses e.g. computing step lengths or turning angles among successive positions. The IRMA dataset was originally generated to be used to model species distributions at large spatial scale, using Species Distribution Models (SDMs).
+
+SEATRACK does not guarantee that this data product is error-free. Any utilization of this dataset for analytical or statistical purposes is the sole responsibility of the users.
 
 #### Prepare workspace & load data
-```{r, fake_loc_setup, echo=TRUE, eval = FALSE, message=FALSE}
+```{r, fake_loc_setup_irma, echo=TRUE, eval = FALSE, message=FALSE}
 # Load libraries
 library(arrow) # for loading parquet files
 library(dplyr) # for easily working with data
@@ -17,7 +27,7 @@ sf::sf_use_s2(FALSE)
 data_dir <- "path/where/you/unzipped/files/data"
 ```
 
-```{r, loc_setup, echo=FALSE, message=FALSE}
+```{r, loc_setup_irma, echo=FALSE, message=FALSE}
 # THE ABOVE BLOCK IS FAKE TO SHOW HOW TO SET THE PATH
 # Load libraries
 library(arrow) # for loading parquet files
@@ -31,9 +41,10 @@ library(maps)
 sf::sf_use_s2(FALSE)
 ```
 
-```{r, generate_loc_path, echo = FALSE, message = FALSE}
+
+```{r, generate_loc_path_irma, echo = FALSE, message = FALSE}
 load_chunk <- knitr::knit_expand(text = c(
-    "```{r, load_loc_files}",
+    "```{r, load_loc_files_irma}",
     'myirmalocs <- read_parquet(file.path(data_dir, "{{IRMA_pos_path}}"))',
     "```"))
 
@@ -45,13 +56,13 @@ load_chunk <- knitr::knit_expand(text = c(
 
 Some examples on how to quickly explore your IRMA positional data.
 
-```{r, loc_explore,  echo=TRUE, message=TRUE}
+```{r, loc_explore-irma,  echo=TRUE, message=TRUE}
 myirmalocs %>%
     dplyr::group_by(colony, year_tracked, age_deployment) %>%
     dplyr::summarise(n_birds_tracked = n_distinct(individ_id))
 ```
 
-```{r, loc_explore,  echo=TRUE, message=TRUE}
+```{r, loc_explore_2_irma,  echo=TRUE, message=TRUE}
 myirmalocs %>%
     dplyr::group_by(colony, year_tracked, loc_type) %>%
     dplyr::summarise(n_positions = n_distinct(id))
@@ -61,11 +72,11 @@ myirmalocs %>%
 
 Some examples on how to quickly map your IRMA positional data.
 
-```{r, plot_loc, echo = TRUE, message = TRUE}
+```{r, plot_loc_irma, echo = TRUE, message = TRUE}
 myirmalocs %>%
     dplyr::mutate(year = year(date_time)) %>%
-    sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) ->
-myirmalocs
+    sf::st_as_sf(coords = c("lon", "lat"), crs = 4326) -> myirmalocs
+
 
 worldmap <- ggplot2::map_data("world")
 

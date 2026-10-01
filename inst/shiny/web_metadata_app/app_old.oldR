@@ -1,0 +1,816 @@
+library(shiny)
+library(shinydashboard)
+library(ggplot2)
+library(readr)
+library(lubridate)
+library(stringr)
+library(RColorBrewer)
+library(dplyr)
+# library(sf)
+# library(plotly)
+# library(terra)
+# library(rasterly)
+library(DT)
+
+# Read files and setup data
+dic <- data.frame(
+  lat = c(
+    "Alle alle", "Fratercula arctica", "Fulmarus glacialis",
+    "Larus argentatus", "Larus fuscus", "Larus hyperboreus",
+    "Phalacrocorax aristotelis", "Rissa tridactyla", "Somateria mollissima",
+    "Uria aalge", "Uria lomvia",
+    "Alca torda", "Stercorarius skua", "Morus bassanus", "Hydrobates leucorhous", "Sterna paradisaea"
+  ),
+  eng = c(
+    "Little auk", "Atlantic puffin", "Northern fulmar",
+    "Herring gull", "Lesser black-backed gull", "Glaucous gull",
+    "European shag", "Black-legged kittiwake", "Common eider",
+    "Common guillemot", "Brünnich's guillemot",
+    "Razorbill", "Great skua", "Northern gannet", "Leach's storm petrel", "Arctic tern"
+  ),
+  abrv = c(
+    "LIAU", "ATPU", "NOFU",
+    "HEGU", "LBBG", "GLGU",
+    "EUSH", "BLKW", "COEI",
+    "COGU", "BRGU",
+    "RABI", "GRSK", "NOGA", "LSP", "ARTE"
+  )
+)
+
+# kernel_files <- list.files("kernels", ".json")
+# ker <- st_read("kernels/Alle alle.json")
+
+pos <- readr::read_csv("data/SEATRACK database positional data available.csv")
+irma <- readr::read_csv("data/SEATRACK database positional data available with IRMA.csv")
+ind <- readr::read_csv("data/SEATRACK database individual sexing data.csv")
+log <- readr::read_csv("data/SEATRACK database individual event data.csv")
+log$year <- factor(log$status_year, 2006:max(log$status_year))
+dat_req <- readr::read_csv("data/SEATRACK data_request_summary.csv")
+dat_req$"Study species" <- " "
+for (i in 1:nrow(dat_req)) dat_req$"Study species"[i] <- str_c(sort(names(dat_req)[4:19][dat_req[i, 4:19] %in% "x"]), collapse = ", ")
+dat_req <- dat_req[, c(1:3, 24, 20:23)]
+
+colony_cols <- readRDS("data/Colony colour palette.rds")
+SEATRACK_species <- readRDS("data/SEATRACK_species.rds")
+
+
+# Extract the last modification date
+data_request_last_modification_date <- file.info("data/SEATRACK data_request_summary.csv")$mtime
+logger_data_last_modification_date <- file.info("data/SEATRACK database positional data available.csv")$mtime
+
+
+server <- function(input, output, session) {
+  # KER <- reactive({
+  #   req(input$species2)
+  #   st_read(paste0("kernels/", dic$lat[dic$eng == input$species2], ".json"))
+  # })
+
+  observeEvent(input$species_sex, {
+    updateSelectInput(session, "colony_sex",
+      choices = c("all colonies", unique(ind$colony[ind$species == input$species_sex])),
+      selected = isolate(input$colony)
+    )
+  })
+
+  observeEvent(input$species_age, {
+    updateSelectInput(session, "colony_age",
+      choices = c("all colonies", unique(ind$colony[ind$species == input$species_age])),
+      selected = isolate(input$colony)
+    )
+  })
+
+  # observeEvent(input$species2, {
+  #   updateSelectInput(session, "colony2", choices = unique(KER()$colony), selected = unique(KER()$colony)[1])
+  #   updateSelectInput(session, "season2", choices = unique(KER()$season), selected = unique(KER()$season)[1])
+  #   updateSelectInput(session, "period2", choices = unique(KER()$period), selected = unique(KER()$period)[1])
+  # })
+
+  output$Plot_sexing_species <- renderPlot({
+    x <- ind[!duplicated(ind$ring_number), c(
+      "species", "colony", "status_sex", "status_sexing_method",
+      "ring_number", "euring_code", "latest_info_date"
+    )]
+    x <- x[x$species == input$species_sex, ]
+    if (input$colony_sex != "all colonies") x <- x[x$colony == input$colony_sex, ]
+
+    x$sexing_data <- "yes"
+    x$sexing_data[x$status_sex == "unknown"] <- "no"
+    x$sexing_data <- factor(x$sexing_data, levels = c(
+      "yes",
+      "no"
+    ))
+
+    x$status_sexing_method[x$status_sexing_method == "none_yet"] <- NA
+    x$status_sexing_method <- factor(x$status_sexing_method,
+      levels = c(
+        "dna",
+        "behaviour",
+        "morphology",
+        NA
+      )
+    )
+    # x$'sexing method' <- x$status_sexing_method
+    x$colony <- factor(x$colony, levels = names(colony_cols))
+
+    if (input$choice == "sexing method") var_chosen <- "status_sexing_method"
+    if (input$choice == "colony") var_chosen <- "colony"
+    x$var <- data.frame(x)[, var_chosen]
+
+
+    if (input$choice == "sexing method") col_chosen <- brewer.pal(4, "Set2")
+    if (input$choice == "colony") col_chosen <- colony_cols
+
+
+    # download data
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        paste("Ring_numbers with sexing data_", input$species_sex, "_", input$colony_sex, "_", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        readr::write_excel_csv(
+          x[, c(
+            "species", "colony", "status_sex", "status_sexing_method",
+            "ring_number", "euring_code", "latest_info_date"
+          )],
+          file
+        )
+      }
+    )
+
+    ggplot(x, aes(
+      x = sexing_data,
+      by = var,
+      fill = var
+    )) +
+      geom_bar(stat = "count", width = 0.7) +
+      scale_x_discrete(drop = FALSE) +
+      scale_fill_discrete(drop = FALSE) +
+      scale_fill_manual(values = col_chosen) +
+      labs(
+        x = "sexing data available?",
+        y = "# individuals",
+        fill = input$choice
+      ) +
+      theme_grey() +
+      theme(
+        legend.position = "bottom",
+        text = element_text(size = 15),
+        axis.line = element_blank(),
+        # axis.text.x=element_text(size=11,margin=margin(b=10),colour="black",angle = 90, vjust = 0.5),
+        # axis.text.y=element_text(size=13,margin=margin(l=10),colour="black"),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_line(colour = grey(0.95)),
+        panel.background = element_blank(),
+        legend.title = element_text(size = 12)
+      )
+  })
+
+  output$Plot_sexing_summary <- renderPlot({
+    x <- ind[!duplicated(ind$ring_number), c("species", "status_sex")]
+
+    x$sexing_data <- "yes"
+    x$sexing_data[x$status_sex == "unknown"] <- "no"
+    x$sexing_data <- factor(x$sexing_data, levels = c("yes", "no"))
+
+    data <- x %>%
+      group_by(species, sexing_data) %>%
+      summarize(n = n()) %>%
+      mutate(freq = n / sum(n))
+    x1 <- data[data$sexing_data == "yes", ]
+    data$species <- factor(data$species, levels = x1$species[order(x1$freq, decreasing = F)])
+    data <- data[!is.na(data$species), ]
+
+    col_chosen <- brewer.pal(3, "Set2")[c(3, 2)]
+
+    ggplot(data, aes(
+      x = species,
+      by = freq,
+      fill = sexing_data
+    )) +
+      geom_bar(aes(y = freq), stat = "identity", width = 0.7) +
+      scale_x_discrete(drop = FALSE) +
+      scale_fill_manual(values = col_chosen) +
+      labs(
+        x = " ",
+        y = "proportion of individuals with known sex",
+        fill = "sexing data available?"
+      ) +
+      theme_minimal() +
+      coord_flip() +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(), text = element_text(size = 15)
+      )
+  })
+
+  output$Plot_ageing_summary <- renderPlot({
+    x <- log
+    x <- x[order(x$known_age, decreasing = T), ]
+    x <- x[!duplicated(x$ring_number), c("species", "status_sex", "known_age")]
+
+    x$known_age <- factor(x$known_age, levels = c("yes", "no"))
+
+    data <- x %>%
+      group_by(species, known_age) %>%
+      summarize(n = n()) %>%
+      mutate(freq = n / sum(n))
+    x1 <- data[data$known_age == "yes", ]
+    data$species <- factor(data$species, levels = x1$species[order(x1$freq, decreasing = F)])
+    data <- data[!is.na(data$species), ]
+
+    col_chosen <- brewer.pal(3, "Set2")[c(3, 2)]
+
+    ggplot(data, aes(
+      x = species,
+      by = freq,
+      fill = known_age
+    )) +
+      geom_bar(aes(y = freq), stat = "identity", width = 0.7) +
+      scale_x_discrete(drop = FALSE) +
+      scale_fill_manual(values = col_chosen) +
+      labs(
+        x = " ",
+        y = "proportion of individuals with known age",
+        fill = "known age available?"
+      ) +
+      theme_minimal() +
+      coord_flip() +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(), text = element_text(size = 15)
+      )
+  })
+
+  output$Plot_ageing_species <- renderPlot({
+    x <- ind[!duplicated(ind$ring_number), c(
+      "species", "colony", "status_age", "known_age",
+      "ring_number", "euring_code", "latest_info_date"
+    )]
+    x <- x[x$species == input$species_age, ]
+    if (input$colony_age != "all colonies") x <- x[x$colony == input$colony_age, ]
+
+    x$known_age <- factor(x$known_age, levels = c("yes", "no"))
+    x$colony <- factor(x$colony, levels = names(colony_cols))
+
+    var_chosen <- "colony"
+    x$var <- data.frame(x)[, var_chosen]
+    col_chosen <- colony_cols
+
+
+    # download data
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        paste("Ring_numbers with known age data_", input$species_age, "_", input$colony_age, "_", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        readr::write_excel_csv(
+          x[, c(
+            "species", "colony", "status_age", "known_age",
+            "ring_number", "euring_code", "latest_info_date"
+          )],
+          file
+        )
+      }
+    )
+
+    ggplot(x, aes(
+      x = known_age,
+      by = var,
+      fill = var
+    )) +
+      geom_bar(stat = "count", width = 0.7) +
+      scale_x_discrete(drop = FALSE) +
+      scale_fill_discrete(drop = FALSE) +
+      scale_fill_manual(values = col_chosen) +
+      labs(
+        x = "known age available?",
+        y = "# individuals",
+        fill = "colony"
+      ) +
+      theme_grey() +
+      theme(
+        legend.position = "bottom",
+        text = element_text(size = 15),
+        axis.line = element_blank(),
+        # axis.text.x=element_text(size=11,margin=margin(b=10),colour="black",angle = 90, vjust = 0.5),
+        # axis.text.y=element_text(size=13,margin=margin(l=10),colour="black"),
+        axis.ticks = element_blank(),
+        panel.grid.major = element_line(colour = grey(0.95)),
+        panel.background = element_blank(),
+        legend.title = element_text(size = 12)
+      )
+  })
+
+  output$Plot_overall_GLS <- renderPlot({
+    x <- log[log$data == "GLS", ]
+    if (input$age_overall == "adults") x <- x[x$status_age == "adult", ]
+    if (input$age_overall == "juveniles") x <- x[x$status_age == "juvenile", ]
+
+
+    dat <- rbind(
+      data.frame(table(x$year[x$eventType == "Deployment"]), type = "deployed"),
+      data.frame(table(x$year[x$eventType == "Retrieval"]), type = "retrieved")
+    )
+    dat$year <- as.numeric(dat$Var1) + 2005
+    dat$cumsum <- c(cumsum(dat$Freq[dat$type == "deployed"]), cumsum(dat$Freq[dat$type == "retrieved"]))
+
+
+    ggplot(data = dat, aes(x = year, y = Freq, fill = type)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      theme_minimal() +
+      ylab("# devices") +
+      xlab(" ") +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(), text = element_text(size = 20)
+      ) # +
+  })
+
+  # output$Plot_overall_IRMA   <- renderPlot ({
+  #
+  #
+  #   x <- log[log$data == "GLS",]
+  #   if(input$age_overall_IRMA == "adults")    x <- x[x$status_age  == "adult", ]
+  #   if(input$age_overall_IRMA == "juveniles") x <- x[x$status_age  == "juvenile", ]
+  #
+  #
+  #   dat <- rbind(
+  #     data.frame(table(x$year[x$eventType == "Deployment"]), type = "deployed"),
+  #     data.frame(table(x$year[x$eventType == "Retrieval"]),  type = "retrieved")
+  #   )
+  #   dat$year <- as.numeric(dat$Var1) + 2005
+  #   dat$cumsum <- c(cumsum(dat$Freq[dat$type=="deployed"]), cumsum(dat$Freq[dat$type=="retrieved"]))
+  #
+  #
+  #   ggplot(data = dat, aes(x = year, y = Freq, fill = type)) +
+  #     geom_bar(stat="identity", position = "dodge") +
+  #     theme_minimal() +
+  #     ylab("# devices") +
+  #     xlab(" ") +
+  #     theme(legend.position = "bottom",
+  #           legend.title = element_blank(), text = element_text(size = 20))# +
+  #
+  # })
+  #
+  output$Plot_overall_GPS <- renderPlot({
+    x <- log[log$data == "GPS", ]
+    # if(input$age_overall == "adults")    x <- x[x$status_age  == "adult", ]
+    # if(input$age_overall == "juveniles") x <- x[x$status_age  == "juvenile", ]
+
+    dat <- rbind(
+      data.frame(table(x$year[x$eventType == "Deployment"]), type = "deployed"),
+      data.frame(table(x$year[x$eventType == "Retrieval"]), type = "retrieved")
+    )
+    dat$year <- as.numeric(dat$Var1) + 2005
+    dat$cumsum <- c(cumsum(dat$Freq[dat$type == "deployed"]), cumsum(dat$Freq[dat$type == "retrieved"]))
+
+
+    ggplot(data = dat, aes(x = year, y = Freq, fill = type)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      theme_minimal() +
+      ylab("# devices") +
+      xlab(" ") +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(), text = element_text(size = 20)
+      ) # +
+  })
+  # output$Plot4 <- renderPlotly ({
+  #
+  #   t <- KER()
+  #   t <- t[t$species == input$species2 &
+  #            t$colony  == input$colony2 &
+  #            t$season  == input$season2 &
+  #            t$period  == input$period2,]
+  #   t$opacity_level <- t$kernel_density/100
+  #
+  #   g <- list(
+  #     visible = F,
+  #     resolution = 50,
+  #     lonaxis = list(showgrid = T),
+  #     lataxis = list(showgrid = T),
+  #     landcolor = toRGB('#E1E1E1'),
+  #     showland = TRUE,
+  #     projection = list(type = 'orthographic',
+  #                       rotation = list(lon=-10, lat=50, roll=0),
+  #                       zoom = 4)
+  #   )
+  #
+  #
+  #   plot_ly(data = t,
+  #           type = "scattergeo",
+  #           theta = -2 * pi,
+  #           hoverinfo = "none",
+  #
+  #           fillcolor = ~paste0('rgba(225, 0, 0, ', opacity_level, ')'),  # Dynamic fill
+  #           # color = ~factor(kernel_density),
+  #           color = 'rgba(255, 0, 0, 0.3)',
+  #           # opacity = 0.5,  # set opacity for filled shapes
+  #           line = list(width = 1, color = 'rgba(255, 255, 255, 1)')) %>%  # semi-transparent line
+  #
+  #           # fill = ~factor(kernel_density),
+  #           # color = ~factor(kernel_density),
+  #           # line = list(width = 1)) %>%
+  #     layout(geo = g)
+  #
+  #
+  # })
+
+  output$Plot_GLS_species <- renderPlot({
+    tryCatch(
+      {
+        if (input$species_logger == "all species") {
+          x <- pos[pos$data == "GLS", ]
+        } else {
+          x <- pos[pos$data == "GLS" & pos$species == input$species_logger, ]
+        }
+
+        if (input$age_logger == "adults") x <- x[x$status_age == "adult", ]
+        if (input$age_logger == "juveniles") x <- x[x$status_age == "juvenile", ]
+
+        # Create the data frame based on selected filtering
+        dat <- data.frame(table(
+          x[[if (input$species_logger == "all species") "species" else "colony"]],
+          x$winter
+        ))
+        colnames(dat) <- c(if (input$species_logger == "all species") "Species" else "Location", "Winter", "Amount")
+        dat$Amount[dat$Amount == 0] <- NA
+
+        # If there's no valid data, skip plot rendering
+        if (all(is.na(dat$Amount))) {
+          stop("No data available")
+        }
+
+        # Plot the data using ggplot2
+        ggplot(dat, aes(x = Winter, y = dat[[1]], size = Amount, colour = Amount)) +
+          geom_point() +
+          scale_colour_viridis_c() +
+          scale_size(guide = FALSE) +
+          ylab(NULL) +
+          theme(
+            axis.line = element_blank(),
+            axis.text.x = element_text(size = 11, margin = margin(b = 10), colour = "black", angle = 90, vjust = 0.5),
+            axis.text.y = element_text(size = 13, margin = margin(l = 10), colour = "black"),
+            axis.ticks = element_blank(),
+            axis.title = element_text(size = 18),
+            panel.grid.major = element_line(colour = grey(0.95)),
+            panel.background = element_blank(),
+            legend.text = element_text(size = 10),
+            legend.title = element_text(size = 12)
+          )
+      },
+      error = function(e) {
+        # Handle the error and show "No data available"
+        plot.new() # Create an empty plot
+        text(0.5, 0.5, "No data available", cex = 1.5) # Add the custom text
+      }
+    )
+  })
+
+  # output$Plot_IRMA_species <- renderPlot ({
+  #
+  #   tryCatch({
+  #     if (input$species_logger_IRMA == "all species") {
+  #       x <- irma[irma$data == "IRMA",]
+  #     } else {
+  #       x <- irma[irma$data == "IRMA" & irma$species == input$species_logger_IRMA, ]
+  #     }
+  #
+  #     if(input$age_logger_IRMA == "adults")    x <- x[x$status_age  == "adult", ]
+  #     if(input$age_logger_IRMA == "juveniles") x <- x[x$status_age  == "juvenile", ]
+  #
+  #     # Create the data frame based on selected filtering
+  #     dat <- data.frame(table(x[[if (input$species_logger_IRMA == "all species") "species" else "colony"]],
+  #                             x$winter))
+  #     colnames(dat) <- c(if (input$species_logger_IRMA == "all species") "Species" else "Location", "Winter", "Amount")
+  #     dat$Amount[dat$Amount == 0] <- NA
+  #
+  #     # If there's no valid data, skip plot rendering
+  #     if (all(is.na(dat$Amount))) {
+  #       stop("No data available")
+  #     }
+  #
+  #     # Plot the data using ggplot2
+  #     ggplot(dat, aes(x = Winter, y = dat[[1]], size = Amount, colour = Amount)) +
+  #       geom_point() +
+  #       scale_colour_viridis_c() +
+  #       scale_size(guide = FALSE) +
+  #       ylab(NULL) +
+  #       theme(
+  #         axis.line = element_blank(),
+  #         axis.text.x = element_text(size = 11, margin = margin(b = 10), colour = "black", angle = 90, vjust = 0.5),
+  #         axis.text.y = element_text(size = 13, margin = margin(l = 10), colour = "black"),
+  #         axis.ticks = element_blank(),
+  #         axis.title = element_text(size = 18),
+  #         panel.grid.major = element_line(colour = grey(0.95)),
+  #         panel.background = element_blank(),
+  #         legend.text = element_text(size = 10),
+  #         legend.title = element_text(size = 12)
+  #       )
+  #   }, error = function(e) {
+  #     # Handle the error and show "No data available"
+  #     plot.new()  # Create an empty plot
+  #     text(0.5, 0.5, "No data available", cex = 1.5)  # Add the custom text
+  #   })
+  # })
+  #
+  output$Plot_GPS_species <- renderPlot({
+    tryCatch(
+      {
+        if (input$species_logger == "all species") {
+          x <- pos[pos$data == "GPS", ]
+        } else {
+          x <- pos[pos$data == "GPS" & pos$species == input$species_logger, ]
+        }
+
+        # if(input$age_logger == "adults")    x <- x[x$status_age  == "adult", ]
+        # if(input$age_logger == "juveniles") x <- x[x$status_age  == "juvenile", ]
+
+        # Create the data frame based on selected filtering
+        dat <- data.frame(table(
+          x[[if (input$species_logger == "all species") "species" else "colony"]],
+          x$winter
+        ))
+        colnames(dat) <- c(if (input$species_logger == "all species") "Species" else "Location", "Winter", "Amount")
+        dat$Amount[dat$Amount == 0] <- NA
+
+        # If there's no valid data, skip plot rendering
+        if (all(is.na(dat$Amount))) {
+          stop("No data available")
+        }
+
+        # Plot the data using ggplot2
+        ggplot(dat, aes(x = Winter, y = dat[[1]], size = Amount, colour = Amount)) +
+          geom_point() +
+          scale_colour_viridis_c() +
+          scale_size(guide = FALSE) +
+          ylab(NULL) +
+          theme(
+            axis.line = element_blank(),
+            axis.text.x = element_text(size = 11, margin = margin(b = 10), colour = "black", angle = 90, vjust = 0.5),
+            axis.text.y = element_text(size = 13, margin = margin(l = 10), colour = "black"),
+            axis.ticks = element_blank(),
+            axis.title = element_text(size = 18),
+            panel.grid.major = element_line(colour = grey(0.95)),
+            panel.background = element_blank(),
+            legend.text = element_text(size = 10),
+            legend.title = element_text(size = 12)
+          )
+      },
+      error = function(e) {
+        # Handle the error and show "No data available"
+        plot.new() # Create an empty plot
+        text(0.5, 0.5, "No data available", cex = 1.5) # Add the custom text
+      }
+    )
+  })
+
+  # Create shortened clickable hyperlinks
+  dat_req$aim <- sapply(dat_req$aim, function(url) {
+    if (grepl("^https://", url)) {
+      paste0('<a href="', url, '" target="_blank">Publication</a>') # "Link" text for https
+    } else {
+      url # Keep the original URL for non-https links
+    }
+  })
+
+  output$Table1 <- DT::renderDT({
+    DT::datatable(
+      dat_req,
+      escape = F, # Allow HTML to be rendered
+      rownames = F,
+      options = list(
+        pageLength = 5,
+        autoWidth = T, # Automatically adjust column width
+        scrollX = T,
+        columnDefs = list(
+          list(
+            targets = 0,
+            width = "40px"
+          ),
+          list(
+            targets = 1,
+            width = "80px"
+          ),
+          list(
+            targets = 2,
+            width = "140px"
+          ),
+          list(
+            targets = 3,
+            width = "80px"
+          ),
+          list(
+            targets = c(4:6),
+            width = "10px"
+          ),
+          list(
+            targets = 7,
+            width = "60px"
+          )
+        )
+      )
+    )
+  })
+}
+
+# Update UI to use navbarPage instead of sidebar layout
+ui <- navbarPage(
+  title = "Metadata App",
+  tags$head(
+    tags$style(HTML("
+      table.dataTable thead th {
+        background-color: darkgrey; /* Header background color */
+        border: none;               /* No border for header */
+      }
+      table.dataTable {
+        border: none;               /* No border for the table */
+      }
+      table.dataTable th,
+      table.dataTable td {
+        border: none;               /* No borders for all cells */
+      }
+    "))
+  ),
+  tabPanel(
+    "Data Request archive",
+    fluidRow(
+      box(
+        p(paste0("An archive of all approved data requests (last updated: ", as.Date(data_request_last_modification_date), ")")),
+        width = 12
+      ),
+      box(
+        DT::dataTableOutput("Table1"),
+        width = 12
+      ),
+      box(
+        p(str_c(paste(dic$abrv, dic$eng, sep = " - "), collapse = ", ")),
+        width = 12
+      )
+    )
+  ),
+  tabPanel(
+    "GLS",
+    fluidRow(
+      box(
+        p(paste("Last updated:", as.Date(logger_data_last_modification_date))),
+        width = 12
+      ),
+      box(
+        p("Amount of light-level geolocators deployed and retrieved each year on all SEATRACK species (including historical data)."),
+        width = 12
+      ),
+      box(
+        selectInput(inputId = "age_overall", label = "Choose an age group:", choices = c("all", "adults", "juveniles"), selected = "all"),
+        plotOutput("Plot_overall_GLS", height = 200),
+        width = 12
+      ),
+      box(
+        p(" "),
+        p("Below, you can select a species to investigate how much geolocator tracking data (as # of tracks in database/year) is available at each location and year."),
+        width = 12
+      ),
+      box(
+        selectInput(inputId = "species_logger", label = "Choose a species:", choices = c("all species", SEATRACK_species), selected = "all species"),
+        selectInput(inputId = "age_logger", label = "Choose an age group:", choices = c("all", "adults", "juveniles"), selected = "all"),
+        plotOutput("Plot_GLS_species", height = 520),
+        width = 12
+      )
+    )
+  ),
+  # tabPanel("IRMA",
+  # fluidRow(
+  #   box(
+  #     p(paste("Last updated:", as.Date(logger_data_last_modification_date))),
+  #     width = 12
+  #   ),
+  #   box(
+  #     p("Amount of light-level geolocator tracks augmented with IRMA (Informed Random Movement Algorithm"),
+  #     width = 12
+  #   ),
+  #   box(
+  #     selectInput(inputId = "age_overall_IRMA", label = "Choose an age group:", choices = c("all", "adults", "juveniles"), selected = "all"),
+  #     plotOutput("Plot_overall_IRMA", height = 200),
+  #     width = 12
+  #   ),
+  #   box(
+  #     p(" "),
+  #     p("Below, you can select a species to investigate how much geolocator tracking data is augmented with IRMA (as # of tracks in database/year) is available at each location and year."),
+  #     width = 12
+  #   ),
+  #   box(
+  #     selectInput(inputId = "species_logger_IRMA", label = "Choose a species:", choices = c("all species", SEATRACK_species), selected = "all species"),
+  #     selectInput(inputId = "age_logger_IRMA", label = "Choose an age group:", choices = c("all", "adults", "juveniles"), selected = "all"),
+  #     plotOutput("Plot_IRMA_species", height = 520),
+  #     width = 12
+  #   )
+  # )
+  # ),
+  tabPanel(
+    "GPS",
+    fluidRow(
+      box(
+        p(paste("Last updated:", as.Date(logger_data_last_modification_date))),
+        width = 12
+      ),
+      box(
+        p("Amount of GPS logger deployed and retrieved each year on all SEATRACK species."),
+        width = 12
+      ),
+      box(
+        # selectInput(inputId = "age_overall", label = "Choose an age group:", choices = c("all", "adults", "juveniles"), selected = "all"),
+        plotOutput("Plot_overall_GPS", height = 200),
+        width = 12
+      ),
+      box(
+        p(" "),
+        p("Below, you can select a species to investigate how much GPS logger tracking data (as # of tracks in database/year) is available at each location and year."),
+        width = 12
+      ),
+      box(
+        selectInput(inputId = "species_logger", label = "Choose a species:", choices = c("all species", SEATRACK_species), selected = "all species"),
+        # selectInput(inputId = "age_logger", label = "Choose an age group:", choices = c("all", "adults", "juveniles"), selected = "all"),
+        plotOutput("Plot_GPS_species", height = 480),
+        width = 12
+      )
+    )
+  ),
+  # tabPanel("Kernel",
+  #          fluidRow(
+  #            box(
+  #              selectInput(inputId = "species2", label = "Choose a species:", choices = dic$eng, selected = dic$eng[1]),
+  #              selectInput(inputId = "colony2", label = "Choose a colony:", choices = unique(ker$colony), selected = unique(ker$colony)[1]),
+  #              selectInput(inputId = "season2", label = "Choose a season:", choices = unique(ker$season), selected = "autumn"),
+  #              selectInput(inputId = "period2", label = "Choose a period:", choices = unique(ker$period), selected = unique(ker$period)[1]),
+  #              width = 4
+  #            ),
+  #            box(plotlyOutput("Plot4", height = "900px", width = "1000px"), width = 8)
+  #          )),
+  tabPanel(
+    "Sex",
+    fluidRow(
+      box(
+        p(paste("Last updated:", as.Date(logger_data_last_modification_date))),
+        width = 12
+      ),
+      box(
+        p("Proportion of tracked individuals with sexing information for each species in SEATRACK."),
+        width = 12
+      ),
+      box(
+        plotOutput("Plot_sexing_summary", height = 300),
+        width = 12
+      ),
+      box(
+        p("Below, you can select a species to investigate what sexing data is available for each species and location."),
+        # p("This metadata can be downloaded."),
+        width = 12
+      ),
+      box(
+        selectInput(inputId = "species_sex", label = "Choose a species:", choices = unique(ind$species), selected = unique(ind$species)[1]),
+        selectInput(inputId = "colony_sex", label = "Choose a colony:", choices = c("all colonies", unique(ind$colony)), selected = "all colonies"),
+        selectInput(inputId = "choice", label = "Plot by:", choices = c("sexing method", "colony"), selected = "sexing method"),
+        # downloadButton("downloadData", "Download selection"),
+        width = 4
+      ),
+      box(plotOutput("Plot_sexing_species", height = 600),
+        width = 8
+      )
+    )
+  ),
+  tabPanel(
+    "Age",
+    fluidRow(
+      box(
+        p(paste("Last updated:", as.Date(logger_data_last_modification_date))),
+        width = 12
+      ),
+      box(
+        p("Proportion of tracked individuals with known age for each species in SEATRACK."),
+        width = 12
+      ),
+      box(
+        plotOutput("Plot_ageing_summary", height = 300),
+        width = 12
+      ),
+      box(
+        p("Below, you can select a species to investigate what age information is available for each location."),
+        # p("This metadata can be downloaded."),
+        width = 12
+      ),
+      box(
+        selectInput(inputId = "species_age", label = "Choose a species:", choices = unique(ind$species), selected = unique(ind$species)[1]),
+        selectInput(inputId = "colony_age", label = "Choose a colony:", choices = c("all colonies", unique(ind$colony)), selected = "all colonies"),
+        # downloadButton("downloadData", "Download selection"),
+        width = 4
+      ),
+      box(
+        plotOutput("Plot_ageing_species", height = 600),
+        width = 8
+      )
+    )
+  )
+)
+
+# Run the application
+shinyApp(ui = ui, server = server)

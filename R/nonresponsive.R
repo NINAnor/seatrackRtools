@@ -181,3 +181,69 @@ save_nonresponsive <- function(file_paths, nonresponsive_list) {
         log_success("Saved nonresponsive sheet to: ", file_paths[i])
     }
 }
+
+#' Set reconstructed download type for nonresponsive loggers
+#'
+#' This function checks the master startup sheets for loggers marked as nonresponsive and updates their download type to "Reconstructed" in both the master startup sheets and the database.
+#' @param all_master_sheets Optional list of master startup sheets. If NULL, the function will load all master startup sheets using `load_all_master_import()`.
+#' @return No return value.
+#' @concept nonresponsive
+set_reconstructed <- function(all_master_sheets = NULL) {
+    if (is.null(all_master_sheets)) {
+        all_master_sheets <- load_all_master_import(
+            combine = FALSE, skip = c("Blomstrand", "Keysite Vestland", "Lowestoft", "Iceland_processed_metadata", "not_processed", "no_location_not_processed", "FROM MARK MALLORY_HISTORIC ARTE"),
+            distinct = TRUE,
+            use_stored = TRUE
+        )
+    }
+
+    unique_sheets_only <- list()
+    seen_paths <- c()
+    for (i in seq_along(all_master_sheets)) {
+        x <- all_master_sheets[[i]]
+        if (!x$path %in% seen_paths) {
+            unique_sheets_only <- c(unique_sheets_only, x)
+            seen_paths <- c(seen_paths, x$path)
+        }
+    }
+    all_master_sheets <- unique_sheets_only
+
+    # Get sessions in ALL
+
+    import_directory <- file.path(the$sea_track_folder, "Database\\Imports_Logger data\\Raw logger data\\ALL")
+    all_metadata <- gls_metadata(import_directory, no_pos_only = FALSE, time_windows = FALSE, download_types = c("Nonresponsive"))
+    db_id_start <- paste(all_metadata$logger_id, all_metadata$starttime_gmt)
+    shutdowns <- dplyr::tbl(con, dbplyr::in_schema("loggers", "shutdown"))
+
+    # For each sheet
+    for (i in seq_along(all_master_sheets)) {
+        log_info("Checking master sheet: ", all_master_sheets[[i]]$path)
+        current_sheet <- all_master_sheets[[i]]
+        sessions <- current_sheet$data$STARTUP_SHUTDOWN
+        session_id_start <- paste(sessions$logger_serial_no, sessions$starttime_gmt)
+        if (any(session_id_start %in% db_id_start)) {
+            matching_sessions <- sessions[session_id_start %in% db_id_start, ]
+            matching_db_sessions <- all_metadata[db_id_start %in% session_id_start, ]
+            log_info("Found ", nrow(matching_sessions), " nonresponsive loggers in master sheet: ", all_master_sheets[[i]]$path)
+            for (j in seq_along(matching_sessions$logger_serial_no)) {
+                matching_session <- matching_sessions[j, ]
+                if (matching_session$download_type == "Nonresponsive") {
+                    log_info("Setting download type to Reconstructed for logger ", matching_session$logger_serial_no, " with start time ", matching_session$starttime_gmt)
+                    row_index <- which(sessions$logger_serial_no == matching_session$logger_serial_no & sessions$starttime_gmt == matching_session$starttime_gmt)
+                    sessions <- set_master_startup_value(sessions, row_index, "download_type", "Reconstructed")
+                }
+            }
+
+            shutdowns_filtered <- dplyr::filter(shutdowns, session_id %in% matching_db_sessions$session_id) %>%
+                dplyr::select(id, download_type) %>%
+                collect()
+            shutdowns_filtered$download_type <- "Reconstructed"
+            log_info("Updating download type to Reconstructed for ", nrow(shutdowns_filtered), " shutdown records in the database.")
+            dplyr::rows_update(shutdowns, shutdowns_filtered, by = "id", unmatched = "ignore", copy = TRUE, in_place = TRUE)
+
+            current_sheet$data$STARTUP_SHUTDOWN <- sessions
+            current_sheet$modified <- TRUE
+            save_master_sheet(current_sheet, modified_only = TRUE)
+        }
+    }
+}

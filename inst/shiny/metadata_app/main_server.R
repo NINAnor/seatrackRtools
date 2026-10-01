@@ -6,7 +6,23 @@ main_server <- function(id) {
 
         busy <- reactiveVal(FALSE)
         unsaved <- reactiveVal(FALSE)
-        user_full_name <- reactiveVal("")
+        # Can load from settings
+        app_settings_list <- app_load_settings()
+
+        app_settings <- reactiveVal(app_settings_list)
+
+        loaded_user_name <- ifelse(!is.null(app_settings_list$user_full_name), app_settings_list$user_full_name, "")
+        user_full_name <- reactiveVal(loaded_user_name)
+        updateTextInput(session, "user_full_name", value = loaded_user_name)
+
+
+        observeEvent(input$user_full_name, {
+            user_full_name(input$user_full_name)
+            app_settings_list <- app_settings()
+            app_settings_list$user_full_name <- user_full_name()
+            app_settings(app_settings_list)
+        })
+
         all_locations <- reactiveVal(list())
         log_line_n <- reactiveVal(default_log_line_n)
         log_interval_millis <- reactiveVal(default_log_interval_millis)
@@ -26,25 +42,43 @@ main_server <- function(id) {
             }
         })
 
-        sea_track_path <- reactiveVal()
-        # Folder selector
-        folder_select <- folder_selector_server("folder", busy, all_locations)
-        observeEvent(folder_select, {
-            sea_track_path(folder_select$folder)
+        settings_init <- reactiveVal(TRUE)
+        observeEvent(app_settings(), {
+            if (!settings_init()) {
+                app_save_settings(app_settings())
+            } else {
+                settings_init(FALSE)
+            }
         })
-        manager_loggers <- manage_logger_server("manage_loggers", busy, all_locations, unsaved)
+
+        manager_loggers <- manage_logger_server("manage_loggers", busy, all_locations, unsaved, user_full_name)
         manage_metadata <- manage_metadata_server("manage_metadata", busy, all_locations, unsaved)
         manage_db_upload <- manage_db_upload_server("manage_db_upload", busy, all_locations, unsaved)
-        connect_db <- connect_db_server("connect_db", busy, getShinyOption("test", FALSE))
-        # Export nonresponsive
-        # Mastersheet viewer
-        # Import partner metadata
-        # Upload to database
+        connect_db <- connect_db_server("connect_db", busy, getShinyOption("test", FALSE),
+            on_busy = function(is_busy) {
+                if (is_busy) {
+                    shinyjs::disable("login")
+                } else {
+                    shinyjs::enable("login")
+                }
+            },
+            on_success = function() {
+                log_success("Succesfully connected")
+            }, on_fail = function(e) {
+                log_error(paste("ERROR", e), namespace = "error")
+            }, app_settings
+        )
+        # sea_track_path <- reactiveVal()
+        # Folder selector
+        folder_select <- folder_selector_server("folder", busy, all_locations, app_settings)
+
 
         observeEvent(busy(), {
             if (busy()) {
                 show_spinner(spin_id = ns("main_spinner"), session = session)
+                shinyjs::disable("user_full_name")
             } else {
+                shinyjs::enable("user_full_name")
                 hide_spinner(spin_id = ns("main_spinner"), session = session)
             }
         })
@@ -55,6 +89,8 @@ main_server <- function(id) {
                 paste(n_loc, "locations loaded")
             ))
         })
+
+
 
         observeEvent(unsaved(), {
             if (unsaved()) {
@@ -82,16 +118,53 @@ main_server <- function(id) {
                     seen_paths <- c(seen_paths, x$path)
                 }
             }
+            unsaved_locations <- FALSE
             for (i in seq_along(unique_sheets_only)) {
                 x <- unique_sheets_only[[i]]
-                new_x <- save_master_sheet(x, modified_only = TRUE)
-                unique_sheets_only[[i]] <- new_x
-                log_success(paste0("Saved master import sheet: ", basename(new_x$path)))
-                locations <- modify_master_import_in_list(locations, new_x)
+                new_x <- tryCatch(
+                    {
+                        save_master_sheet(x, modified_only = TRUE)
+                    },
+                    ERROR = function(e) {
+                        log_error(paste0("Error saving master import sheet: ", basename(x$path), " - ", e$message))
+                        return(NULL)
+                    }
+                )
+                if (!is.null(new_x)) {
+                    unique_sheets_only[[i]] <- new_x
+                    locations <- modify_master_import_in_list(locations, new_x)
+                } else {
+                    unsaved_locations <- TRUE
+                }
             }
             all_locations(locations)
-            unsaved(FALSE)
+            unsaved(unsaved_locations)
             busy(FALSE)
         })
     })
+}
+
+app_load_settings <- function() {
+    settings_path <- getShinyOption("settings_path")
+    full_settings_path <- file.path(settings_path, "settings")
+    log_info("Load settings from: ", full_settings_path)
+    if (!file.exists(full_settings_path)) {
+        log_info("No settings file found, using defaults")
+        return(list())
+    }
+    temp_env <- new.env()
+    load(full_settings_path, envir = temp_env)
+    if (!exists("app_settings", envir = temp_env) || class(temp_env$app_settings) != "list") {
+        log_info("No app_settings object found in settings file, using defaults")
+        return(list())
+    }
+
+    return(temp_env$app_settings)
+}
+
+app_save_settings <- function(app_settings) {
+    settings_path <- getShinyOption("settings_path")
+    full_settings_path <- file.path(settings_path, "settings")
+    log_info("Saving settings to: ", full_settings_path)
+    save(app_settings, file = full_settings_path)
 }

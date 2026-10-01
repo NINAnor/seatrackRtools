@@ -59,11 +59,40 @@ file_list <- c(file_list, "| -- data")
 included_data <- c()
 for (i in seq_along(params$file_list)) {
   included_data <- c(included_data, names(params$file_list)[i])
-  file_list <- c(file_list, knitr::knit_expand(text = '| &nbsp;&nbsp;&nbsp;&nbsp;|-- {{params$file_list[[i]]$description}} (<span style="color: #ABB2B9;">{{params$file_list[[i]]$path}}</span>)'))
+  if ("files" %in% names(params$file_list[[i]])) {
+    file_list <- c(file_list, "<details>")
+  }
+
+  if ("files" %in% names(params$file_list[[i]])) {
+    base_text <- "<summary>&nbsp;"
+  } else {
+    base_text <- "| &nbsp;&nbsp;&nbsp;&nbsp;"
+  }
+
+  base_text <- paste0(base_text, "|-- {{params$file_list[[i]]$description}}")
+  if ("path" %in% names(params$file_list[[i]])) {
+    base_text <- paste(base_text, '(<span style="color: #ABB2B9;">{{params$file_list[[i]]$path}}</span>)')
+  }
+  if ("files" %in% names(params$file_list[[i]])) {
+    base_text <- paste0(base_text, " - click to expand</summary>")
+  }
+  file_list <- c(file_list, knitr::knit_expand(text = base_text))
+
+
+  if ("files" %in% names(params$file_list[[i]])) {
+    for (j in seq_along(params$file_list[[i]]$files)) {
+      base_text <- "| &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- {{params$file_list[[i]]$files[[j]]$description}}"
+      if ("path" %in% names(params$file_list[[i]]$files[[j]])) {
+        sub_path <- basename(params$file_list[[i]]$files[[j]]$path)
+        base_text <- paste(base_text, '(<span style="color: #ABB2B9;">{{sub_path}}</span>)')
+      }
+      file_list <- c(file_list, knitr::knit_expand(text = base_text))
+    }
+    file_list <- c(file_list, "</details>")
+  }
 }
 
 file_list <- paste(knitr::knit_expand(text = file_list), collapse = "\n")
-
 species_list <- md_list(unique(params$species))
 colony_list <- md_list(unique(params$colonies))
 time_span <- knitr::knit_expand(text = "| - *{{params$times[1]}}* - *{{params$times[2]}}*")
@@ -71,10 +100,14 @@ additional_notes <- knitr::knit_expand(text = "| {{params$notes}}")
 
 has_pop <- any(grepl("Abundance_model", included_data))
 has_pos <- "GLS_positional_data" %in% included_data
-has_irma_pos <- "IRMA_positional_data" %in% included_data
+has_irma_pos <- any(grepl("IRMA_positional_data", included_data))
+# To pull the generic overview from the YAML
 if (has_pop) {
-  # To pull the generic overview from the YAML
+
   included_data <- c(included_data, "population_maps")
+}
+if (has_irma_pos) {
+  included_data <- c(included_data, "IRMA_positional_data")
 }
 
 # Load schema
@@ -85,8 +118,6 @@ included_schema <- names(schema_dict$datasets)[names(schema_dict$datasets) %in% 
 schema_md <- paste(sapply(included_schema, render_schema, dict = schema_dict), collapse = "\n\n")
 
 image_path <- system.file("img", "SEATRACK_logo_landscape.jpg", package = "seatrackR")
-
-
 ```
 
 ```{r include-package-image, echo=FALSE}
@@ -105,8 +136,8 @@ knitr::include_graphics(image_path)
 `r if(has_pos) {"| *For more information about the processing of GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2735757)*"}`
 `r if(has_pos) {"| *contact re. GLS data processing: vegard.brathen@nina.no*"}`
 `r if(has_pop) {"| *For more information about the creation of population maps, please see this [paper](https://www.int-res.com/articles/meps_oa/m676p255.pdf)*"}`
-`r if(has_pop) {"| *contact re. Population maps: arnaud.tarroux@nina.no*"}`
-`r if(has_irma_pos) {"| *For more information about the use of IRMA to fill in gaps in the GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2595504)*"}`
+`r if(has_pop) {"| *Contact re. Population maps: arnaud.tarroux@nina.no*"}`
+`r if(has_irma_pos) {"| *For more information about the use of IRMA to fill in gaps in the GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2595504) and the disclaimer below*"}`
 `r if(has_irma_pos) {"| *contact re. IRMA: arnaud.tarroux@nina.no*"}`
 | ___________________________________________________________________________________________________
 ## Package overview
@@ -126,9 +157,9 @@ knitr::include_graphics(image_path)
 `r knitr::knit(text = colony_list)`
 |
 | **Data responsible**:
-`r knitr::kable(params$data_responsible, col.names = c("Species", "Colony", "Responsible persons"))`
+`r knitr::kable(params$data_responsible, col.names = c("Colony", "Species", "Year", "Responsible persons"))`
 | ___________________________________________________________________________________________________
-## Disclaimer
+## Data use disclaimer
 | ___________________________________________________________________________________________________
 | Data is shared under the [Agreement of Understanding](https://seatrack.net/wp-content/uploads/2024/11/SEATRACK_Agreement-of-understanding_2024.pdf).
 | Depending on the intended use of the data, include the SEATRACK program group and data responsible individuals early in the process. 
@@ -138,7 +169,7 @@ knitr::include_graphics(image_path)
 
 ```{r, show_examples, echo=FALSE, results='asis'}
 if (has_pos) {
-  pos_path <- params$file_list[["GLS_positional_data"]]$path
+  pos_path <- params$file_list[[which(grepl("GLS_positional_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_locations.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -146,7 +177,7 @@ if (has_pos) {
 }
 
 if (has_irma_pos) {
-  IRMA_pos_path <- params$file_list[["IRMA_positional_data"]]$path
+  IRMA_pos_path <- params$file_list[[which(grepl("IRMA_positional_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_IRMA_locations.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -154,7 +185,7 @@ if (has_irma_pos) {
 }
 
 if ("individual_data" %in% included_data) {
-  indiv_path <- params$file_list[["individual_data"]]$path
+  indiv_path <- params$file_list[[which(grepl("individual_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_individuals.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -162,7 +193,7 @@ if ("individual_data" %in% included_data) {
 }
 
 if ("light_data" %in% included_data) {
-  light_path <- params$file_list[["light_data"]]$path
+  light_path <- params$file_list[[which(grepl("light_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_light.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
@@ -170,7 +201,7 @@ if ("light_data" %in% included_data) {
 }
 
 if ("immersion_data" %in% included_data) {
-  imm_path <- params$file_list[["immersion_data"]]$path
+  imm_path <- params$file_list[[which(grepl("immersion_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_immersion.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )

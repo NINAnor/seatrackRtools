@@ -4,6 +4,7 @@
 #'
 #' @param master_metadata A data frame representing the master import metadata.
 #' @param encounter_data A data frame representing the encounter data to be appended.
+#' @param version Version of processing to use
 #' @return A data frame with the encounter data appended to the master metadata.
 #' @examples
 #' \dontrun{
@@ -11,7 +12,7 @@
 #' }
 #' @export
 #' @concept encounters
-append_encounter_data <- function(master_metadata, encounter_data) {
+append_encounter_data <- function(master_metadata, encounter_data, version = 2026) {
     if (nrow(encounter_data) == 0) {
         log_info("No encounter data to append.")
         return(master_metadata)
@@ -26,6 +27,14 @@ append_encounter_data <- function(master_metadata, encounter_data) {
     }
     if (!"nest_longitude" %in% colnames(master_metadata)) {
         master_metadata$nest_longitude <- NA
+    }
+
+    if (version > 2025 && "scull" %in% names(master_metadata)) {
+        # Rename scull
+        master_metadata <- dplyr::rename(master_metadata, skull = scull)
+    }
+    if ("scull" %in% names(encounter_data) && !"scull" %in% names(master_metadata)) {
+        encounter_data <- dplyr::rename(encounter_data, skull = scull)
     }
 
     # remove invalid rows from encounter_data
@@ -45,6 +54,7 @@ append_encounter_data <- function(master_metadata, encounter_data) {
     if (any(encounter_data$date <= as.Date("1000-01-01"))) {
         stop("Date format was loaded incorrectly. Check excel column type.")
     }
+
 
 
     # Throw an error if there are any columns in encounter_data that are not in master_metadata

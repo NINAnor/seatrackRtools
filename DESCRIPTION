@@ -1,10 +1,11 @@
 Package: seatrackRtools
 Title: Internal utility Functions for Seatrack
-Version: 0.0.0.9000
+Version: 0.0.0.35
 Authors@R:
     c(
     person("Julian", "Evans", email = "julian.evans@nina.no", role = c("aut", "cre")),
-    person("Lars", "Ursem", email = "lars.ursem@npolar.no", role = c("ctb")))
+    person("Lars", "Ursem", email = "lars.ursem@npolar.no", role = c("ctb")),
+    person("Vegard Sandøy", "Bråthen", email = "vegard.brathen@nina.no", role = c("ctb"),comment = c(ORCID = "0000-0002-7357-6727")))
 Description: Internal utility functions to assist in the handling of data as part of the seatrack project.
 URL: https://ninanor.github.io/seatrackRtools
 License: MIT + file LICENSE
@@ -12,6 +13,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
 Imports:
+    bslib,
     flexlsx,
     dplyr,
     sf,
@@ -44,6 +46,8 @@ Imports:
     shinyWidgets,
     ggplot2,
     viridis
+    pdftools,
+    rsconnect
 Suggests: 
     knitr,
     rmarkdown,
