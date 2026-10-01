@@ -21,6 +21,7 @@ Useful links:
 Other contributors:
 \itemize{
   \item Lars Ursem \email{lars.ursem@npolar.no} [contributor]
+  \item Vegard Sandøy Bråthen \email{vegard.brathen@nina.no} (\href{https://orcid.org/0000-0002-7357-6727}{ORCID}) [contributor]
 }
 
 }

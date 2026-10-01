@@ -8,7 +8,10 @@ gls_calibrate_all(
   no_pos_only = TRUE,
   rerun_existing = FALSE,
   include_existing = TRUE,
-  filter_plots = FALSE
+  filter_plots = FALSE,
+  rerun_existing_plots = FALSE,
+  n_workers = 4,
+  new_filter_settings = FALSE
 )
 }
 \arguments{
@@ -19,6 +22,12 @@ gls_calibrate_all(
 \item{include_existing}{Logical indicating whether to include existing calibration data in the final output. Default is TRUE.}
 
 \item{filter_plots}{Logical indicating whether to export filter plots. Default is FALSE.}
+
+\item{rerun_existing_plots}{Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is FALSE.}
+
+\item{n_workers}{Integer specifying the number of worker processes to use for parallel processing. Default is 4.}
+
+\item{new_filter_settings}{Logical indicating whether to force creation of a new filter settings files for each species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings files will be overwritten.}
 }
 \value{
 None. The function saves the prepared calibration data to the specified output directory.

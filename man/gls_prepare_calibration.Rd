@@ -6,15 +6,17 @@
 \usage{
 gls_prepare_calibration(
   import_directory,
-  output_directory,
+  output_directory = NULL,
   species = NULL,
   colony = NULL,
+  id_year_model = NULL,
   no_pos_only = TRUE,
   existing_calibration_dir = NULL,
   rerun_existing = TRUE,
   include_existing = TRUE,
   filter_plots = FALSE,
-  rerun_existing_plots = FALSE
+  rerun_existing_plots = FALSE,
+  new_filter_settings = FALSE
 )
 }
 \arguments{
@@ -26,6 +28,8 @@ gls_prepare_calibration(
 
 \item{colony}{Colony name to filter metadata. Default is NULL (no filtering).}
 
+\item{id_year_model}{Character string in the format "loggerID_year_loggermodel" to filter for a specific logger, year and model. Default is NULL (no filtering).}
+
 \item{no_pos_only}{Logical indicating whether to include only loggers without position data in the database. Default is TRUE.}
 
 \item{existing_calibration_dir}{Directory containing existing calibration data. Default is NULL. If provided, calibration data from this directory will be merged.}
@@ -35,6 +39,10 @@ gls_prepare_calibration(
 \item{include_existing}{Logical indicating whether to include existing calibration data in the final output. Default is TRUE.}
 
 \item{filter_plots}{Logical indicating whether to export filter plots. Default is FALSE.}
+
+\item{rerun_existing_plots}{Logical indicating whether to rerun calibration for loggers that already have calibration plots. Default is FALSE.}
+
+\item{new_filter_settings}{Logical indicating whether to force creation of a new filter settings file for the species/colony combination, using the seatrackRgls defaults. Default is FALSE. If TRUE, existing filter settings file will be overwritten.}
 }
 \value{
 None. The function saves the prepared calibration data to the specified output directory.

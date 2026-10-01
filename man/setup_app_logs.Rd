@@ -2,7 +2,8 @@
 % Please edit documentation in R/run_app.R
 \name{setup_app_logs}
 \alias{setup_app_logs}
-\title{Set up logs for shiny app}
+\title{Set up logs for shiny app
+This function initializes logging for the Shiny app, creating separate log files for general logs, errors, and successes. It ensures that the specified log directory exists and starts logging with appropriate settings for each log type.}
 \usage{
 setup_app_logs(
   silent = FALSE,
@@ -14,7 +15,19 @@ setup_app_logs(
     ".log"))
 )
 }
+\arguments{
+\item{silent}{A boolean indicating whether to start logs silently.}
+
+\item{log_path}{A string specifying the path to the directory where log files should be stored. If NULL, it defaults to a "seatrackRtools_app/seatrackRtools_logs" directory in the current working directory.}
+
+\item{log_names}{A list of strings specifying the names of the log files for general logs, errors, and successes. Each name should include a timestamp to ensure uniqueness. Defaults to a list with names "seatrackRtools_log_\if{html}{\out{<timestamp>}}.log", "seatrackRtools_log_ERROR_\if{html}{\out{<timestamp>}}.log", and "seatrackRtools_log_SUCCESS_\if{html}{\out{<timestamp>}}.log".}
+}
+\value{
+A list of log file names that were set up for the app.
+}
 \description{
 Set up logs for shiny app
+This function initializes logging for the Shiny app, creating separate log files for general logs, errors, and successes. It ensures that the specified log directory exists and starts logging with appropriate settings for each log type.
 }
 \concept{shiny_app}
+\keyword{internal}
