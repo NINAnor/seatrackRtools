@@ -11,7 +11,8 @@ manage_metadata_ui <- function(id) {
                 selectize = TRUE
             ),
             actionButton(ns("revert_master_btn"), "Reload file"),
-            col_widths = c(4, 3),
+            uiOutput(ns("filename")),
+            col_widths = c(4, 3, 4),
             fillable = FALSE,
         ),
         br(),
@@ -78,6 +79,11 @@ manage_metadata_server <- function(id, busy, all_locations, unsaved) {
 
         observeEvent(current_location_name(), {
             refresh_tables()
+            if (!is.na(current_location_name())) {
+                output$filename <- renderUI({
+                    p(basename(all_locations()[[current_location_idx()]]$path))
+                })
+            }
             # if (!is.na(current_location_name())) {
             #     metadata_tables(all_locations()[[current_location_idx()]]$data)
             # } else {
