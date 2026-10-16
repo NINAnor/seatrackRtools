@@ -14,6 +14,7 @@ check_startup_rows <- function(startup_shutdown) {
 }
 
 check_shutdown <- function(startup_shutdown) {
+    log_info("Checking start date...")
     # remove cases with no startup date. For some loggers, this should be inferred from the deployment date. This can happen here.
     original_count <- nrow(startup_shutdown)
 
@@ -30,6 +31,7 @@ check_shutdown <- function(startup_shutdown) {
 }
 
 check_euring_code <- function(metadata) {
+    log_info("Checking euring_code...")
     # check euring code
     problem_ring_bool <- is.na(metadata$ring_number) | is.na(metadata$euring_code)
     if (sum(problem_ring_bool) > 0) {
@@ -57,6 +59,7 @@ check_people_startup_shutdown <- function(startup_shutdown) {
 }
 
 check_people_startup_col <- function(startup_shutdown, col_name) {
+    log_info(glue::glue("Checking {col_name}..."))
     startup_shutdown[[col_name]] <- fix_people_strings(startup_shutdown[[col_name]])
 
     unique_people <- unique(startup_shutdown[[col_name]])
@@ -75,6 +78,7 @@ check_people_startup_col <- function(startup_shutdown, col_name) {
 }
 
 check_people_metadata <- function(metadata) {
+    log_info("Checking data_responsible...")
     metadata$data_responsible <- fix_people_strings(metadata$data_responsible)
 
     unique_people <- unique(metadata$data_responsible)
@@ -92,6 +96,7 @@ check_people_metadata <- function(metadata) {
 }
 
 check_sex_metadata <- function(metadata) {
+    log_info("Checking sex...")
     valid_sex <- c("male", "female", "unknown", NA)
     sex_alias <- data.frame(db_name = c("male", "female", "unknown"), alias = c("m", "f", "u"))
     metadata$sex <- tolower(metadata$sex)
@@ -124,6 +129,7 @@ fix_metadata_latlon <- function(metadata) {
 }
 
 check_metadata_breeding_stage <- function(metadata) {
+    log_info("Checking breeding tage...")
     db_breeding_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "breeding_stages"))
     valid_breeding_stages <- dplyr::pull(db_breeding_table, "breeding_stage")
     invalid_breeding_bool <- !is.na(metadata$breeding_stage) & !metadata$breeding_stage %in% valid_breeding_stages
@@ -145,9 +151,43 @@ fix_metadata_back_on_nest <- function(metadata) {
     return(metadata)
 }
 
+fix_colony <- function(colonies, colony_only = FALSE) {
+    colonies_df <- tibble(md_location = colonies)
+    db_colonies <- seatrackR::getColonies()
+    db_locations <- seatrackR::getColonies(allLocations = TRUE)
+
+    colonies_df <- dplyr::left_join(colonies_df, db_locations, by = dplyr::join_by(md_location == location_name), keep = TRUE)
+    colonies_df <- dplyr::left_join(colonies_df, db_colonies, by = dplyr::join_by(md_location == colony_nat_name), keep = TRUE, suffix = c("_location", "_colony_nat"))
+    colonies_df <- dplyr::left_join(colonies_df, db_colonies, by = dplyr::join_by(md_location == colony_int_name), keep = TRUE, suffix = c("", "_colony_int"))
+
+    if (colony_only) {
+        colonies_df <- dplyr::mutate(colonies_df,
+            found_location_name =
+                dplyr::case_when(
+                    !is.na(location_name) ~ colony_int_name_location,
+                    !is.na(colony_nat_name) ~ colony_int_name_colony_nat,
+                    !is.na(colony_int_name) ~ colony_int_name,
+                )
+        )
+    } else {
+        colonies_df <- dplyr::mutate(colonies_df,
+            found_location_name =
+                dplyr::case_when(
+                    !is.na(location_name) ~ location_name,
+                    !is.na(colony_nat_name) ~ colony_int_name_colony_nat,
+                    !is.na(colony_int_name) ~ colony_int_name,
+                )
+        )
+    }
+    colonies_df <- select(colonies_df, md_location, found_location_name)
+
+    return(dplyr::pull(colonies_df, found_location_name))
+}
+
 check_metadata_colony <- function(metadata) {
-    db_locs <- seatrackR::getColonies(allLocations = TRUE)$location_name
-    problem_colony_bool <- !metadata$colony %in% db_locs
+    log_info("Checking colony/locations...")
+    metadata$colony <- fix_colony(metadata$colony)
+    problem_colony_bool <- is.na(metadata$colony)
     if (sum(problem_colony_bool) > 0) {
         log_warn(paste("Removed ", sum(problem_colony_bool), " rows with invalid location names."))
         row_summary <- metadata[problem_colony_bool, c("date", "ring_number", "colony", "logger_id_deployed", "logger_id_retrieved")]
@@ -158,6 +198,7 @@ check_metadata_colony <- function(metadata) {
 }
 
 check_metadata_mounting <- function(metadata) {
+    log_info("Checking mounting method...")
     metadata$logger_mount_method[!is.na(metadata$logger_mount_method)] <- tolower(metadata$logger_mount_method[!is.na(metadata$logger_mount_method)])
 
     db_mounting_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "mounting_types"))
@@ -174,6 +215,7 @@ check_metadata_mounting <- function(metadata) {
 }
 
 check_startup_species <- function(startup_shutdown) {
+    log_info("Check intended species...")
     db_species <- seatrackR::getSpecies()$species_name_eng
     startup_shutdown$intended_species <- gsub(" adults", "", startup_shutdown$intended_species)
     startup_shutdown$intended_species <- gsub(" chicks", "", startup_shutdown$intended_species)
@@ -190,6 +232,7 @@ check_startup_species <- function(startup_shutdown) {
 }
 
 check_metadata_species <- function(metadata) {
+    log_info("Check species...")
     db_species <- seatrackR::getSpecies()$species_name_eng
     problem_species_bool <- !metadata$species %in% db_species
 
