@@ -6032,7 +6032,7 @@
     },
     "pdftools": {
       "Package": "pdftools",
-      "Version": "3.9.0",
+      "Version": "3.9.1",
       "Source": "Repository",
       "Type": "Package",
       "Title": "Text Extraction, Rendering and Converting of PDF Documents",

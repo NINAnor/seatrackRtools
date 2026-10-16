@@ -18,7 +18,6 @@ Imports:
     dplyr,
     sf,
     logger,
-    readxl,
     openxlsx2,
     tibble,
     DBI,

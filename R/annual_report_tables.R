@@ -1,3 +1,5 @@
+
+
 #' Export all tables for annual report
 #'
 #' This function generates tables for the annual report based on the field plan, metadata and database.
@@ -5,9 +7,8 @@
 #' @param field_year Year to generate tables for, default is current year
 #' @param body_cell_width Width of body cells in the exported Excel file, default is 9
 #' @param event_table_header_heights Heights of header rows in the event tables, default is c(100, 30)
-#' @param export_dir Directory to export tables to. Default is "Admin/01_Annual reports/Status_Report_for_funders_" in the sea track folder. The field year will be appended to the directory name
+#' @param base_export_dir Directory to export tables to. Default is "Admin/01_Annual reports/Status_Report_for_funders_" in the sea track folder. The field year will be appended to the directory name
 #' @param all_metadata Optional data frame of all metadata, if not provided will be loaded from master import
-#' @param new_locations Optional dataframe of new locations to check against field plan
 #' @export
 #' @concept annual_report
 make_annual_report_tables <- function(
@@ -15,27 +16,42 @@ make_annual_report_tables <- function(
     field_year = c(as.numeric(format(Sys.Date(), "%Y"))),
     body_cell_width = 9,
     event_table_header_heights = c(100, 30),
-    export_dir = file.path(the$sea_track_folder, "Admin/01_Annual reports/Status_Report_for_funders_"), 
-    all_metadata = NULL, 
-    new_locations = NULL) {
+    base_export_dir = file.path(the$sea_track_folder, "Admin/01_Annual reports/Status_Report_for_funders_"),
+    export_clean_plan = TRUE,
+    all_metadata = NULL) {
+    seatrackR:::checkCon()
+
+    flag_missing_data <- function(variable) {
+        if (any(is.na(variable))) {
+            return(TRUE)
+        }
+        return(FALSE)
+    }
+
     target_species <- c(
         "Atlantic puffin", "Brünnich's guillemot", "Common guillemot",
         "Little auk", "Razorbill", "Arctic tern", "Black-legged kittiwake", "Great skua",
         "Leach's Storm Petrel", "Northern fulmar", "Northern gannet", "Glaucous gull", "Herring gull",
         "Lesser black-backed gull", "European shag", "Common eider"
     )
-    juv_species <- c("Atlantic puffin", "Brünnich's guillemot", "Common guillemot", "Little auk", "Black-legged kittiwake", "Glaucous gull")
-    gps_species <- c("Brünnich's guillemot", "Common guillemot", "Great skua", "Northern fulmar", "Northern gannet", "Glaucous gull", "Herring gull", "European shag", "Common eider")
-    # juv/gps could be pulled from db now
+    phase_3_species <- c("Razorbill", "Arctic tern", "Great skua", "Leach's Storm Petrel", "Northern gannet")
 
-    export_dir <- file.path(paste0(export_dir, field_year), "tables")
+    species_introduction_year <- lapply(target_species, function(x) {
+        if (x %in% phase_3_species) {
+            return(2023)
+        } else {
+            return(2014)
+        }
+    })
+
+    names(species_introduction_year) <- target_species
+
+    juv_species <- c("Atlantic puffin", "Brünnich's guillemot", "Common guillemot", "Little auk", "Black-legged kittiwake", "Northern gannet", "Glaucous gull")
+    gps_species <- c("Brünnich's guillemot", "Common guillemot", "Great skua", "Northern fulmar", "Northern gannet", "Glaucous gull", "Herring gull", "European shag", "Common eider")
+
+    export_dir <- file.path(paste0(base_export_dir, field_year), "tables")
     if (!dir.exists(export_dir)) {
         dir.create(export_dir, recursive = TRUE)
-    }
-
-    full_field_plan_path <- list.files(field_plan_path, recursive = TRUE, full.names = TRUE, pattern = paste0(".*", field_year, "_fieldsuksess.xlsx$"))[1]
-    if (is.null(full_field_plan_path)) {
-        stop(paste("Cannot find field plan for year", field_year))
     }
 
     if (is.null(all_metadata)) {
@@ -43,18 +59,10 @@ make_annual_report_tables <- function(
         all_metadata <- load_all_master_import(skip = c(c("Blomstrand", "Keysite Vestland", "Lowestoft", "Iceland_processed_metadata", "not_processed", "no_location_not_processed")))
     }
 
-    field_plan_sheet <- get_field_plan(full_field_plan_path)
-
-    log_info("Checking field plan locations...")
-    # Better to add the new locations to the db first, pull ocean areas from db
-    field_plan_sheet <- field_plan_check_locations(field_plan_sheet, new_locations)
-
-    all_years <- c(2014:field_year)
+    field_plan_sheet <- load_field_plan_sheet(field_plan_path, field_year)
 
     log_info("Cleaning field plan for all years...")
-    if (!"GPS assigned" %in% names(field_plan_sheet)) {
-        field_plan_sheet$`GPS assigned` <- 0
-    }
+    all_years <- c(2014:field_year)
 
     all_clean_field_plan <- lapply(all_years, function(target_year) {
         log_info(paste("Cleaning field plan for year", target_year, "..."))
@@ -63,50 +71,104 @@ make_annual_report_tables <- function(
             field_plan_clean <- field_plan_clean[field_plan_clean$source != "reported", ]
         }
         field_plan_clean$year <- target_year
-        # Try to get ocean areas
-        field_plan_clean_lme <- field_plan_check_locations(
-            dplyr::rename(field_plan_clean, "Colony" = Location, "Ocean area" = LME)) %>%
-            dplyr::rename("Location" = Colony, "LME" = "Ocean area") %>%
-            dplyr::select(!c(id, colony_nat_name))
 
-        return(field_plan_clean_lme)
+        return(field_plan_clean)
     })
 
     names(all_clean_field_plan) <- all_years
     current_field_plan <- all_clean_field_plan[[which(names(all_clean_field_plan) == field_year)]]
 
+    device_type_totals <- dplyr::group_by(current_field_plan, logger_type, age) %>%
+        summarise(
+            planned = sum(planned, na.rm = TRUE),
+            retrieved = sum(retrieved, na.rm = TRUE),
+            deployed = sum(deployed, na.rm = TRUE),
+            missing_data = flag_missing_data(source)
+        )
+
+    age_totals <- dplyr::group_by(current_field_plan, age) %>%
+        summarise(
+            planned = sum(planned, na.rm = TRUE),
+            retrieved = sum(retrieved, na.rm = TRUE),
+            deployed = sum(deployed, na.rm = TRUE),
+            missing_data = flag_missing_data(source)
+        )
+
+    location_sumamry <- data.frame(n_locations = length(unique(current_field_plan$Location)))
+
+    if (export_clean_plan) {
+        write.csv(current_field_plan, file.path(paste0(base_export_dir, field_year), glue::glue("clean_field_plan_{field_year}.csv")))
+        write.csv(device_type_totals, file.path(paste0(base_export_dir, field_year), glue::glue("device_type_totals_{field_year}.csv")))
+        write.csv(age_totals, file.path(paste0(base_export_dir, field_year), glue::glue("age_totals_{field_year}.csv")))
+        write.csv(location_sumamry, file.path(paste0(base_export_dir, field_year), glue::glue("n_locations_{field_year}.csv")))
+    }
+
     log_info("Generating tables for annual report...")
+
+
 
     # Table 1
     log_info("Generating table 1...")
+    ###################
     ## Assemble table 1
+    ###################
     phases <- list(phase_1 = c(2014:2018), phase_2 = c(2019:2022), phase_3 = c(2023:2026))
 
     phase_summaries <- lapply(phases, function(current_phase) {
         phase_summary <- lapply(current_phase, function(target_year) {
             target_field_plan <- all_clean_field_plan[[which(names(all_clean_field_plan) == target_year)]]
-            current_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>% summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE), .groups = "drop")
+            target_field_plan <- target_field_plan[target_field_plan$age == "A", ]
+            current_species <- unlist(sapply(seq_along(species_introduction_year), function(i) {
+                if (species_introduction_year[[i]] <= target_year) {
+                    return(names(species_introduction_year)[i])
+                }
+            }))
+            target_field_plan <- target_field_plan[target_field_plan$Species %in% current_species, ]
+
+            current_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>%
+                summarise(
+                    deployed = sum(deployed, na.rm = TRUE),
+                    retrieved = sum(retrieved, na.rm = TRUE),
+                    missing_data = flag_missing_data(source), .groups = "drop"
+                )
             current_field_summary <- rbind(current_field_summary, data.frame(
                 Species = "Total", year = target_year,
                 deployed = sum(current_field_summary$deployed, na.rm = TRUE),
-                retrieved = sum(current_field_summary$retrieved, na.rm = TRUE)
+                retrieved = sum(current_field_summary$retrieved, na.rm = TRUE),
+                missing_data = any(current_field_summary$missing_data[!is.na(current_field_summary$Species)])
             ))
             return(current_field_summary)
         })
         phase_summary <- do.call(rbind, phase_summary)
         phase_summary_med <- dplyr::group_by(phase_summary, Species) %>%
-            dplyr::summarise(med_deployed = median(deployed, na.rm = TRUE)) %>%
+            dplyr::summarise(
+                med_deployed = median(deployed, na.rm = TRUE),
+                missing_data = any(missing_data)
+            ) %>%
             left_join(dplyr::group_by(phase_summary, Species) %>% summarise(med_retrieved = median(retrieved, na.rm = TRUE)), by = "Species")
         phase_summary_med <- phase_summary_med[match(c(target_species, "Total"), phase_summary_med$Species), ]
     })
 
-    current_field_summary <- dplyr::group_by(current_field_plan, Species) %>% summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE), planned = sum(planned, na.rm = TRUE), .groups = "drop")
+    current_species <- unlist(sapply(seq_along(species_introduction_year), function(i) {
+        if (species_introduction_year[[i]] <= field_year) {
+            return(names(species_introduction_year)[i])
+        }
+    }))
+
+    current_field_summary <- dplyr::group_by(current_field_plan[current_field_plan$age == "A" & current_field_plan$Species %in% current_species, ], Species) %>%
+        summarise(
+            deployed = sum(deployed, na.rm = TRUE),
+            retrieved = sum(retrieved, na.rm = TRUE),
+            planned = sum(planned, na.rm = TRUE),
+            missing_data = flag_missing_data(source), .groups = "drop"
+        )
 
     current_field_summary <- rbind(current_field_summary, data.frame(
         Species = "Total",
         retrieved = sum(current_field_summary$retrieved, na.rm = TRUE),
         deployed = sum(current_field_summary$deployed, na.rm = TRUE),
-        planned = sum(current_field_summary$planned, na.rm = TRUE)
+        planned = sum(current_field_summary$planned, na.rm = TRUE),
+        missing_data = any(current_field_summary$missing_data)
     ))
 
     current_field_summary$prop_success <- current_field_summary$deployed / current_field_summary$planned
@@ -114,17 +176,37 @@ make_annual_report_tables <- function(
 
     all_returns <- lapply(all_years, function(target_year) {
         target_field_plan <- all_clean_field_plan[[which(names(all_clean_field_plan) == target_year)]]
-        target_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>% summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE), .groups = "drop")
+        target_field_plan <- target_field_plan[target_field_plan$age == "A", ]
+
+        current_species <- unlist(sapply(seq_along(species_introduction_year), function(i) {
+            if (species_introduction_year[[i]] <= target_year) {
+                return(names(species_introduction_year)[i])
+            }
+        }))
+        target_field_plan <- target_field_plan[target_field_plan$Species %in% current_species, ]
+
+        target_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>%
+            summarise(
+                deployed = sum(deployed, na.rm = TRUE),
+                retrieved = sum(retrieved, na.rm = TRUE), .groups = "drop",
+                missing_data = flag_missing_data(source)
+            )
         target_field_summary <- rbind(target_field_summary, data.frame(
             Species = "Total", year = target_year,
             retrieved = sum(target_field_summary$retrieved, na.rm = TRUE),
-            deployed = sum(target_field_summary$deployed, na.rm = TRUE)
+            deployed = sum(target_field_summary$deployed, na.rm = TRUE),
+            missing_data = any(target_field_summary$missing_data[!is.na(target_field_summary$Species)])
         ))
         return(target_field_summary)
     })
+
     all_returns <- do.call(rbind, all_returns)
     all_returns_sum <- dplyr::group_by(all_returns, Species) %>%
-        dplyr::summarise(total_deployed = sum(deployed, na.rm = TRUE), total_retrieved = sum(retrieved, na.rm = TRUE)) %>%
+        dplyr::summarise(
+            total_deployed = sum(deployed, na.rm = TRUE),
+            total_retrieved = sum(retrieved, na.rm = TRUE),
+            missing_data = any(missing_data)
+        ) %>%
         dplyr::mutate(prop_recovered = total_retrieved / total_deployed)
     all_returns_sum <- all_returns_sum[match(tolower(c(target_species, "Total")), tolower(all_returns_sum$Species)), ]
 
@@ -146,10 +228,19 @@ make_annual_report_tables <- function(
     table_1_df[, perc_cols] <- table_1_df[, perc_cols] * 100
     numeric_cols <- sapply(table_1_df, is.numeric)
     table_1_df[numeric_cols] <- lapply(table_1_df[numeric_cols], function(x) round(x, 0))
+    table_2_df[perc_cols] <- lapply(table_2_df[perc_cols], function(x) ifelse(is.na(x), 0, x))
     table_1_df[, perc_cols] <- apply(table_1_df[, perc_cols], 2, function(x) {
         paste0(x, "%")
     })
 
+
+    # Add asterisk to indicate missing data
+    table_1_missing_data <- table_1_df$current_year_._missing_data
+    table_1_df$current_year_._missing_data <- NULL
+    current_cols <- which(grepl("current_year", names(table_1_df), fixed = TRUE) & !grepl("planned", names(table_1_df), fixed = TRUE))
+    table_1_df[table_1_missing_data, current_cols] <- apply(table_1_df[table_1_missing_data, current_cols], 2, function(x) {
+        paste0(x, "*")
+    })
 
     ## Format table 1
     # convert to flextable
@@ -222,31 +313,58 @@ make_annual_report_tables <- function(
 
     table_1_wb$save(file.path(export_dir, paste0(sheet_name, ".xlsx")))
 
+    #########
     # Table 2
+    #########
     min_juv_year <- 2019
     target_juv_years <- c(min_juv_year:(field_year - 1))
 
     juv_year_summary <- lapply(target_juv_years, function(target_year) {
         target_field_plan <- all_clean_field_plan[[which(names(all_clean_field_plan) == target_year)]]
         target_field_plan <- target_field_plan[target_field_plan$age == "C", ]
-        current_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>% summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE), .groups = "drop")
+        current_species <- unlist(sapply(seq_along(species_introduction_year), function(i) {
+            if (species_introduction_year[[i]] <= target_year) {
+                return(names(species_introduction_year)[i])
+            }
+        }))
+        target_field_plan <- target_field_plan[target_field_plan$Species %in% current_species, ]
+
+        current_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>%
+            summarise(
+                deployed = sum(deployed, na.rm = TRUE),
+                retrieved = sum(retrieved, na.rm = TRUE),
+                missing_data = flag_missing_data(source), .groups = "drop"
+            )
         current_field_summary <- rbind(current_field_summary, data.frame(
             Species = "Total", year = target_year,
             deployed = sum(current_field_summary$deployed, na.rm = TRUE),
-            retrieved = sum(current_field_summary$retrieved, na.rm = TRUE)
+            retrieved = sum(current_field_summary$retrieved, na.rm = TRUE),
+            missing_data = any(current_field_summary$missing_data[!is.na(current_field_summary$Species)])
         ))
         return(current_field_summary)
     })
     names(juv_year_summary) <- target_juv_years
 
-    juv_only_current <- current_field_plan[current_field_plan$age == "C", ]
+    current_species <- unlist(sapply(seq_along(species_introduction_year), function(i) {
+        if (species_introduction_year[[i]] <= field_year) {
+            return(names(species_introduction_year)[i])
+        }
+    }))
+
+    juv_only_current <- current_field_plan[current_field_plan$age == "C" & current_field_plan$Species %in% current_species, ]
     juv_only_sum_current <- dplyr::group_by(juv_only_current, Species) %>%
-        dplyr::summarise(retrieved = sum(retrieved, na.rm = TRUE), deployed = sum(deployed, na.rm = TRUE), planned = sum(planned, na.rm = TRUE))
+        dplyr::summarise(
+            retrieved = sum(retrieved, na.rm = TRUE),
+            deployed = sum(deployed, na.rm = TRUE),
+            planned = sum(planned, na.rm = TRUE),
+            missing_data = flag_missing_data(source)
+        )
     juv_only_sum_current <- rbind(
         juv_only_sum_current,
         data.frame(
             Species = "Total",
-            as.data.frame(t(colSums(juv_only_sum_current[sapply(juv_only_sum_current, is.numeric)])))
+            as.data.frame(t(colSums(juv_only_sum_current[sapply(juv_only_sum_current, is.numeric)]))),
+            missing_data = any(juv_only_sum_current$missing_data[!is.na(juv_only_sum_current$Species)])
         )
     )
 
@@ -258,28 +376,46 @@ make_annual_report_tables <- function(
     all_returns <- lapply(target_juv_years, function(target_year) {
         target_field_plan <- all_clean_field_plan[[which(names(all_clean_field_plan) == target_year)]]
         target_field_plan <- target_field_plan[target_field_plan$age == "C", ]
-        target_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>% summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE), .groups = "drop")
+        current_species <- unlist(sapply(seq_along(species_introduction_year), function(i) {
+            if (species_introduction_year[[i]] <= target_year) {
+                return(names(species_introduction_year)[i])
+            }
+        }))
+        target_field_plan <- target_field_plan[target_field_plan$Species %in% current_species, ]
+
+        target_field_summary <- dplyr::group_by(target_field_plan, Species, year) %>%
+            summarise(
+                deployed = sum(deployed, na.rm = TRUE),
+                retrieved = sum(retrieved, na.rm = TRUE),
+                missing_data = flag_missing_data(source),
+                missing_data = flag_missing_data(source), .groups = "drop"
+            )
         target_field_summary <- rbind(target_field_summary, data.frame(
             Species = "Total", year = target_year,
             deployed = sum(target_field_summary$deployed, na.rm = TRUE),
-            retrieved = sum(target_field_summary$retrieved, na.rm = TRUE)
+            retrieved = sum(target_field_summary$retrieved, na.rm = TRUE),
+            missing_data = any(target_field_summary$missing_data[!is.na(target_field_summary$Species)])
         ))
         return(target_field_summary)
     })
     all_returns <- do.call(rbind, all_returns)
     all_returns_sum <- dplyr::group_by(all_returns, Species) %>%
-        dplyr::summarise(deployed = sum(deployed, na.rm = TRUE), retrieved = sum(retrieved, na.rm = TRUE)) %>%
+        dplyr::summarise(
+            deployed = sum(deployed, na.rm = TRUE),
+            retrieved = sum(retrieved, na.rm = TRUE),
+            missing_data = any(missing_data)
+        ) %>%
         dplyr::mutate(prop_recovered = retrieved / deployed)
     all_returns_sum <- all_returns_sum[match(tolower(c(juv_species, "Total")), tolower(all_returns_sum$Species)), ]
 
     # Construct dataframe
     table_2_df <- do.call(data.frame, lapply(seq_along(juv_year_summary), function(year_idx) {
-        current_summary <- juv_year_summary[[year_idx]][, c("retrieved", "deployed")]
+        current_summary <- juv_year_summary[[year_idx]]
+        current_summary <- current_summary[match(c(juv_species, "Total"), current_summary$Species), c("retrieved", "deployed")]
 
         names(current_summary) <- paste(names(juv_year_summary)[year_idx], names(current_summary), sep = "_._")
         return(current_summary)
     }))
-
 
     table_2_df <- data.frame(Species = c(juv_species, "Total"), table_2_df, juv_only_sum_current, current_year_._prop_recovered = all_returns_sum$prop_recovered)
 
@@ -288,8 +424,17 @@ make_annual_report_tables <- function(
     table_2_df[, perc_cols] <- table_2_df[, perc_cols] * 100
     numeric_cols <- sapply(table_2_df, is.numeric)
     table_2_df[numeric_cols] <- lapply(table_2_df[numeric_cols], function(x) round(x, 0))
+    table_2_df[perc_cols] <- lapply(table_2_df[perc_cols], function(x) ifelse(is.na(x), 0, x))
     table_2_df[, perc_cols] <- apply(table_2_df[, perc_cols], 2, function(x) {
         paste0(x, "%")
+    })
+
+    # Add asterisk to indicate missing data
+    table_2_missing_data <- table_2_df$current_year_._missing_data
+    table_2_df$current_year_._missing_data <- NULL
+    current_cols <- which(grepl("current_year", names(table_2_df), fixed = TRUE) & !grepl("planned", names(table_2_df), fixed = TRUE))
+    table_2_df[table_2_missing_data, current_cols] <- apply(table_2_df[table_2_missing_data, current_cols], 2, function(x) {
+        paste0(x, "*")
     })
 
     # Format table 2
@@ -367,15 +512,13 @@ make_annual_report_tables <- function(
             name = paste("Light-level geolocators\nDeployments", field_year),
             event_type = "deployed",
             logger_type = "GLS",
-            target_age = "A",
-            target_species <- target_species
+            target_age = "A", target_species = target_species
         ),
         table_4 = list(
             name = paste("Light-level geolocators\nRetrievals", field_year),
             event_type = "retrieved",
             logger_type = "GLS",
-            target_age = "A",
-            target_species <- target_species
+            target_age = "A", target_species = target_species
         ),
         table_5 = list(
             name = paste("Leg-mounted GPS logger\nDeployments", field_year),

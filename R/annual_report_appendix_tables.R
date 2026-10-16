@@ -1,7 +1,7 @@
 # Function to return background colour based on value of x
-success_col_func <- function(x, background = "white", breaks = c(0, 0.05, 0.25, 0.45, Inf)) {
+success_col_func <- function(x, background = "white", breaks = c(-Inf, 0, 0.05, 0.25, 0.45, Inf)) {
     # Define colour palette
-    col_palette <- c("#EF3F27", "#FEC76B", "#F2EF92", "#A3D09C")
+    col_palette <- c("black", "#EF3F27", "#FEC76B", "#F2EF92", "#A3D09C")
     # Check which values in x are numeric
     numeric_x_bool <- !is.na(x)
 
@@ -88,15 +88,15 @@ create_appendix_table_ft <- function(field_plan_clean, logger_type, age_target, 
         target_species <- c(target_species, "Total")
     }
 
+    field_plan_clean$missing_data <- is.na(field_plan_clean$source)
     # Filter field_plan_clean for logger_type and age_target
-    field_plan_clean_target <- field_plan_clean[field_plan_clean$logger_type == logger_type & field_plan_clean$age == age_target, c("LME", "Location", "Species", "planned", "retrieved", "deployed", "ret_success", "dep_success")]
-    field_plan_clean_target$prev_deployed <- NULL
-
+    field_plan_clean_target <- field_plan_clean[field_plan_clean$logger_type == logger_type & field_plan_clean$age == age_target, c("LME", "Location", "Species", "planned", "retrieved", "deployed", "ret_success", "dep_success", "missing_data")]
+    field_plan_clean_target$prev_retrieved <- NULL
 
     # Create wide table with pivot_wider
     wide_table <- tidyr::pivot_wider(field_plan_clean_target,
         names_from = c("Species"),
-        values_from = c("planned", "retrieved", "deployed", "ret_success", "dep_success"),
+        values_from = c("planned", "retrieved", "deployed", "ret_success", "dep_success", "missing_data"),
         names_sep = "_._"
     )
 
@@ -118,9 +118,11 @@ create_appendix_table_ft <- function(field_plan_clean, logger_type, age_target, 
     # Get indices of deployed and retrieved columns
     deployed_idx <- grep("deployed", names(wide_table))
     retrieved_idx <- grep("retrieved", names(wide_table))
+    missing_data_idx <- grep("missing_data", names(wide_table))
 
     wide_table$deployed_._Total <- rowSums(wide_table[, deployed_idx], na.rm = TRUE)
     wide_table$dep_success_._Total <- NA
+    wide_table$missing_data_._Total <- NA
 
     # Get indices of columns matching target_species
     species_indices <- unlist(lapply(target_species, function(species) {
@@ -200,6 +202,9 @@ create_appendix_table_ft <- function(field_plan_clean, logger_type, age_target, 
     retrieval_idx <- sapply(unique(species_table_species[species_order]), function(x) {
         which(grepl(x, names(species_table)) & grepl("retrieved", names(species_table)))
     })
+    missing_idx <- sapply(unique(species_table_species[species_order]), function(x) {
+        which(grepl(x, names(species_table)) & grepl("missing_data", names(species_table)))
+    })
 
     if (logger_type != "GPS-GSM") {
         # create footer
@@ -208,7 +213,17 @@ create_appendix_table_ft <- function(field_plan_clean, logger_type, age_target, 
         footer <- data.frame(col_keys = all_col_keys, values = c("", "Total", colSums(species_table[, sort(c(deployment_idx))], na.rm = TRUE)))
     }
 
+    for (i in seq_along(missing_idx)) {
+        missing_col_idx <- missing_idx[i]
+        dep_succ_col_idx <- dep_success_idx[i]
+        ret_succ_col_idx <- ret_success_idx[i]
+        missing_bool <- species_table[, missing_col_idx]
 
+        species_table[!is.na(missing_bool) & missing_bool, dep_succ_col_idx] <- -1
+        if (logger_type != "GPS-GSM") {
+            species_table[!is.na(missing_bool) & missing_bool, ret_succ_col_idx] <- -1
+        }
+    }
 
 
     ### Start flextable creation

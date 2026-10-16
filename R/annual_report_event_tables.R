@@ -8,19 +8,19 @@
 #' @param export_dir The directory where the exported excel file will be saved.
 #' @concept annual_report
 export_event_table <- function(event_table_i, field_year, current_table_name, body_cell_width, header_heights, export_dir) {
-        sheet_name <- paste(current_table_name, field_year, sep = "_")
-        table_i_wb <- openxlsx2::wb_workbook()$add_worksheet(sheet_name)
-        table_i_wb <- flexlsx::wb_add_flextable(table_i_wb, sheet_name, event_table_i)
+    sheet_name <- paste(current_table_name, field_year, sep = "_")
+    table_i_wb <- openxlsx2::wb_workbook()$add_worksheet(sheet_name)
+    table_i_wb <- flexlsx::wb_add_flextable(table_i_wb, sheet_name, event_table_i)
 
-        lme_range <- openxlsx2::wb_dims(x = event_table_i$body$content$data, from_row = 1, from_col = 2, rows = 1, col_names = FALSE)
-        table_i_wb$add_cell_style(dims = lme_range, textRotation = 90)
-        col_name_range <- openxlsx2::wb_dims(x = event_table_i$body$content$data, from_row = 2, from_col = 2, rows = 1, col_names = FALSE)
-        table_i_wb$add_cell_style(dims = col_name_range, textRotation = 90)
+    lme_range <- openxlsx2::wb_dims(x = event_table_i$body$content$data, from_row = 1, from_col = 2, rows = 1, col_names = FALSE)
+    table_i_wb$add_cell_style(dims = lme_range, textRotation = 90)
+    col_name_range <- openxlsx2::wb_dims(x = event_table_i$body$content$data, from_row = 2, from_col = 2, rows = 1, col_names = FALSE)
+    table_i_wb$add_cell_style(dims = col_name_range, textRotation = 90)
 
-        table_i_wb <- openxlsx2::wb_set_col_widths(table_i_wb, cols = 2:ncol(event_table_i$body$content$data), widths = body_cell_width * 0.75)
-        table_i_wb <- openxlsx2::wb_set_row_heights(table_i_wb, rows = c(1, 2), heights = header_heights)
-        # Export
-        table_i_wb$save(file.path(export_dir, paste0(sheet_name, ".xlsx")))
+    table_i_wb <- openxlsx2::wb_set_col_widths(table_i_wb, cols = 2:ncol(event_table_i$body$content$data), widths = body_cell_width * 0.75)
+    table_i_wb <- openxlsx2::wb_set_row_heights(table_i_wb, rows = c(1, 2), heights = header_heights)
+    # Export
+    table_i_wb$save(file.path(export_dir, paste0(sheet_name, ".xlsx")))
 }
 
 #' Get event table as flextable
@@ -49,9 +49,41 @@ get_event_table_ft <- function(current_field_plan, name, target_species, event_t
         x[1] == "event_success"
     })]
 
+    event_table_success_no_total <- event_table_success[, !sapply(strsplit(colnames(event_table_success), "_-_"), function(x) {
+        x[2] == "Total"
+    })]
     n_cols <- names(event_table_df)[sapply(strsplit(names(event_table_df), "_-_"), function(x) {
         x[1] == "n_event"
     })]
+
+    n_cols_no_total <- n_cols[!sapply(strsplit(n_cols, "_-_"), function(x) {
+        x[2] == "Total"
+    })]
+
+    event_table_missing_data <- event_table_df[, sapply(strsplit(names(event_table_df), "_-_"), function(x) {
+        x[1] == "missing_data"
+    })]
+
+    event_table_missing_data <- event_table_missing_data > 0
+
+    for (col_name in n_cols) {
+        current_lme <- strsplit(col_name, "_-_")[[1]][2]
+
+        missing_data_col_bool <- sapply(strsplit(colnames(event_table_missing_data), "_-_"), function(x) {
+            x[2] == current_lme
+        })
+
+        missing_data_bool <- event_table_missing_data[, missing_data_col_bool]
+        if (any(missing_data_bool, na.rm = TRUE)) {
+            event_table_df_flat[[col_name]][missing_data_bool & !is.na(missing_data_bool)] <- sapply(event_table_df_flat[[col_name]][missing_data_bool & !is.na(missing_data_bool)], function(x) {
+                if (!is.na(x)) {
+                    return(paste0(x, "*"))
+                } else {
+                    return("*")
+                }
+            })
+        }
+    }
 
     event_table_ft <- flextable(event_table_df_flat, use_labels = FALSE)
     # change header labels
@@ -99,20 +131,20 @@ get_event_table_ft <- function(current_field_plan, name, target_species, event_t
     event_table_ft <- bg(event_table_ft, i = 2, bg = table_bg$col_name_bg, part = "header")
     event_table_ft <- bg(event_table_ft, i = 2, j = 1, bg = table_bg$header, part = "header")
     # Colour cells by success
-    bg_cols <- success_col_func(unlist(as.vector(event_table_success)))
+    bg_cols <- success_col_func(unlist(as.vector(event_table_success_no_total)))
 
     text_cols <- rep("black", length(bg_cols))
-    text_cols[bg_cols == "#EF3F27"] = "white"
+    text_cols[bg_cols == "#EF3F27"] <- "white"
 
     event_table_ft <- bg(event_table_ft,
-        j = n_cols,
+        j = n_cols_no_total,
         bg = bg_cols,
         part = "body"
     )
-    event_table_ft <- bg(event_table_ft, j = c((ncol(event_table_df_flat) - 1), ncol(event_table_df_flat)), bg = "white", part = "body")
+    # event_table_ft <- bg(event_table_ft, j = c((ncol(event_table_df_flat) - 1), ncol(event_table_df_flat)), bg = "white", part = "body")
     event_table_ft <- bg(event_table_ft, i = nrow(event_table_df_flat), bg = table_bg$col_name_bg, part = "body")
 
-    event_table_ft <- color(event_table_ft, j = n_cols, color = text_cols, part = "body")
+    event_table_ft <- color(event_table_ft, j = n_cols_no_total, color = text_cols, part = "body")
 
     # fonts
     event_table_ft <- bold(event_table_ft, part = "header", i = 1)
@@ -164,6 +196,12 @@ get_event_table_ft <- function(current_field_plan, name, target_species, event_t
 #' @return A data frame containing the number of events, number of sites, and event success rate for each species and LME, formatted for creating the event table.
 #' @keywords internal
 get_event_table_df <- function(current_field_plan, target_species, event_type = c("deployed", "retrieved"), logger_type = c("GLS", "GPS", "GPS-GSM"), target_age = c("A", "C")) {
+    flag_missing_data <- function(variable) {
+        if (any(is.na(variable))) {
+            return(TRUE)
+        }
+        return(FALSE)
+    }
     regions <- c(
         "Barents Sea",
         "Norwegian Sea",
@@ -179,12 +217,17 @@ get_event_table_df <- function(current_field_plan, target_species, event_type = 
     if (event_type == "deployed") {
         target_events$success_col <- target_events$planned
     } else if (event_type == "retrieved") {
-        target_events$success_col <- target_events$prev_deployed
+        target_events$success_col <- target_events$prev_retrieved
     }
 
     target_event_summary <- dplyr::mutate(target_events, event_col = pull(target_events, event_type)) %>%
         dplyr::group_by(LME, Species) %>%
-        dplyr::summarise(n_event = sum(event_col), n_site = n_distinct(Location), success_col = sum(success_col, na.rm = TRUE), .groups = "drop") %>%
+        dplyr::summarise(
+            n_event = sum(event_col, na.rm = TRUE),
+            n_site = n_distinct(Location),
+            success_col = sum(success_col, na.rm = TRUE),
+            missing_data = flag_missing_data(source), .groups = "drop"
+        ) %>%
         dplyr::mutate(event_success = n_event / success_col)
 
     target_event_summary$event_success[is.infinite(target_event_summary$event_success)] <- 1
@@ -192,7 +235,7 @@ get_event_table_df <- function(current_field_plan, target_species, event_type = 
     target_event_lme <- tidyr::pivot_wider(
         target_event_summary,
         names_from = c(LME),
-        values_from = c(n_event, n_site, success_col, event_success),
+        values_from = c(n_event, n_site, success_col, event_success, missing_data),
         values_fill = NA,
         names_sep = "_-_"
     )
@@ -208,7 +251,8 @@ get_event_table_df <- function(current_field_plan, target_species, event_type = 
             grep("n_event", ordered_cols, fixed = TRUE, value = TRUE),
             grep("n_site", ordered_cols, fixed = TRUE, value = TRUE),
             grep("event_success", ordered_cols, fixed = TRUE, value = TRUE),
-            grep("success_col", ordered_cols, fixed = TRUE, value = TRUE)
+            grep("success_col", ordered_cols, fixed = TRUE, value = TRUE),
+            grep("missing_data", ordered_cols, fixed = TRUE, value = TRUE)
         )
     )]
 
@@ -222,10 +266,15 @@ get_event_table_df <- function(current_field_plan, target_species, event_type = 
     target_event_lme <- target_event_lme[match(tolower(c(target_species, "Total")), tolower(target_event_lme$Species)), ]
     target_event_lme$Species[is.na(target_event_lme$Species)] <- c(target_species, "Total")[is.na(target_event_lme$Species)]
     target_event_lme <- dplyr::mutate(target_event_lme,
-        `n_site_-_Total` = rowSums(dplyr::select(target_event_lme, dplyr::starts_with("n_site")), na.rm = TRUE),
         `n_event_-_Total` = rowSums(dplyr::select(target_event_lme, dplyr::starts_with("n_event")), na.rm = TRUE),
+        `n_site_-_Total` = rowSums(dplyr::select(target_event_lme, dplyr::starts_with("n_site")), na.rm = TRUE),
         `success_col_-_Total` = rowSums(dplyr::select(target_event_lme, dplyr::starts_with("success_col")), na.rm = TRUE)
-    ) %>% dplyr::mutate(`event_success_-_Total` = `n_event_-_Total` / `success_col_-_Total`)
+    ) %>% dplyr::mutate(
+        `event_success_-_Total` = `n_event_-_Total` / `success_col_-_Total`,
+        `missing_data_-_Total` = rowSums(dplyr::select(target_event_lme, dplyr::starts_with("missing_data")), na.rm = TRUE) > 0
+    )
+
+
 
     return(target_event_lme)
 }
