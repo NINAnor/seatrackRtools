@@ -310,7 +310,7 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' Requires an active connection to the SEATRACK database.
 #' Currently netCDF files are not included in the data request package, so these have to be injected using `additional_data_files` if needed.
 #' @param request_name A string representing the name of the data request.
-#' @param data_types A character vector specifying the types of data to include in the request. Possible values are "GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps" and "logger_info". Defaults to all types.
+#' @param data_types A character vector specifying the types of data to include in the request. Possible values are "GLS_positional_data", "GPS-GSM_positional_data" "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps" and "logger_info". Defaults to all types.
 #' @param start_year An integer representing the start year for the data request.
 #' @param end_year An integer representing the end year for the data request. Defaults to the current year.
 #' @param species An optional string specifying the species to filter the data. If NULL, data for all species will be retrieved.
@@ -336,7 +336,7 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' @concept data_requests
 data_request <- function(
     request_name,
-    data_types = c("raw_data", "GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
+    data_types = c("raw_data", "GLS_positional_data", "GPS-GSM_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
     start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL,
     age_deployment = "A",
     project = NULL,
@@ -355,11 +355,22 @@ data_request <- function(
 
     # check colonies
     if (!is.null(colony)) {
-        available_colonies <- seatrackR::getColonies(allLocations = TRUE)$location_name
-        missing_colony_bool <- !colony %in% available_colonies
+        all_locations <- seatrackR::getColonies(allLocations = TRUE)
+        locations <- all_locations$location_name[all_locations$colony_int_name %in% colony]
+
+        missing_colony_bool <- !colony %in% all_locations$colony_int_name
         if (any(missing_colony_bool)) {
             missing_colonies <- paste(colony[missing_colony_bool], collapse = ", ")
             stop(paste(c("Colonies", missing_colonies, "not in database."), collapse = " "))
+        }
+    }
+
+    if (!is.null(species)) {
+        all_species <- seatrackR::getSpecies()
+        missing_species_bool <- !species %in% all_species$species_name_eng
+        if (any(missing_species_bool)) {
+            missing_species <- paste(species[missing_species_bool], collapse = ", ")
+            stop(paste(c("Species", missing_species, "not in database."), collapse = " "))
         }
     }
 
@@ -367,16 +378,25 @@ data_request <- function(
 
     if ("GLS_positional_data" %in% data_types) {
         log_info("Fetching GLS position data...")
-        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+        all_pos <- seatrackR::getPositions(species = species, colony = locations, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
         all_data$GLS_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
             description = "GLS Positional data"
         )
     }
 
+    if ("GPS-GSM_positional_data" %in% data_types) {
+        log_info("Fetching GPS-GSM position data...")
+        all_pos <- seatrackR::getPositions(datatype = "GPS-GSM", species = species, colony = locations, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+        all_data$GPS_GSM_positional_data <- list(
+            data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
+            description = "GPS-GSM Positional data"
+        )
+    }
+
     if ("IRMA_positional_data" %in% data_types) {
         log_info("Fetching IRMA position data...")
-        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = locations, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
         all_data$IRMA_positional_data <- list(
             data = irma_pos[irma_pos$date_time >= start_date & irma_pos$date_time < end_date, ],
             description = "IRMA Positional data"
@@ -385,15 +405,18 @@ data_request <- function(
 
     all_data <- c(all_data, additional_data)
 
-    if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% c(data_types, names(all_data)))) {
+    if (any(c("GLS_positional_data", "GPS_GSM_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% c(data_types, names(all_data)))) {
         log_info("Fetching individual data...")
-        individuals <- seatrackR::getIndividInfo(colony = colony, year = NULL, age_at_deployment = age_deployment, species = species, session_id = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+        individuals <- seatrackR::getIndividInfo(colony = locations, year = NULL, age_at_deployment = age_deployment, species = species, session_id = session_ID, project = project, exclude_embargoed = exclude_embargoed)
 
         if ("individual_data" %in% data_types) {
             # Filter the individual information based on the data being returned
             session_ids <- c()
             if ("GLS_positional_data" %in% names(all_data)) {
                 session_ids <- c(session_ids, unique(all_data$GLS_positional_data$data$session_id))
+            }
+            if ("GPS_GSM_positional_data" %in% names(all_data)) {
+                session_ids <- c(session_ids, unique(all_data$GPS_GSM_positional_data$data$session_id))
             }
             if ("IRMA_positional_data" %in% names(all_data)) {
                 session_ids <- c(session_ids, unique(all_data$IRMA_positional_data$data$session_id))
@@ -438,6 +461,9 @@ data_request <- function(
         if ("GLS_positional_data" %in% names(all_data)) {
             session_ids <- c(session_ids, unique(all_data$GLS_positional_data$data$session_id))
         }
+        if ("GPS_GSM_positional_data" %in% names(all_data)) {
+            session_ids <- c(session_ids, unique(all_data$GPS_GSM_positional_data$data$session_id))
+        }
         if ("IRMA_positional_data" %in% names(all_data)) {
             session_ids <- c(session_ids, unique(all_data$IRMA_positional_data$data$session_id))
         }
@@ -451,7 +477,7 @@ data_request <- function(
         if (length(session_ids) > 0) {
             logger_info <- seatrackR::getLoggerInfo(session = session_ids, exclude_embargoed = exclude_embargoed)
         } else {
-            logger_info <- seatrackR::getLoggerInfo(colony = colony, species = species, project = project, exclude_embargoed = exclude_embargoed)
+            logger_info <- seatrackR::getLoggerInfo(colony = locations, species = species, project = project, exclude_embargoed = exclude_embargoed)
 
             logger_info <- logger_info[logger_info$deployment_date >= start_date & (!is.na(logger_info$retrieval_date) & logger_info$retrieval_date < end_date), ]
             session_ids <- unique(logger_info$session_id)
@@ -490,13 +516,13 @@ data_request <- function(
     # should log the removal of the data
     all_data <- all_data[data_exists_bool]
 
-    if (any(c("GLS_positional_data", "IRMA_positional_data", "light_data", "temperature_data", "immersion_data") %in% names(all_data))) {
+    if (any(c("GLS_positional_data", "GPS_GSM_positional_data", "IRMA_positional_data", "light_data", "temperature_data", "immersion_data") %in% names(all_data))) {
         times <- NULL
     } else {
         times <- c(start_date, end_date)
     }
 
-    if (any(c("GLS_positional_data", "IRMA_positional_data", "individual_data") %in% names(all_data))) {
+    if (any(c("GLS_positional_data", "GPS_GSM_positional_data", "IRMA_positional_data", "individual_data") %in% names(all_data))) {
         species <- NULL
         colony <- NULL
     }
