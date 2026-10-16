@@ -3,7 +3,7 @@ seapop_paths <- list(
     kde = file.path(the$sea_track_folder, "Data", "Data products", "Kernel_data", "SEAPOP kernel daten 20260923", "all_kde_seapop.geojson")
 )
 
-get_web_kernel_data <- function(seapop_paths = NULL) {
+get_web_kernel_data <- function(seapop_paths = NULL, combine_species = TRUE, output_folder = file.path(the$sea_track_folder, "Data", "Data products", "Kernel_data_new")) {
     if (!is.null(seapop_paths)) {
         # Load existing SEAPOP kernels/colonies
         seapop_kernels <- sf::st_read(seapop_paths$kde)
@@ -17,7 +17,9 @@ get_web_kernel_data <- function(seapop_paths = NULL) {
 
         db_seapop_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "seapop_species_colony")) %>% collect()
 
-        colonies <- unique(db_seapop_table$seatrack_colony)
+        # colonies <- unique(db_seapop_table$seatrack_colony)
+        seatrack_colonies <- seatrackR::getColonies(loadGeometries = TRUE)
+        colonies <- seatrack_colonies$colony_int_name[seatrack_colonies$country == "Norway"]
     } else {
         colonies <- seatrackR::getColonies(loadGeometries = TRUE)
         colonies <- colonies[!sf::st_is_empty(colonies), , drop = FALSE]$colony_int_name
@@ -35,9 +37,60 @@ get_web_kernel_data <- function(seapop_paths = NULL) {
 
     # run for each species ----------------------------------------------------
 
+    if (combine_species) {
+        species_export <- FALSE
+        if (!dir.exists(file.path(output_folder))) {
+            dir.create(output_folder)
+        }
+    } else {
+        species_export <- TRUE
+    }
+
+    all_kernel_df <- data.frame()
+    all_colony_df <- data.frame()
     for (species_name in selected_species) {
-        species_session_ids <- ind_info$session_id[ind_info$species == species_name]
-        species_kernel_result <- get_kernel(session_ids = species_session_ids, species_name = species_name, data_type = "GLS", seapop_data = seapop_data)
+        if (!"species" %in% names(all_kernel_df) || (!species_name %in% all_kernel_df$species)) {
+            species_session_ids <- ind_info$session_id[ind_info$species == species_name]
+            species_kernel_result <- get_kernel(
+                session_ids = species_session_ids,
+                species_name = species_name,
+                data_type = "GLS",
+                seapop_data = seapop_data,
+                export = species_export,
+                output_folder = output_folder
+            )
+            if (combine_species) {
+                if(nrow(species_kernel_result$all_kernels)>0){
+                    all_kernel_df <- rbind(all_kernel_df, species_kernel_result$all_kernels)
+                }
+                if(nrow(species_kernel_result$all_colonies)>0){
+                    all_colony_df <- rbind(all_colony_df, species_kernel_result$all_colonies)
+                }
+
+                # if (nrow(species_kernel) > 0) {
+                #     species_kernel$feature_type <- "kernel_polygons"
+                #     species_colonies$feature_type <- "colony_points"
+                #     all_species_df <- rbind(all_species_df, species_kernel, species_colonies)
+                # }
+            }
+        }
+    }
+    if (combine_species) {
+        if (!is.null(seapop_paths)) {
+            filename <- "SEAPOP"
+        } else {
+            filename <- "SEATRACK"
+        }
+        sf::st_write(all_kernel_df,
+            file.path(output_folder, paste0(filename, "_kernels.geojson")),
+            delete_dsn = TRUE,
+            driver = "GeoJSON"
+        )
+        sf::st_write(all_colony_df,
+            file.path(output_folder, paste0(filename, "_colony.geojson")),
+            delete_dsn = TRUE,
+            driver = "GeoJSON"
+        )
     }
 }
 
@@ -50,13 +103,13 @@ get_kernel <- function(
     output_folder = file.path(the$sea_track_folder, "Data", "Data products", "Kernel_data_new"),
     data_type = "GLS",
     seapop_data = NULL) {
-
     # load postion data
     log_info("Getting position data for ", species_name, " (", data_type, ")")
     dat <- seatrackR::getPositions(species = species_name, datatype = data_type, sessionId = session_ids)
     # switch location out for colony
     locations <- seatrackR::getColonies(allLocations = TRUE)
     colonies <- seatrackR::getColonies(allLocations = FALSE, loadGeometries = TRUE)
+    sf::st_crs(colonies) <- 4326
     dat$location <- dat$colony
     dat <- dplyr::left_join(dat, dplyr::select(locations, location_name, colony_int_name), by = dplyr::join_by(colony == location_name))
     dat$colony <- dat$colony_int_name
@@ -80,12 +133,19 @@ get_kernel <- function(
             by = dplyr::join_by(species == seatrack_species, colony == seapop_colony)
         )
 
+        seatrack_colonies <- colonies
         colonies <- dplyr::filter(seapop_table, species %in% dat$species) %>% dplyr::select(colony_int_name = colony)
+        colonies <- sf::st_transform(colonies, 4326)
 
         seapop_colony_match_idx <- match(paste(dat$colony, dat$species), paste(seapop_table$seatrack_colony, seapop_table$species))
         original_colony <- dat$colony
         dat$colony <- seapop_table$colony[seapop_colony_match_idx]
         dat$colony[is.na(dat$colony)] <- original_colony[is.na(dat$colony)]
+        missing_colonies <- unique(dat$colony)[!unique(dat$colony) %in% colonies$colony_int_name]
+
+
+        colonies <- rbind(colonies, dplyr::filter(seatrack_colonies, colony_int_name %in% missing_colonies) %>% dplyr::select(colony_int_name))
+
         # dat <- dat[!is.na(dat$colony), ]
 
         # unique(paste(dat$colony, dat$species)[is.na(match(paste(dat$colony, dat$species), paste(seapop_table$seatrack_colony, seapop_table$species)))])
@@ -149,96 +209,112 @@ get_kernel <- function(
     colony_season_period_kernels <- data.frame() # 3 kernels (at different kd) for each species, colony, period, season combo
 
     for (k in seq_along(kids)) {
-        log_info("Callculating kernel ", k, " of ", length(kids))
-        kid <- kids[k]
+        tryCatch(
+            {
+                log_info("Callculating kernel ", k, " of ", length(kids))
+                kid <- kids[k]
 
-        sp_dat_sub <- sp_dat[sp_dat$kernel_id == kid, ]
+                sp_dat_sub <- sp_dat[sp_dat$kernel_id == kid, ]
 
-        # create projection centred on mid point of location distribution
-        proj.aezd <- paste0(
-            "+proj=aeqd  +lat_0=",
-            mean(range(sf::st_coordinates(sp_dat_sub)[, 2])),
-            "  +lon_0=",
-            mean(range(sf::st_coordinates(sp_dat_sub)[, 1])),
-            " +units=km"
+                # create projection centred on mid point of location distribution
+                proj.aezd <- paste0(
+                    "+proj=aeqd  +lat_0=",
+                    mean(range(sf::st_coordinates(sp_dat_sub)[, 2])),
+                    "  +lon_0=",
+                    mean(range(sf::st_coordinates(sp_dat_sub)[, 1])),
+                    " +units=km"
+                )
+
+                sp_dat_sub <- sf::st_transform(sp_dat_sub, proj.aezd)
+
+                bbox <- sf::st_bbox(sp_dat_sub)
+                buff <- 500
+
+                # Consider moving this to a more modern package at some point
+                test.grid <- sp::GridTopology(
+                    cellcentre.offset = c(
+                        floor(bbox[1]) - buff,
+                        floor(bbox[2]) - buff
+                    ),
+                    cellsize = c(20, 20),
+                    cells.dim = c(
+                        ceiling((bbox[3] - bbox[1] + buff * 2) / 20),
+                        ceiling((bbox[4] - bbox[2] + buff * 2) / 20)
+                    )
+                )
+                test.point <- sp::SpatialPoints(cbind(c(0), c(0)))
+                test.pixel <- sp::SpatialPixels(test.point, proj4string = sp::CRS(proj.aezd), round = NULL, grid = test.grid)
+
+                kud <- adehabitatHR::kernelUD(sf::as_Spatial(sp_dat_sub[, "kernel_id"]), h = 44, grid = test.pixel)
+
+                c75 <- adehabitatHR::getverticeshr(kud, 75)
+                c50 <- adehabitatHR::getverticeshr(kud, 50)
+                c25 <- adehabitatHR::getverticeshr(kud, 25)
+
+                c75$kernel_density <- 75
+                c50$kernel_density <- 50
+                c25$kernel_density <- 25
+
+                cc_sub <- rbind(c75, c50)
+                cc_sub <- rbind(cc_sub, c25)
+                cc_sub <- sf::st_as_sf(cc_sub)
+                cc_sub <- sf::st_transform(cc_sub, 4326)
+
+                cc_sub$id <- kids[k]
+
+                colony_season_period_kernels <- rbind(colony_season_period_kernels, cc_sub)
+            },
+            error = function(e) {
+                log_error("Callculating kernel ", k, " of ", length(kids), " FAILED")
+            }
         )
-
-        sp_dat_sub <- sf::st_transform(sp_dat_sub, proj.aezd)
-
-        bbox <- sf::st_bbox(sp_dat_sub)
-        buff <- 500
-
-        # Consider moving this to a more modern package at some point
-        test.grid <- sp::GridTopology(
-            cellcentre.offset = c(
-                floor(bbox[1]) - buff,
-                floor(bbox[2]) - buff
-            ),
-            cellsize = c(20, 20),
-            cells.dim = c(
-                ceiling((bbox[3] - bbox[1] + buff * 2) / 20),
-                ceiling((bbox[4] - bbox[2] + buff * 2) / 20)
-            )
-        )
-        test.point <- sp::SpatialPoints(cbind(c(0), c(0)))
-        test.pixel <- sp::SpatialPixels(test.point, proj4string = sp::CRS(proj.aezd), round = NULL, grid = test.grid)
-
-        kud <- adehabitatHR::kernelUD(sf::as_Spatial(sp_dat_sub[, "kernel_id"]), h = 44, grid = test.pixel)
-
-        c75 <- adehabitatHR::getverticeshr(kud, 75)
-        c50 <- adehabitatHR::getverticeshr(kud, 50)
-        c25 <- adehabitatHR::getverticeshr(kud, 25)
-
-        c75$kernel_density <- 75
-        c50$kernel_density <- 50
-        c25$kernel_density <- 25
-
-        cc_sub <- rbind(c75, c50)
-        cc_sub <- rbind(cc_sub, c25)
-        cc_sub <- sf::st_as_sf(cc_sub)
-        cc_sub <- sf::st_transform(cc_sub, 4326)
-
-        cc_sub$id <- kids[k]
-
-        colony_season_period_kernels <- rbind(colony_season_period_kernels, cc_sub)
     }
-    colony_season_period_kernels <- sf::st_wrap_dateline(colony_season_period_kernels, options = c("WRAPDATELINE=YES"))
+    if (nrow(colony_season_period_kernels) > 0) {
+        colony_season_period_kernels <- sf::st_wrap_dateline(colony_season_period_kernels, options = c("WRAPDATELINE=YES"))
 
-    data_in_string <- as.data.frame(stringr::str_split_fixed(as.character(colony_season_period_kernels$id), "_", 4))
-    names(data_in_string) <- c("species", "season", "colony", "period")
-    colony_season_period_kernels <- cbind(colony_season_period_kernels, data_in_string)
+        data_in_string <- as.data.frame(stringr::str_split_fixed(as.character(colony_season_period_kernels$id), "_", 4))
+        names(data_in_string) <- c("species", "season", "colony", "period")
+        colony_season_period_kernels <- cbind(colony_season_period_kernels, data_in_string)
 
 
 
-    colony_season_period_kernels <- merge(colony_season_period_kernels, dat[!duplicated(dat$kernel_id), c("kernel_id", "period_info")],
-        by.x = "id", by.y = "kernel_id", all.x = TRUE
-    )
+        colony_season_period_kernels <- merge(colony_season_period_kernels, dat[!duplicated(dat$kernel_id), c("kernel_id", "period_info")],
+            by.x = "id", by.y = "kernel_id", all.x = TRUE
+        )
 
-    period_details <- dplyr::group_by(sf::st_drop_geometry(sp_dat), species, colony, season, period) %>% dplyr::summarise(
-        locations = dplyr::n(),
-        individuals = dplyr::n_distinct(individ_id),
-        colonies = dplyr::n_distinct(colony),
-        days = n_distinct(doy),
-        months = n_distinct(month),
-        years = n_distinct(year),
-    )
-    period_details$period <- as.character(period_details$period)
-    colony_season_period_kernels <- dplyr::left_join(colony_season_period_kernels, period_details, by = join_by("species", "colony", "season", "period"))
-    colony_season_period_kernels$project <- "SEATRACK"
-    colony_season_period_kernels$technology <- tolower(data_type)
 
+        period_details <- dplyr::group_by(sf::st_drop_geometry(sp_dat), species, colony, season, period) %>% dplyr::summarise(
+            locations = dplyr::n(),
+            individuals = dplyr::n_distinct(individ_id),
+            colonies = dplyr::n_distinct(colony),
+            days = n_distinct(doy),
+            months = n_distinct(month),
+            years = n_distinct(year),
+        )
+        period_details$period <- as.character(period_details$period)
+        colony_season_period_kernels <- dplyr::left_join(colony_season_period_kernels, period_details, by = join_by("species", "colony", "season", "period"))
+        colony_season_period_kernels$project <- "SEATRACK"
+        colony_season_period_kernels$technology <- tolower(data_type)
+    }
     if (!is.null(seapop_data)) {
         # replace summer season with seapop kernel
         colony_season_period_kernels <- colony_season_period_kernels[colony_season_period_kernels$season != "summer", ]
         kernels_to_add <- seapop_kernels[seapop_kernels$species %in% colony_season_period_kernels$species &
             seapop_kernels$colony %in% colony_season_period_kernels$colony, ]
-        kernels_to_add$id <- paste(kernels_to_add$species, "summer", kernels_to_add$colony, kernels_to_add$period, sep = "_")
+        if (nrow(kernels_to_add) > 0) {
+            kernels_to_add$season <- "summer"
+            kernels_to_add$period <- kernels_to_add$year
+            kernels_to_add$id <- paste(kernels_to_add$species, kernels_to_add$season, kernels_to_add$colony, kernels_to_add$period, sep = "_")
 
-        kernels_to_add <- sf::st_transform(kernels_to_add, sf::st_crs(colony_season_period_kernels))
-        kernels_to_add <- kernels_to_add[, names(colony_season_period_kernels)]
-        colony_season_period_kernels <- dplyr::bind_rows(colony_season_period_kernels, kernels_to_add)
-
+            kernels_to_add <- sf::st_transform(kernels_to_add, sf::st_crs(colony_season_period_kernels))
+            kernels_to_add <- kernels_to_add[, names(colony_season_period_kernels)[names(colony_season_period_kernels) %in% names(kernels_to_add)]]
+            colony_season_period_kernels <- dplyr::bind_rows(colony_season_period_kernels, kernels_to_add)
+        }
         # dplyr::select(sf::st_drop_geometry(seapop_kernels), species, colony) %>% distinct() %>% dplyr::filter(species %in% colony_season_period_kernels$species)
+    }
+
+    if (nrow(colony_season_period_kernels) == 0) {
+        return(list(all_kernels = data.frame(), all_colonies = data.frame()))
     }
 
     colony_season_period_kernels$area <- NULL
@@ -246,39 +322,42 @@ get_kernel <- function(
     log_info("Calculating kernels for all colonies")
 
     all_colony_kernels <- merge_kernels(sp_dat, c("species", "period", "season"), colony_season_period_kernels)
-
-    all_colony_kernels$colony <- "All_colonies"
-    all_colony_kernels$id <- paste(
-        all_colony_kernels$species,
-        all_colony_kernels$season,
-        all_colony_kernels$colony,
-        all_colony_kernels$period,
-        all_colony_kernels$kernel_density,
-        sep = " "
-    )
+    if (nrow(all_colony_kernels)) {
+        all_colony_kernels$colony <- "All_colonies"
+        all_colony_kernels$id <- paste(
+            all_colony_kernels$species,
+            all_colony_kernels$season,
+            all_colony_kernels$colony,
+            all_colony_kernels$period,
+            all_colony_kernels$kernel_density,
+            sep = " "
+        )
+    }
 
     all_kernels <- dplyr::bind_rows(colony_season_period_kernels, all_colony_kernels)
 
     ## all seasons
-    log_info("Calculating kernels for all seasons") # DON'T DO THIS FOR SEAPOP.
-    all_season_details <- get_details(sp_dat, c("species", "period", "colony"))
-    all_colony_season_details <- get_details(sp_dat, c("species", "period"))
-    all_colony_season_details$colony <- "All_colonies"
-    all_season_details <- rbind(all_season_details, all_colony_season_details)
+    if (is.null(seapop_data)) {
+        log_info("Calculating kernels for all seasons")
+        all_season_details <- get_details(sp_dat, c("species", "period", "colony"))
+        all_colony_season_details <- get_details(sp_dat, c("species", "period"))
+        all_colony_season_details$colony <- "All_colonies"
+        all_season_details <- rbind(all_season_details, all_colony_season_details)
 
-    all_season_kernels <- merge_kernels(sp_dat, c("species", "period", "colony"), all_kernels, all_season_details)
+        all_season_kernels <- merge_kernels(sp_dat, c("species", "period", "colony"), all_kernels, all_season_details)
 
-    all_season_kernels$season <- "All_seasons"
-    all_season_kernels$id <- paste(
-        all_season_kernels$species,
-        all_season_kernels$season,
-        all_season_kernels$colony,
-        all_season_kernels$period,
-        all_season_kernels$kernel_density,
-        sep = " "
-    )
+        all_season_kernels$season <- "All_seasons"
+        all_season_kernels$id <- paste(
+            all_season_kernels$species,
+            all_season_kernels$season,
+            all_season_kernels$colony,
+            all_season_kernels$period,
+            all_season_kernels$kernel_density,
+            sep = " "
+        )
 
-    all_kernels <- dplyr::bind_rows(colony_season_period_kernels, all_season_kernels)
+        all_kernels <- dplyr::bind_rows(colony_season_period_kernels, all_season_kernels)
+    }
 
     ## all periods -----
     log_info("Calculating kernels for all periods")
@@ -286,14 +365,19 @@ get_kernel <- function(
     all_colony_period_details <- get_details(sp_dat, c("species", "season"))
     all_colony_period_details$colony <- "All_colonies"
 
-    # DON'T DO THIS FOR SEAPOP
-    all_season_period_details <- get_details(sp_dat, c("species", "colony"))
-    all_season_period_details$season <- "All_seasons"
+    if (is.null(seapop_data)) {
+        all_season_period_details <- get_details(sp_dat, c("species", "colony"))
+        all_season_period_details$season <- "All_seasons"
+        all_season_period_colony_detail <- get_details(sp_dat, c("species"))
+        all_season_period_colony_detail$colony <- "All_colonies"
+        all_season_period_colony_detail$season <- "All_seasons"
+    } else {
+        all_season_period_details <- data.frame()
+        all_season_period_colony_detail <- data.frame()
+    }
 
-    all_season_period_colony_detail <- get_details(sp_dat, c("species"))
-    all_season_period_colony_detail$colony <- "All_colonies"
-    all_season_period_colony_detail$season <- "All_seasons"
-    ###
+
+
 
     all_period_details <- rbind(all_period_details, all_colony_period_details, all_season_period_details, all_season_period_colony_detail)
     all_period_kernels <- merge_kernels(sp_dat, c("species", "season", "colony"), all_kernels, all_period_details)
@@ -308,8 +392,17 @@ get_kernel <- function(
         sep = " "
     )
 
+
     all_kernels <- dplyr::bind_rows(colony_season_period_kernels, all_period_kernels)
 
+    if (!is.null(seapop_data)) {
+        all_kernels <- dplyr::select(all_kernels, -locations, -individuals, -days, -months, -years)
+        all_kernels$project[is.na(all_kernels$project) & all_kernels$season == "summer"] <- "SEAPOP"
+        all_kernels$project[is.na(all_kernels$project) & !all_kernels$season == "summer"] <- "SEATRACK"
+        all_kernels$technology[is.na(all_kernels$technology) & all_kernels$season == "summer"] <- "gps"
+        all_kernels$technology[is.na(all_kernels$technology) & !all_kernels$season == "summer"] <- "gls"
+        all_kernels <- all_kernels[all_kernels$period == "All_periods", ]
+    }
 
     # Replace kernels with colony locations
     all_colonies <- sf::st_drop_geometry(all_kernels)
@@ -329,35 +422,34 @@ get_kernel <- function(
             sf::st_union(current_colony_points$geometry)
     }
 
-    # If seapop, throw out summer and replace with seapop data.
-
     all_kernels <- sf::st_transform(all_kernels, 3857)
+    all_colonies <- sf::st_transform(all_colonies, 3857)
 
-    sf::st_crs(all_colonies) <- 3857
+    if (export) {
+        if (!dir.exists(file.path(output_folder))) {
+            dir.create(output_folder)
+        }
 
-    if (!dir.exists(file.path(output_folder))) {
-        dir.create(output_folder)
-    }
+        overview <- dplyr::select(dat, species, colony, season, period, period_info) %>% dplyr::distinct()
 
-    overview <- dplyr::select(dat, species, colony, season, period, period_info) %>% dplyr::distinct()
+        for (species in unique(all_kernels$species)) {
+            write.table(overview[overview$species == species, ],
+                file = file.path(output_folder, paste("content_WebApp_", species, ".txt", sep = "")),
+                sep = "\t", row.names = FALSE, fileEncoding = "UTF-8"
+            )
 
-    for (species in unique(all_kernels$species)) {
-        write.table(overview[overview$species == species, ],
-            file = file.path(output_folder, paste("content_WebApp_", species, ".txt", sep = "")),
-            sep = "\t", row.names = FALSE, fileEncoding = "UTF-8"
-        )
+            sf::st_write(all_kernels[all_kernels$species == species, ],
+                file.path(output_folder, paste("KDE_", species_name, ".geojson", sep = "")),
+                delete_layer = TRUE, # overwrite existing layer
+                driver = "GeoJSON"
+            )
 
-        sf::st_write(all_kernels[all_kernels$species == species, ],
-            file.path(output_folder, paste("KDE_", species_name, ".geojson", sep = "")),
-            delete_layer = TRUE, # overwrite existing layer
-            driver = "GeoJSON"
-        )
-
-        sf::st_write(all_colonies[all_colonies$species == species, ],
-            file.path(output_folder, paste("COLONIES_", species_name, ".geojson", sep = "")),
-            delete_layer = TRUE, # overwrite existing layer
-            driver = "GeoJSON"
-        )
+            sf::st_write(all_colonies[all_colonies$species == species, ],
+                file.path(output_folder, paste("COLONIES_", species_name, ".geojson", sep = "")),
+                delete_layer = TRUE, # overwrite existing layer
+                driver = "GeoJSON"
+            )
+        }
     }
 
     return(list(all_kernels = all_kernels, all_colonies = all_colonies))
@@ -380,6 +472,11 @@ get_details <- function(sp_dat, grouping_vars) {
 merge_kernels <- function(sp_dat, grouping_vars, kernel_dataframe, details = NULL) {
     if (is.null(details)) {
         details <- get_details(sp_dat, grouping_vars)
+    }
+    for (grouping_var in grouping_vars) {
+        if (is.character(kernel_dataframe[[grouping_var]])) {
+            details[[grouping_var]] <- as.character(details[[grouping_var]])
+        }
     }
     result <- data.frame() # One row per species, season, period
     for (i in seq_len(nrow(details))) {
