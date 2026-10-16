@@ -100,6 +100,7 @@ additional_notes <- knitr::knit_expand(text = "| {{params$notes}}")
 
 has_pop <- any(grepl("Abundance_model", included_data))
 has_pos <- "GLS_positional_data" %in% included_data
+has_gps_gsm_pos <- "GPS_GSM_positional_data" %in% included_data
 has_irma_pos <- any(grepl("IRMA_positional_data", included_data))
 # To pull the generic overview from the YAML
 if (has_pop) {
@@ -135,6 +136,7 @@ knitr::include_graphics(image_path)
 |
 `r if(has_pos) {"| *For more information about the processing of GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2735757)*"}`
 `r if(has_pos) {"| *contact re. GLS data processing: vegard.brathen@nina.no*"}`
+`r if(has_gps_gsm_pos) {"| *contact re. GPS-GSM data: nanette.verboven@npolar.no*"}`
 `r if(has_pop) {"| *For more information about the creation of population maps, please see this [paper](https://www.int-res.com/articles/meps_oa/m676p255.pdf)*"}`
 `r if(has_pop) {"| *Contact re. Population maps: arnaud.tarroux@nina.no*"}`
 `r if(has_irma_pos) {"| *For more information about the use of IRMA to fill in gaps in the GLS data, please see this [report](https://brage.nina.no/nina-xmlui/handle/11250/2595504) and the disclaimer below*"}`
@@ -171,6 +173,14 @@ knitr::include_graphics(image_path)
 if (has_pos) {
   pos_path <- params$file_list[[which(grepl("GLS_positional_data", names(params$file_list)))[1]]]$path
   res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_locations.Rmd", package = "seatrackRtools"),
+    quiet = TRUE, envir = environment()
+  )
+  cat(res, sep = "\n")
+}
+
+if (has_gps_gsm_pos) {
+  gps_gsm_pos_path <- params$file_list[[which(grepl("GPS_GSM_positional_data", names(params$file_list)))[1]]]$path
+  res <- knitr::knit_child(system.file("Rmd", "EXAMPLES_gps_gsm_locations.Rmd", package = "seatrackRtools"),
     quiet = TRUE, envir = environment()
   )
   cat(res, sep = "\n")
