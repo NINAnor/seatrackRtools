@@ -1,4 +1,4 @@
-### GLS positional data
+### GPS-GSM positional data
 
 #### Prepare workspace & load data
 ```{r, fake_loc_setup, echo=TRUE, eval = FALSE, message=FALSE}
