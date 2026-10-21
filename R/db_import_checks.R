@@ -152,7 +152,7 @@ fix_metadata_back_on_nest <- function(metadata) {
 }
 
 fix_colony <- function(colonies, colony_only = FALSE) {
-    colonies_df <- tibble(md_location = colonies)
+    colonies_df <- tibble(md_location = trimws(colonies))
     db_colonies <- seatrackR::getColonies()
     db_locations <- seatrackR::getColonies(allLocations = TRUE)
 
