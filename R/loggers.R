@@ -313,6 +313,8 @@ handle_returned_loggers <- function(colony, master_startup, logger_returns, rest
     }
 
     log_trace("Check returned loggers")
+    master_startup <- master_startup[order(master_startup$starttime_gmt), ]
+
     valid_status <- !logger_returns$status %in% c("No download attemted", "No download attempted") & !is.na(logger_returns$status)
     unhandled_loggers <- tibble()
     if (any(valid_status)) {
