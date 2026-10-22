@@ -28,7 +28,7 @@ get_field_plan_path <- function(field_plan_path = file.path(the$sea_track_folder
 load_field_plan_sheet <- function(field_plan_path = file.path(the$sea_track_folder, "Admin/Fieldplanning"), field_year = c(as.numeric(format(Sys.Date(), "%Y"))), return_df = TRUE) {
     full_field_plan_path <- get_field_plan_path(field_plan_path, field_year)
 
-    field_plan_wb <- wb_load(full_field_plan_path)
+    field_plan_wb <- openxlsx2::wb_load(full_field_plan_path)
     if (return_df) {
         return(get_field_plan_df(field_plan_wb))
     } else {
@@ -76,8 +76,8 @@ load_clean_field_plan <- function(field_plan_path = file.path(the$sea_track_fold
 #' @export
 #' @concept field_planning
 get_field_plan_df <- function(field_plan_wb = NULL) {
-    field_plan_sheet <- openxlsx2::wb_to_df(wb, sheet = "Main", na.strings = c("", "?"))
-
+    field_plan_sheet <- openxlsx2::wb_to_df(field_plan_wb, sheet = "Main", na.strings = c("", "?"))
+    field_plan_sheet <- field_plan_sheet[, !is.na(colnames(field_plan_sheet))]
 
     field_plan_sheet$`Ocean area` <- as.character(field_plan_sheet$`Ocean area`)
     field_plan_sheet <- field_plan_sheet[!is.na(field_plan_sheet$Colony) & !is.na(field_plan_sheet$`Ocean area`), ]
