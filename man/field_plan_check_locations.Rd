@@ -4,12 +4,10 @@
 \alias{field_plan_check_locations}
 \title{Check and update locations in the field plan sheet}
 \usage{
-field_plan_check_locations(field_plan_sheet, new_locations = NULL)
+field_plan_check_locations(field_plan_sheet)
 }
 \arguments{
 \item{field_plan_sheet}{A data frame containing the field plan data}
-
-\item{new_locations}{An optional data frame containing new locations with columns 'colony' and 'lat'}
 }
 \value{
 A data frame with updated and ordered locations

@@ -9,10 +9,10 @@ make_annual_report_tables(
   field_year = c(as.numeric(format(Sys.Date(), "\%Y"))),
   body_cell_width = 9,
   event_table_header_heights = c(100, 30),
-  export_dir = file.path(the$sea_track_folder,
+  base_export_dir = file.path(the$sea_track_folder,
     "Admin/01_Annual reports/Status_Report_for_funders_"),
-  all_metadata = NULL,
-  new_locations = NULL
+  export_clean_plan = TRUE,
+  all_metadata = NULL
 )
 }
 \arguments{
@@ -24,11 +24,9 @@ make_annual_report_tables(
 
 \item{event_table_header_heights}{Heights of header rows in the event tables, default is c(100, 30)}
 
-\item{export_dir}{Directory to export tables to. Default is "Admin/01_Annual reports/Status_Report_for_funders_" in the sea track folder. The field year will be appended to the directory name}
+\item{base_export_dir}{Directory to export tables to. Default is "Admin/01_Annual reports/Status_Report_for_funders_" in the sea track folder. The field year will be appended to the directory name}
 
 \item{all_metadata}{Optional data frame of all metadata, if not provided will be loaded from master import}
-
-\item{new_locations}{Optional dataframe of new locations to check against field plan}
 }
 \description{
 This function generates tables for the annual report based on the field plan, metadata and database.

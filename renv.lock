@@ -7931,7 +7931,7 @@
     },
     "seatrackR": {
       "Package": "seatrackR",
-      "Version": "0.0.5",
+      "Version": "0.0.62",
       "Source": "GitHub",
       "Title": "Interface functions for the Seatrack database",
       "Authors@R": "c(person(given = \"Jens\",  family = \"Åström\",  email = \"jens.astrom@nina.no\",  role = c(\"aut\"), comment = c(ORCID = \"0000-0002-6114-0440\", note=\"Original creator\")), person(given = \"Julian\",  family = \"Evans\",  role = c(\"aut\", \"cre\"),  email = \"julian.evans@nina.no\"))",
@@ -7978,7 +7978,8 @@
         "shinyjs",
         "bslib",
         "future",
-        "promises"
+        "promises",
+        "DT"
       ],
       "Depends": [
         "R (>= 4.1)"
@@ -7996,7 +7997,7 @@
       "RemoteUsername": "ninanor",
       "RemoteRepo": "seatrackR",
       "RemoteRef": "main",
-      "RemoteSha": "cb6ea8c9a259db0ed0fc09bb3ac860f4f2f66e9a",
+      "RemoteSha": "e221491c081f8dbb0bb737f579ddcf60d85d506b",
       "Remotes": "seatrackR=github::NINAnor/NinaR"
     },
     "seatrackRgls": {
