@@ -1,6 +1,24 @@
+merge_data_requests <- function(request_1, request_2) {
+    for (data_name in names(request_1$all_data)) {
+        r1_data <- request_1$all_data[[data_name]]$data
+        r2_data <- request_2$all_data[[data_name]]$data
+        combined_data <- rbind(r1_data, r2_data)
+        request_1$all_data[[data_name]]$data <- combined_data
+    }
+    return(request_1)
+}
+
+merge_all_data_requests <- function(requests) {
+    request_1 <- requests[[1]]
+    for (i in 2:length(requests)) {
+        request_1 <- merge_data_requests(request_1, requests[[i]])
+    }
+    return(request_1)
+}
+
 get_col_from_list <- function(data_list, col_names) {
     for (curr_data in data_list) {
-        for (col_name in col_names){
+        for (col_name in col_names) {
             if (col_name %in% names(curr_data)) {
                 return(curr_data[[col_name]])
             }
@@ -89,7 +107,6 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
         stop("request_name must be provided.")
     }
 
-
     tmp_dir <- tempfile(pattern = paste0(request_name, "_"))
     dir.create(tmp_dir, showWarnings = FALSE, recursive = TRUE)
     dir.create(file.path(tmp_dir, "data"), recursive = TRUE)
@@ -109,25 +126,19 @@ export_data_package <- function(data_request_result = NULL, all_data = NULL, req
         x$data
     })
 
-    if (is.null(species)) {
-        species <- get_col_from_list(all_data_data_only, c("species", "deployment_species"))
-        if (!is.null(species)) {
-            species <- unique(species)
-        }
+    data_species <- get_col_from_list(all_data_data_only, c("species", "deployment_species"))
+    if (!is.null(data_species)) {
+        species <- unique(data_species)
     }
 
-    if (is.null(times)) {
-        times <- get_col_from_list(all_data_data_only, "date_time")
-        if (!is.null(times)) {
-            times <- c(min(as.Date(times)), max(as.Date(times)))
-        }
+    data_times <- get_col_from_list(all_data_data_only, "date_time")
+    if (!is.null(data_times)) {
+        times <- c(min(as.Date(data_times)), max(as.Date(data_times)))
     }
 
-    if (is.null(colony)) {
-        colony <- get_col_from_list(all_data_data_only, "colony")
-        if (!is.null(colony)) {
-            colony <- unique(colony)
-        }
+    data_colony <- get_col_from_list(all_data_data_only, "colony")
+    if (!is.null(data_colony)) {
+        colony <- unique(data_colony)
     }
 
     sessions <- unique(get_col_from_list(all_data_data_only, "session_id"))
@@ -336,14 +347,39 @@ create_readme <- function(request_name, file_list, species, colonies, times, dat
 #' @concept data_requests
 data_request <- function(
     request_name,
-    data_types = c("raw_data", "GLS_positional_data", "GPS-GSM_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps", "logger_info", "immersion"),
-    start_year = "2000", end_year = format(Sys.Date(), "%Y"), species = NULL, colony = NULL,
+    data_types = c(
+        "raw_data",
+        "GLS_positional_data",
+        "GPS-GSM_positional_data",
+        "GPS_positional_data",
+        "IRMA_positional_data",
+        "individual_data",
+        "light",
+        "temperature",
+        "activity",
+        "population_maps",
+        "logger_info",
+        "immersion"
+    ),
+    start_year = "2000", end_year = format(Sys.Date(), "%Y"),
+    species = NULL,
+    colony = NULL,
+    location = NULL,
     age_deployment = "A",
     project = NULL,
     exclude_embargoed = TRUE,
     session_ID = NULL,
-    export = TRUE, output_dir = NULL,
-    additional_notes = "", additional_data_files = list(), additional_files = list(), additional_data = list()) {
+    lme_area = NULL,
+    polygons = NULL,
+    logger_types = NULL,
+    has_pos = NULL,
+    export = TRUE,
+    output_dir = NULL,
+    additional_notes = "", 
+    additional_data_files = list(), 
+    additional_files = list(), 
+    additional_data = list()) {
+
     start_date <- as.Date(paste0(start_year, "-01-01"))
     end_date <- as.Date(paste0(end_year, "-12-31")) + 1
     all_data <- list()
@@ -356,7 +392,6 @@ data_request <- function(
     # check colonies
     if (!is.null(colony)) {
         all_locations <- seatrackR::getColonies(allLocations = TRUE)
-        locations <- all_locations$location_name[all_locations$colony_int_name %in% colony]
 
         missing_colony_bool <- !colony %in% all_locations$colony_int_name
         if (any(missing_colony_bool)) {
@@ -374,11 +409,63 @@ data_request <- function(
         }
     }
 
+    if ("GLS_positional_data" %in% data_types || "IRMA_positional_data" %in% data_types) {
+        if (is.null(logger_types)) {
+            logger_types <- c()
+        }
+        logger_types <- c(logger_types, "GLS")
+    }
+    if ("GPS_positional_data" %in% data_types) {
+        if (is.null(logger_types)) {
+            logger_types <- c()
+        }
+        logger_types <- c(logger_types, "GPS")
+    }
+    if ("GPS-GSM_positional_data" %in% data_types) {
+        if (is.null(logger_types)) {
+            logger_types <- c()
+        }
+        logger_types <- c(logger_types, "GPS-GSM")
+    }
+
+    if (is.null(has_pos) && ("GLS_positional_data" %in% data_types || "GPS-GSM_positional_data" %in% data_types)) {
+        has_pos <- TRUE
+    }
+
+    has_irma <- "IRMA_positional_data" %in% data_types
+    if (!has_irma) {
+        has_irma <- NULL
+    }
+
     log_info(paste("Starting data request, datatypes are", paste(data_types, collapse = " ")))
+
+    # Get sessions first
+    sessions <- seatrackR::getSessionInfo(
+        session_id = session_ID,
+        colony = colony,
+        location = location,
+        dates_deployed_overlap = c(start_date, end_date),
+        deployment_age_class = age_deployment,
+        species = species,
+        project = project,
+        embargoed = !exclude_embargoed,
+        lme_area = lme_area,
+        polygons = polygons,
+        as_tibble = FALSE,
+        has_pos = has_pos,
+        has_irma = has_irma,
+        logger_type = logger_types
+    )
+
+    session_ID <- dplyr::distinct(sessions, session_id) %>% dplyr::pull(session_id)
+
+    # Chunk session IDs
+
+    # Pull all other tables using session IDs
 
     if ("GLS_positional_data" %in% data_types) {
         log_info("Fetching GLS position data...")
-        all_pos <- seatrackR::getPositions(species = species, colony = locations, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+        all_pos <- seatrackR::getPositions(species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
         all_data$GLS_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
             description = "GLS Positional data"
@@ -387,7 +474,7 @@ data_request <- function(
 
     if ("GPS-GSM_positional_data" %in% data_types) {
         log_info("Fetching GPS-GSM position data...")
-        all_pos <- seatrackR::getPositions(datatype = "GPS-GSM", species = species, colony = locations, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+        all_pos <- seatrackR::getPositions(datatype = "GPS-GSM", species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
         all_data$GPS_GSM_positional_data <- list(
             data = all_pos[all_pos$date_time >= start_date & all_pos$date_time < end_date, ],
             description = "GPS-GSM Positional data"
@@ -396,59 +483,27 @@ data_request <- function(
 
     if ("IRMA_positional_data" %in% data_types) {
         log_info("Fetching IRMA position data...")
-        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = locations, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+        irma_pos <- seatrackR::getPositions(datatype = "IRMA", species = species, colony = colony, age_deployment_class = age_deployment, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
         all_data$IRMA_positional_data <- list(
             data = irma_pos[irma_pos$date_time >= start_date & irma_pos$date_time < end_date, ],
             description = "IRMA Positional data"
         )
     }
 
+    # Add additional data if provided
     all_data <- c(all_data, additional_data)
 
-    if (any(c("GLS_positional_data", "GPS_GSM_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity") %in% c(data_types, names(all_data)))) {
-        log_info("Fetching individual data...")
-        individuals <- seatrackR::getIndividInfo(colony = locations, year = NULL, age_at_deployment = age_deployment, species = species, session_id = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+    # Always fetch individual data
+    log_info("Fetching individual data...")
+    individuals <- seatrackR::getIndividInfo(colony = colony, location = location, year = NULL, age_at_deployment = age_deployment, species = species, session_id = session_ID, project = project, exclude_embargoed = exclude_embargoed)
+    all_data$individual_data <- list(data = individuals, description = "Individual information data")
 
-        if ("individual_data" %in% data_types) {
-            # Filter the individual information based on the data being returned
-            session_ids <- c()
-            if ("GLS_positional_data" %in% names(all_data)) {
-                session_ids <- c(session_ids, unique(all_data$GLS_positional_data$data$session_id))
-            }
-            if ("GPS_GSM_positional_data" %in% names(all_data)) {
-                session_ids <- c(session_ids, unique(all_data$GPS_GSM_positional_data$data$session_id))
-            }
-            if ("IRMA_positional_data" %in% names(all_data)) {
-                session_ids <- c(session_ids, unique(all_data$IRMA_positional_data$data$session_id))
-            }
-            if (length(session_ids) > 0) {
-                individuals <- individuals[individuals$session_id %in% session_ids, ]
-            } else {
-                overlap_individuals <- lapply(unique(individuals$session_id), function(x) {
-                    current_individ <- individuals[individuals$session_id == x, ]
-                    deployment <- current_individ[current_individ$eventType == "Deployment", ]
-                    retrieval <- current_individ[current_individ$eventType == "Retrieval", ]
-                    deployment_date <- min(deployment$status_date)
-                    if (nrow(retrieval) > 0) {
-                        retrieval_date <- max(retrieval$status_date)
-                    } else {
-                        retrieval_date <- as.Date(Inf)
-                    }
+    # BUT WHAT INDIVIDUAL DATA? SHOULD WE RETURN FRON INDIVIDUAL_INFO? SEPERATE TO THE ENCOUNTER EVENTS?
 
-                    if ((deployment_date <= end_date) && (retrieval_date >= start_date)) {
-                        return(current_individ)
-                    } else {
-                        return(NULL)
-                    }
-                })
-                individuals <- do.call(rbind, overlap_individuals)
-            }
-            all_data$individual_data <- list(data = individuals, description = "Individual information data")
-        }
-    }
+
     if ("raw_data" %in% data_types) {
         all_data$raw_data <- list(
-            data = find_raw_data(session_ids = unique(all_data$individual_data$data$session_id)),
+            data = find_raw_data(session_ids = session_ID),
             description = "Raw data files"
         )
     }
@@ -456,33 +511,10 @@ data_request <- function(
     if ("logger_info" %in% data_types) {
         log_info("Fetching logger data...")
 
+        logger_info <- seatrackR::getLoggerInfo(session = session_ID, colony = colony, species = species, project = project, exclude_embargoed = exclude_embargoed)
 
-        session_ids <- c()
-        if ("GLS_positional_data" %in% names(all_data)) {
-            session_ids <- c(session_ids, unique(all_data$GLS_positional_data$data$session_id))
-        }
-        if ("GPS_GSM_positional_data" %in% names(all_data)) {
-            session_ids <- c(session_ids, unique(all_data$GPS_GSM_positional_data$data$session_id))
-        }
-        if ("IRMA_positional_data" %in% names(all_data)) {
-            session_ids <- c(session_ids, unique(all_data$IRMA_positional_data$data$session_id))
-        }
-        if ("raw_data" %in% names(all_data)) {
-            session_ids <- c(session_ids, unique(c(all_data$raw_data$data$local_files$session_id, all_data$raw_data$data$ftp_files$session_id)))
-        }
-        if ("individual_data" %in% names(all_data)) {
-            session_ids <- c(session_ids, unique(all_data$individual_data$data$session_id))
-        }
-
-        if (length(session_ids) > 0) {
-            logger_info <- seatrackR::getLoggerInfo(session = session_ids, exclude_embargoed = exclude_embargoed)
-        } else {
-            logger_info <- seatrackR::getLoggerInfo(colony = locations, species = species, project = project, exclude_embargoed = exclude_embargoed)
-
-            logger_info <- logger_info[logger_info$deployment_date >= start_date & (!is.na(logger_info$retrieval_date) & logger_info$retrieval_date < end_date), ]
-            session_ids <- unique(logger_info$session_id)
-        }
         all_data$logger_info <- list(data = logger_info, description = "Logger info")
+        # BUT WHAT LOGGER INFO?
     }
 
     descriptions <- c(
@@ -492,7 +524,7 @@ data_request <- function(
     if (length(types) > 0) {
         activity_light_temp <- lapply(types, function(type) {
             log_info(paste0("Fetching ", type, " data..."))
-            recordings <- seatrackR::getRecordings(type = type, sessionId = session_ids, exclude_embargoed = exclude_embargoed)
+            recordings <- seatrackR::getRecordings(type = type, colony = colony, location = location, species = species, sessionId = session_ID, project = project, exclude_embargoed = exclude_embargoed)
             recordings <- recordings[recordings$date_time >= start_date & recordings$date_time < end_date, ]
             return(list(data = recordings, description = descriptions[type]))
         })
@@ -516,24 +548,13 @@ data_request <- function(
     # should log the removal of the data
     all_data <- all_data[data_exists_bool]
 
-    if (any(c("GLS_positional_data", "GPS_GSM_positional_data", "IRMA_positional_data", "light_data", "temperature_data", "immersion_data") %in% names(all_data))) {
-        times <- NULL
-    } else {
-        times <- c(start_date, end_date)
-    }
-
-    if (any(c("GLS_positional_data", "GPS_GSM_positional_data", "IRMA_positional_data", "individual_data") %in% names(all_data))) {
-        species <- NULL
-        colony <- NULL
-    }
-
     data_request_result <- list(
         all_data = all_data,
         request_name = request_name,
         output_dir = output_dir,
         species = species,
         colony = colony,
-        times = times,
+        times = c(start_date, end_date),
         additional_notes = additional_notes,
         additional_data_files = additional_data_files,
         additional_files = additional_files

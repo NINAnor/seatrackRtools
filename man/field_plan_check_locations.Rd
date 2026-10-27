@@ -19,7 +19,7 @@ calculates the distance of each ocean area from Trondheim, and orders the ocean 
 \examples{
 \dontrun{
 seatrackR::connectSeatrack()
-field_plan_sheet <- get_field_plan("path/to/fieldplan.xlsx")
+field_plan_sheet <- load_field_plan_sheet("path/to/fieldplan.xlsx")
 new_locations <- data.frame(colony = c("Nord-Troms", "\u00C5gotnes"), lat = c(70, 60.40))
 field_plan_check_locations(field_plan_sheet, new_locations)
 }
