@@ -256,10 +256,19 @@ Functions to load and handle data from the field planning sheet
   : Check and update locations in the field plan sheet
 - [`field_plan_combine_locations()`](https://ninanor.github.io/seatrackRtools/reference/field_plan_combine_locations.md)
   : Combine duplicate locations/species in the field plan sheet
+- [`generate_next_field_plan()`](https://ninanor.github.io/seatrackRtools/reference/generate_next_field_plan.md)
+  : Generate the next year's field plan based on the current year's
+  field plan sheet.
 - [`get_clean_field_plan()`](https://ninanor.github.io/seatrackRtools/reference/get_clean_field_plan.md)
-  : Read and clean the field plan data
-- [`get_field_plan()`](https://ninanor.github.io/seatrackRtools/reference/get_field_plan.md)
-  : Read and process the field plan Excel sheet
+  : Clean the field plan data
+- [`get_field_plan_df()`](https://ninanor.github.io/seatrackRtools/reference/get_field_plan_df.md)
+  : Read and process a field plan Excel sheet
+- [`get_field_plan_path()`](https://ninanor.github.io/seatrackRtools/reference/get_field_plan_path.md)
+  : Get the path to the field plan Excel sheet
+- [`load_clean_field_plan()`](https://ninanor.github.io/seatrackRtools/reference/load_clean_field_plan.md)
+  : Load and clean field plan data
+- [`load_field_plan_sheet()`](https://ninanor.github.io/seatrackRtools/reference/load_field_plan_sheet.md)
+  : Load a field plan sheet
 
 ## Website metadata app
 
@@ -300,6 +309,8 @@ Functions to create and export annual report appendix tables
   appropriate styling and formatting for use in the annual report.
 - [`make_annual_report_tables()`](https://ninanor.github.io/seatrackRtools/reference/make_annual_report_tables.md)
   : Export all tables for annual report
+- [`phase_summary_table()`](https://ninanor.github.io/seatrackRtools/reference/phase_summary_table.md)
+  : Function to generate a summary table of field plan data by phase
 
 ## General utility functions
 

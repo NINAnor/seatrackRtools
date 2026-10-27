@@ -5,7 +5,7 @@ First, load the field planning excel file
 ``` r
 
 field_plan_path <- "fieldplanning2025_fieldsuksess.xlsx"
-field_plan_sheet <- get_field_plan(field_plan_path)
+field_plan_sheet <- load_field_plan_sheet(field_plan_path)
 ```
 
 Check locations against the database, appending a lattitude and

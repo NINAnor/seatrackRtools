@@ -58,17 +58,22 @@ Currently netCDF files are not included in the data request package, so these ha
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">data_request</span><span class="op">(</span></span>
 <span>  <span class="va">request_name</span>,</span>
-<span>  data_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raw_data"</span>, <span class="st">"GLS_positional_data"</span>, <span class="st">"IRMA_positional_data"</span>,</span>
-<span>    <span class="st">"individual_data"</span>, <span class="st">"light"</span>, <span class="st">"temperature"</span>, <span class="st">"activity"</span>, <span class="st">"population_maps"</span>,</span>
-<span>    <span class="st">"logger_info"</span>, <span class="st">"immersion"</span><span class="op">)</span>,</span>
+<span>  data_types <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"raw_data"</span>, <span class="st">"GLS_positional_data"</span>, <span class="st">"GPS-GSM_positional_data"</span>,</span>
+<span>    <span class="st">"GPS_positional_data"</span>, <span class="st">"IRMA_positional_data"</span>, <span class="st">"individual_data"</span>, <span class="st">"light"</span>,</span>
+<span>    <span class="st">"temperature"</span>, <span class="st">"activity"</span>, <span class="st">"population_maps"</span>, <span class="st">"logger_info"</span>, <span class="st">"immersion"</span><span class="op">)</span>,</span>
 <span>  start_year <span class="op">=</span> <span class="st">"2000"</span>,</span>
 <span>  end_year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"%Y"</span><span class="op">)</span>,</span>
 <span>  species <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  colony <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  location <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  age_deployment <span class="op">=</span> <span class="st">"A"</span>,</span>
 <span>  project <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  exclude_embargoed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  session_ID <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lme_area <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  polygons <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  logger_types <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  has_pos <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  export <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  output_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  additional_notes <span class="op">=</span> <span class="st">""</span>,</span>
@@ -87,7 +92,7 @@ Currently netCDF files are not included in the data request package, so these ha
 
 
 <dt id="arg-data-types">data_types<a class="anchor" aria-label="anchor" href="#arg-data-types"></a></dt>
-<dd><p>A character vector specifying the types of data to include in the request. Possible values are "GLS_positional_data", "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps" and "logger_info". Defaults to all types.</p></dd>
+<dd><p>A character vector specifying the types of data to include in the request. Possible values are "GLS_positional_data", "GPS-GSM_positional_data" "IRMA_positional_data", "individual_data", "light", "temperature", "activity", "population_maps" and "logger_info". Defaults to all types.</p></dd>
 
 
 <dt id="arg-start-year">start_year<a class="anchor" aria-label="anchor" href="#arg-start-year"></a></dt>

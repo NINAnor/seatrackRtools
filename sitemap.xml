@@ -44,13 +44,15 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/field_plan_check_locations.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/field_plan_combine_locations.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/find_raw_data.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/generate_next_field_plan.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_activity_db_sessions.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_all_locations.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_can_dummy_models.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_clean_field_plan.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_event_table_df.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_event_table_ft.html</loc></url>
-<url><loc>https://ninanor.github.io/seatrackRtools/reference/get_field_plan.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/get_field_plan_df.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/get_field_plan_path.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_history_table.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_irma_from_onedrive.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/get_location_unprocessed.html</loc></url>
@@ -90,6 +92,8 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/index.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/load_activity.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/load_all_master_import.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/load_clean_field_plan.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/load_field_plan_sheet.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/load_immersion_data.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/load_light_data.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/load_master_import.html</loc></url>
@@ -105,6 +109,7 @@
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/parse_data_request_folder.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/parse_data_request_pdf.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/parse_migratetech_header.html</loc></url>
+<url><loc>https://ninanor.github.io/seatrackRtools/reference/phase_summary_table.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/prep_SEATRACK_ColonyRepr.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/prepare_master_sheet_for_db.html</loc></url>
 <url><loc>https://ninanor.github.io/seatrackRtools/reference/prepare_session_batch.html</loc></url>

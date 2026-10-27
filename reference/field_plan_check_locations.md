@@ -9,7 +9,7 @@ Trondheim.
 ## Usage
 
 ``` r
-field_plan_check_locations(field_plan_sheet, new_locations = NULL)
+field_plan_check_locations(field_plan_sheet)
 ```
 
 ## Arguments
@@ -17,11 +17,6 @@ field_plan_check_locations(field_plan_sheet, new_locations = NULL)
 - field_plan_sheet:
 
   A data frame containing the field plan data
-
-- new_locations:
-
-  An optional data frame containing new locations with columns 'colony'
-  and 'lat'
 
 ## Value
 
@@ -32,7 +27,7 @@ A data frame with updated and ordered locations
 ``` r
 if (FALSE) { # \dontrun{
 seatrackR::connectSeatrack()
-field_plan_sheet <- get_field_plan("path/to/fieldplan.xlsx")
+field_plan_sheet <- load_field_plan_sheet("path/to/fieldplan.xlsx")
 new_locations <- data.frame(colony = c("Nord-Troms", "\u00C5gotnes"), lat = c(70, 60.40))
 field_plan_check_locations(field_plan_sheet, new_locations)
 } # }

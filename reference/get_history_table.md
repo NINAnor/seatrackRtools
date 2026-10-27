@@ -10,12 +10,7 @@ moved to seatrackRdb at some point.
 ## Usage
 
 ``` r
-get_history_table(
-  history_year,
-  gps_models,
-  gsm_models,
-  event_type = c("Deployment", "Retrieval")
-)
+get_history_table(history_year, event_type = c("deployment", "retrieval"))
 ```
 
 ## Arguments
@@ -27,7 +22,7 @@ get_history_table(
 - event_type:
 
   A vector specifying the event type(s) to filter by (defaults to
-  c("Deployment", "Retrieval"))
+  c("deployment", "retrieval"))
 
 ## Value
 

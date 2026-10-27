@@ -1,0 +1,27 @@
+# Generate the next year's field plan based on the current year's field plan sheet.
+
+This function takes the current year's field plan sheet, processes it,
+and generates a new field plan sheet for the next year. It updates the
+relevant columns, moves delivery dates, and fills in retrievals and
+deployments based on the current year's data.
+
+## Usage
+
+``` r
+generate_next_field_plan(
+  field_year = c(as.numeric(format(Sys.Date(), "%Y"))),
+  all_locations = NULL
+)
+```
+
+## Arguments
+
+- field_year:
+
+  The year for which to generate the next field plan (default is the
+  current year).
+
+## Value
+
+A new field plan sheet for the next year is saved in the appropriate
+directory. The function does not return any value.

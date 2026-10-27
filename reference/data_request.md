@@ -18,17 +18,22 @@ needed.
 ``` r
 data_request(
   request_name,
-  data_types = c("raw_data", "GLS_positional_data", "IRMA_positional_data",
-    "individual_data", "light", "temperature", "activity", "population_maps",
-    "logger_info", "immersion"),
+  data_types = c("raw_data", "GLS_positional_data", "GPS-GSM_positional_data",
+    "GPS_positional_data", "IRMA_positional_data", "individual_data", "light",
+    "temperature", "activity", "population_maps", "logger_info", "immersion"),
   start_year = "2000",
   end_year = format(Sys.Date(), "%Y"),
   species = NULL,
   colony = NULL,
+  location = NULL,
   age_deployment = "A",
   project = NULL,
   exclude_embargoed = TRUE,
   session_ID = NULL,
+  lme_area = NULL,
+  polygons = NULL,
+  logger_types = NULL,
+  has_pos = NULL,
   export = TRUE,
   output_dir = NULL,
   additional_notes = "",
@@ -48,9 +53,9 @@ data_request(
 
   A character vector specifying the types of data to include in the
   request. Possible values are "GLS_positional_data",
-  "IRMA_positional_data", "individual_data", "light", "temperature",
-  "activity", "population_maps" and "logger_info". Defaults to all
-  types.
+  "GPS-GSM_positional_data" "IRMA_positional_data", "individual_data",
+  "light", "temperature", "activity", "population_maps" and
+  "logger_info". Defaults to all types.
 
 - start_year:
 

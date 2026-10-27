@@ -69,7 +69,7 @@
 <p>First, load the field planning excel file</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">field_plan_path</span> <span class="op">&lt;-</span> <span class="st">"fieldplanning2025_fieldsuksess.xlsx"</span></span>
-<span><span class="va">field_plan_sheet</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_field_plan.html">get_field_plan</a></span><span class="op">(</span><span class="va">field_plan_path</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">field_plan_sheet</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_field_plan_sheet.html">load_field_plan_sheet</a></span><span class="op">(</span><span class="va">field_plan_path</span><span class="op">)</span></span></code></pre></div>
 <p>Check locations against the database, appending a lattitude and
 longitude. For locations not yet present in the database, a simple
 dataframe of name and lattitude can be provided.</p>
