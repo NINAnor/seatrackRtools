@@ -274,7 +274,11 @@ gls_prepare_folder_upload <- function(gls_directory_path = file.path(the$sea_tra
 #' @concept gls_helper
 gls_prepare_file_upload <- function(gls_file_path) {
     gls_pos_data <- read.csv(gls_file_path)
-    db_info <- seatrackR::getSessionInfo(posdata_filename = tools::file_path_sans_ext(gls_pos_data$raw_data_file[1]), has_pos_data = FALSE)
+    archive_table <- dplyr::tbl(con, dbplyr::in_schema("loggers", "file_archive"))
+    file_name_only <- gls_pos_data$raw_data_file[1]
+    session_id <- dplyr::filter(archive_table, filename == file_name_only) %>% pull(session_id)
+
+    db_info <- seatrackR::getSessionInfo(session_id = session_id, has_positions = FALSE)
     if (nrow(db_info) == 0) {
         log_warn("No session information without pos data found for file: ", basename(gls_file_path), ". Skipping this file.")
         return(NULL)
