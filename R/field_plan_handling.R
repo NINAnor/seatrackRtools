@@ -22,15 +22,16 @@ get_field_plan_path <- function(field_plan_path = file.path(the$sea_track_folder
 #' @param field_plan_path The file path to the field plan Excel sheet. Default is "Admin/Fieldplanning" within the SEATRACK folder.
 #' @param field_year The year for which to load the field plan (default is the current year)
 #' @param return_df A logical value indicating whether to return a data frame (TRUE) or the workbook object (FALSE). Default is TRUE.
+#' @param check_colony A logical value indicating whether to check for colonies in the database (TRUE) or not (FALSE). Default is TRUE.
 #' @return A data frame containing the processed field plan data
 #' @concept field_planning
 #' @export
-load_field_plan_sheet <- function(field_plan_path = file.path(the$sea_track_folder, "Admin/Fieldplanning"), field_year = c(as.numeric(format(Sys.Date(), "%Y"))), return_df = TRUE) {
+load_field_plan_sheet <- function(field_plan_path = file.path(the$sea_track_folder, "Admin/Fieldplanning"), field_year = c(as.numeric(format(Sys.Date(), "%Y"))), return_df = TRUE, check_colony = TRUE) {
     full_field_plan_path <- get_field_plan_path(field_plan_path, field_year)
 
     field_plan_wb <- openxlsx2::wb_load(full_field_plan_path)
     if (return_df) {
-        return(get_field_plan_df(field_plan_wb))
+        return(get_field_plan_df(field_plan_wb, check_colony = check_colony))
     } else {
         return(field_plan_wb)
     }
@@ -68,6 +69,7 @@ load_clean_field_plan <- function(field_plan_path = file.path(the$sea_track_fold
 #' This function reads a field plan Excel sheet and processes the data to ensure it is in the correct format. It performs a few basic checks and transformations, including converting certain columns to numeric, removing strings in brackets from colony names, combining duplicate locations/species, and checking locations against the SEATRACK database.
 #' A database connection is required to check the locations against the SEATRACK database.
 #' @param field_plan_wb The workbook object of the field plan Excel sheet
+#' @param check_colony A logical value indicating whether to stop execution if a colony is not found in the database (TRUE) or to log a warning and continue (FALSE). Default is TRUE.
 #' @return A data frame containing the processed field plan data
 #' @examples
 #' \dontrun{
@@ -75,31 +77,32 @@ load_clean_field_plan <- function(field_plan_path = file.path(the$sea_track_fold
 #' }
 #' @export
 #' @concept field_planning
-get_field_plan_df <- function(field_plan_wb = NULL) {
+get_field_plan_df <- function(field_plan_wb = NULL, check_colony = TRUE) {
     field_plan_sheet <- openxlsx2::wb_to_df(field_plan_wb, sheet = "Main", na.strings = c("", "?"))
     field_plan_sheet <- field_plan_sheet[, !is.na(colnames(field_plan_sheet))]
+    names(field_plan_sheet) <- tolower(names(field_plan_sheet))
 
-    field_plan_sheet$`Ocean area` <- as.character(field_plan_sheet$`Ocean area`)
-    field_plan_sheet <- field_plan_sheet[!is.na(field_plan_sheet$Colony) & !is.na(field_plan_sheet$`Ocean area`), ]
+    field_plan_sheet$`ocean area` <- as.character(field_plan_sheet$`ocean area`)
+    field_plan_sheet <- field_plan_sheet[!is.na(field_plan_sheet$colony) & !is.na(field_plan_sheet$`ocean area`), ]
 
     # Force some columns to be numeric
     suppressWarnings({
-        field_plan_sheet$`GLS deployments` <- as.numeric(field_plan_sheet$`GLS deployments`)
-        field_plan_sheet$`GLS retrievals` <- as.numeric(field_plan_sheet$`GLS retrievals`)
+        field_plan_sheet$`GLS deployments` <- as.numeric(field_plan_sheet$`gls deployments`)
+        field_plan_sheet$`GLS retrievals` <- as.numeric(field_plan_sheet$`gls retrievals`)
     })
 
     # remove any strings in brackets from the colony name e.g "\u00C5gotnes (instead of Lyngøy)"" becomes "\u00C5gotnes"
-    field_plan_sheet$Colony <- gsub(" \\(.*\\)", "", field_plan_sheet$Colony)
+    field_plan_sheet$colony <- gsub(" \\(.*\\)", "", field_plan_sheet$colony)
 
     # Combine duplicate locations/species e.g. Herring gulls instrumented at two sites in Nord-Troms, and assigned two rows in the planning sheet get combined into one.
     field_plan_sheet <- field_plan_combine_locations(field_plan_sheet)
 
     log_info("Checking field plan locations...")
-    field_plan_sheet <- field_plan_check_locations(field_plan_sheet)
+    field_plan_sheet <- field_plan_check_locations(field_plan_sheet, check_colony = check_colony)
 
 
-    if (!"GPS assigned" %in% names(field_plan_sheet)) {
-        field_plan_sheet$`GPS assigned` <- 0
+    if (!"gps assigned" %in% names(field_plan_sheet)) {
+        field_plan_sheet$`gps assigned` <- 0
     }
 
     return(field_plan_sheet)
@@ -119,7 +122,7 @@ get_field_plan_df <- function(field_plan_wb = NULL) {
 #' @concept field_planning
 field_plan_combine_locations <- function(field_plan_sheet) {
     # Aggregate locations with the same colony name, species and age together (sum all numeric variables)
-    colony_species <- group_by(field_plan_sheet, Colony, Species, Age)
+    colony_species <- group_by(field_plan_sheet, colony, species, age)
     colony_species_summary <- summarise(colony_species, across(
         where(is.numeric),
         function(x) {
@@ -131,7 +134,7 @@ field_plan_combine_locations <- function(field_plan_sheet) {
         }
     ), .groups = "drop")
 
-    new_field_plan_sheet <- left_join(colony_species_summary, field_plan_sheet, suffix = c("", "._x_"), by = c("Colony", "Species", "Age"), multiple = "first")
+    new_field_plan_sheet <- left_join(colony_species_summary, field_plan_sheet, suffix = c("", "._x_"), by = c("colony", "species", "age"), multiple = "first")
     new_field_plan_sheet <- select(new_field_plan_sheet, -ends_with("._x_"))
     new_field_plan_sheet <- new_field_plan_sheet[, names(field_plan_sheet)]
     return(new_field_plan_sheet)
@@ -142,6 +145,7 @@ field_plan_combine_locations <- function(field_plan_sheet) {
 #' This function checks the locations in the field plan sheet against the SEATRACK database table of colonies, updates the sheet with new locations if provided,
 #' calculates the distance of each ocean area from Trondheim, and orders the ocean areas by latitude and distance from Trondheim.
 #' @param field_plan_sheet A data frame containing the field plan data
+#' @param check_colony A logical value indicating whether to stop execution if a colony is not found in the database (TRUE) or to log a warning and continue (FALSE). Default is TRUE.
 #' @return A data frame with updated and ordered locations
 #' @examples
 #' \dontrun{
@@ -152,35 +156,48 @@ field_plan_combine_locations <- function(field_plan_sheet) {
 #' }
 #' @export
 #' @concept field_planning
-field_plan_check_locations <- function(field_plan_sheet) {
+field_plan_check_locations <- function(field_plan_sheet, check_colony = TRUE) {
     # Check if there is a seatrack DB data connection
     seatrackR:::checkCon()
     colonies <- dplyr::tbl(con, dbplyr::in_schema("metadata", "colony_details")) %>% collect()
-    new_colony <- fix_colony(field_plan_sheet$Colony, TRUE)
+    new_colony <- fix_colony(field_plan_sheet$colony, TRUE)
     if (any(is.na(new_colony))) {
-        problem_colony <- paste(unique(field_plan_sheet$Colony[is.na(new_colony)]), collapse = ", ")
-        stop(glue::glue("The following colonies are not in the database: {problem_colony}"))
+        problem_colony <- paste(unique(field_plan_sheet$colony[is.na(new_colony)]), collapse = ", ")
+        error_string <- glue::glue("The following colonies are not in the database: {problem_colony}")
+        if (check_colony) {
+            stop(error_string)
+        } else {
+            log_warn(error_string)
+        }
     }
-    field_plan_sheet$Colony <- new_colony
+    
+    field_plan_sheet$colony[!is.na(new_colony)] <- new_colony[!is.na(new_colony)]
 
-    if (any(is.na(field_plan_sheet$`Ocean area`))) {
+    if (any(is.na(field_plan_sheet$`ocean area`))) {
         # First double check this colony doesn't appear elsewhere
-        with_lme <- dplyr::filter(field_plan_sheet, !is.na(`Ocean area`)) %>%
-            dplyr::select(Colony, "Ocean area") %>%
+        with_lme <- dplyr::filter(field_plan_sheet, !is.na(`ocean area`)) %>%
+            dplyr::select(Colony, "ocean area") %>%
             dplyr::distinct()
-        field_plan_sheet$`Ocean area`[is.na(field_plan_sheet$`Ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(`Ocean area`)), with_lme, by = "Colony", multiple = "first")$`Ocean area.y`
+        field_plan_sheet$`ocean area`[is.na(field_plan_sheet$`ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(`ocean area`)), with_lme, by = "colony", multiple = "first")$`ocean area.y`
 
         # Otherwise take lme from the database
 
-        field_plan_sheet$`Ocean area`[is.na(field_plan_sheet$`Ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(`Ocean area`)), colonies, by = dplyr::join_by(Colony == colony_int_name))$`lme_name`
+        field_plan_sheet$`ocean area`[is.na(field_plan_sheet$`ocean area`)] <- dplyr::left_join(dplyr::filter(field_plan_sheet, is.na(`ocean area`)), colonies, by = dplyr::join_by(colony == colony_int_name))$`lme_name`
     }
 
-    field_plan_sheet <- dplyr::left_join(field_plan_sheet, select(colonies, colony_int_name, lat, lon), by = dplyr::join_by(Colony == colony_int_name))
+    field_plan_sheet <- dplyr::left_join(field_plan_sheet, select(colonies, colony_int_name, lat, lon), by = dplyr::join_by(colony == colony_int_name))
 
 
     if (any(is.na(field_plan_sheet$lat) | is.na(field_plan_sheet$lon))) {
-        problem_colony <- paste(unique(field_plan_sheet$Colony[is.na(field_plan_sheet$lat)]), collapse = ", ")
-        stop(glue::glue("The following colonies are missing latitutdes: {problem_colony}"))
+        problem_colony <- paste(unique(field_plan_sheet$colony[is.na(field_plan_sheet$lat)]), collapse = ", ")
+        error_string <- glue::glue("The following colonies are missing latitutdes: {problem_colony}")
+        if (check_colony) {
+            stop(error_string)
+        } else {
+            log_warn(error_string)
+            field_plan_sheet$lat[is.na(field_plan_sheet$lat)] <- 0
+            field_plan_sheet$lon[is.na(field_plan_sheet$lon)] <- 0
+        }
     }
 
     # calculate distance of each ocean area from Trondheim (the center of the world)
@@ -192,7 +209,7 @@ field_plan_check_locations <- function(field_plan_sheet) {
     })
 
     # Get average latitude and longitude of each ocean area
-    ocean_area_coords <- group_by(field_plan_sheet_ocean, `Ocean area`)
+    ocean_area_coords <- group_by(field_plan_sheet_ocean, `ocean area`)
     ocean_area_coords <- slice_min(ocean_area_coords, order_by = distance_from_trondheim)
     ocean_area_coords <- summarise(ocean_area_coords,
         lat = mean(lat),
@@ -204,9 +221,9 @@ field_plan_check_locations <- function(field_plan_sheet) {
     # Order the ocean areas by distance latitude and distance from Trondheim
     ocean_area_coords <- arrange(ocean_area_coords, desc(lat), distance_from_trondheim)
 
-    field_plan_sheet$`Ocean area` <- factor(field_plan_sheet$`Ocean area`, levels = ocean_area_coords$`Ocean area`)
+    field_plan_sheet$`ocean area` <- factor(field_plan_sheet$`ocean area`, levels = ocean_area_coords$`ocean area`)
 
-    field_plan_sheet <- arrange(field_plan_sheet, `Ocean area`, desc(lat))
+    field_plan_sheet <- arrange(field_plan_sheet, `ocean area`, desc(lat))
 
     return(field_plan_sheet)
 }
