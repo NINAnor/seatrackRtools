@@ -4,10 +4,12 @@
 \alias{get_field_plan_df}
 \title{Read and process a field plan Excel sheet}
 \usage{
-get_field_plan_df(field_plan_wb = NULL)
+get_field_plan_df(field_plan_wb = NULL, check_colony = TRUE)
 }
 \arguments{
 \item{field_plan_wb}{The workbook object of the field plan Excel sheet}
+
+\item{check_colony}{A logical value indicating whether to stop execution if a colony is not found in the database (TRUE) or to log a warning and continue (FALSE). Default is TRUE.}
 }
 \value{
 A data frame containing the processed field plan data

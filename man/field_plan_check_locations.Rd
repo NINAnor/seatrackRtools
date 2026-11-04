@@ -4,10 +4,12 @@
 \alias{field_plan_check_locations}
 \title{Check and update locations in the field plan sheet}
 \usage{
-field_plan_check_locations(field_plan_sheet)
+field_plan_check_locations(field_plan_sheet, check_colony = TRUE)
 }
 \arguments{
 \item{field_plan_sheet}{A data frame containing the field plan data}
+
+\item{check_colony}{A logical value indicating whether to stop execution if a colony is not found in the database (TRUE) or to log a warning and continue (FALSE). Default is TRUE.}
 }
 \value{
 A data frame with updated and ordered locations
