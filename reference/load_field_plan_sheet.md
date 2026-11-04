@@ -10,7 +10,8 @@ processed field plan data; otherwise, it returns the workbook object.
 load_field_plan_sheet(
   field_plan_path = file.path(the$sea_track_folder, "Admin/Fieldplanning"),
   field_year = c(as.numeric(format(Sys.Date(), "%Y"))),
-  return_df = TRUE
+  return_df = TRUE,
+  check_colony = TRUE
 )
 ```
 
@@ -30,6 +31,11 @@ load_field_plan_sheet(
 
   A logical value indicating whether to return a data frame (TRUE) or
   the workbook object (FALSE). Default is TRUE.
+
+- check_colony:
+
+  A logical value indicating whether to check for colonies in the
+  database (TRUE) or not (FALSE). Default is TRUE.
 
 ## Value
 

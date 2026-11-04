@@ -47,7 +47,7 @@ A database connection is required to check the locations against the SEATRACK da
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_field_plan_df</span><span class="op">(</span>field_plan_wb <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_field_plan_df</span><span class="op">(</span>field_plan_wb <span class="op">=</span> <span class="cn">NULL</span>, check_colony <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -56,6 +56,10 @@ A database connection is required to check the locations against the SEATRACK da
 
 <dl><dt id="arg-field-plan-wb">field_plan_wb<a class="anchor" aria-label="anchor" href="#arg-field-plan-wb"></a></dt>
 <dd><p>The workbook object of the field plan Excel sheet</p></dd>
+
+
+<dt id="arg-check-colony">check_colony<a class="anchor" aria-label="anchor" href="#arg-check-colony"></a></dt>
+<dd><p>A logical value indicating whether to stop execution if a colony is not found in the database (TRUE) or to log a warning and continue (FALSE). Default is TRUE.</p></dd>
 
 </dl></div>
     <div class="section level2">

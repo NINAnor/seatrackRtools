@@ -256,6 +256,8 @@ Functions to load and handle data from the field planning sheet
   : Check and update locations in the field plan sheet
 - [`field_plan_combine_locations()`](https://ninanor.github.io/seatrackRtools/reference/field_plan_combine_locations.md)
   : Combine duplicate locations/species in the field plan sheet
+- [`generate_fieldplan_templates()`](https://ninanor.github.io/seatrackRtools/reference/generate_fieldplan_templates.md)
+  : Generate field plan email templates
 - [`generate_next_field_plan()`](https://ninanor.github.io/seatrackRtools/reference/generate_next_field_plan.md)
   : Generate the next year's field plan based on the current year's
   field plan sheet.

@@ -11,7 +11,7 @@ SEATRACK database.
 ## Usage
 
 ``` r
-get_field_plan_df(field_plan_wb = NULL)
+get_field_plan_df(field_plan_wb = NULL, check_colony = TRUE)
 ```
 
 ## Arguments
@@ -19,6 +19,12 @@ get_field_plan_df(field_plan_wb = NULL)
 - field_plan_wb:
 
   The workbook object of the field plan Excel sheet
+
+- check_colony:
+
+  A logical value indicating whether to stop execution if a colony is
+  not found in the database (TRUE) or to log a warning and continue
+  (FALSE). Default is TRUE.
 
 ## Value
 

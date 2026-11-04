@@ -9,7 +9,7 @@ Trondheim.
 ## Usage
 
 ``` r
-field_plan_check_locations(field_plan_sheet)
+field_plan_check_locations(field_plan_sheet, check_colony = TRUE)
 ```
 
 ## Arguments
@@ -17,6 +17,12 @@ field_plan_check_locations(field_plan_sheet)
 - field_plan_sheet:
 
   A data frame containing the field plan data
+
+- check_colony:
+
+  A logical value indicating whether to stop execution if a colony is
+  not found in the database (TRUE) or to log a warning and continue
+  (FALSE). Default is TRUE.
 
 ## Value
 
