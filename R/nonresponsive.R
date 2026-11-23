@@ -80,14 +80,16 @@ load_nonresponsive <- function(file_paths, manufacturers) {
 #' @return Updated list of nonresponsive logger sheets
 #' @concept nonresponsive
 #' @export
-nonresponsive_from_master <- function(all_metadata_combined, nonresponsive_list, start_date = NULL, end_date = Inf) {
+nonresponsive_from_master <- function(all_metadata_combined, nonresponsive_list = list(), start_date = NULL, end_date = Inf) {
     if (is.null(start_date)) {
         start_date <- format(Sys.Date(), "%Y-01-01")
     }
 
-    nonresponsive_rows <- all_metadata_combined$STARTUP_SHUTDOWN[!is.na(all_metadata_combined$STARTUP_SHUTDOWN$download_date) &
+    nonresponsive_rows <- all_metadata_combined$STARTUP_SHUTDOWN[
+        !is.na(all_metadata_combined$STARTUP_SHUTDOWN$download_date) &
         all_metadata_combined$STARTUP_SHUTDOWN$download_date >= as.Date(start_date) &
-        all_metadata_combined$STARTUP_SHUTDOWN$download_date <= as.Date(end_date), ]
+        all_metadata_combined$STARTUP_SHUTDOWN$download_date <= as.Date(end_date) &
+        all_metadata_combined$STARTUP_SHUTDOWN$download_type %in% c("Failed", "Nonresponsive", "Error"), ]
 
     nonresponsive_rows$producer_2 <- tolower(nonresponsive_rows$producer)
     # biotrack loggers should go in the lotek sheet
@@ -103,11 +105,13 @@ nonresponsive_from_master <- function(all_metadata_combined, nonresponsive_list,
         new_nonresponsive <- tibble(
             logger_serial_no = nonresponsive_for_manufacturer$logger_serial_no,
             logger_model = nonresponsive_for_manufacturer$logger_model,
+            sent = NA,
+            priority = NA,
             producer = nonresponsive_for_manufacturer$producer,
             production_year = nonresponsive_for_manufacturer$production_year,
             project = nonresponsive_for_manufacturer$project,
             starttime_gmt = nonresponsive_for_manufacturer$starttime_gmt,
-            download_type = "Nonresponsive",
+            download_type = nonresponsive_for_manufacturer$download_type,
             download_date = nonresponsive_for_manufacturer$download_date,
             comment = nonresponsive_for_manufacturer$comment,
             intended_species = nonresponsive_for_manufacturer$intended_species,
@@ -115,8 +119,7 @@ nonresponsive_from_master <- function(all_metadata_combined, nonresponsive_list,
             logging_mode = nonresponsive_for_manufacturer$logging_mode,
             days_delayed = nonresponsive_for_manufacturer$days_delayed,
             programmed_gmt_time = nonresponsive_for_manufacturer$programmed_gmt_time,
-            priority = NA,
-            sent = NA
+
         )
         nonresponsive_list <- append_to_nonresponsive(nonresponsive_list, new_nonresponsive, manufacturer)
     }

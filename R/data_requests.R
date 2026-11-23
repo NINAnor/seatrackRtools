@@ -375,11 +375,10 @@ data_request <- function(
     has_pos = NULL,
     export = TRUE,
     output_dir = NULL,
-    additional_notes = "", 
-    additional_data_files = list(), 
-    additional_files = list(), 
+    additional_notes = "",
+    additional_data_files = list(),
+    additional_files = list(),
     additional_data = list()) {
-
     start_date <- as.Date(paste0(start_year, "-01-01"))
     end_date <- as.Date(paste0(end_year, "-12-31")) + 1
     all_data <- list()

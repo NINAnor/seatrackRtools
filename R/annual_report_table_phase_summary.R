@@ -53,7 +53,7 @@ phase_summary_table <- function(
 
 
     phase_summaries <- lapply(phases, function(current_phase) {
-        phase_summary <- lapply(current_phase, function(target_year) {
+        phase_summary <- lapply(current_phase[current_phase != field_year], function(target_year) {
             target_field_plan <- filtered_field_plan[[which(names(filtered_field_plan) == target_year)]]
             current_species <- filter_species_intro_year(target_year)
             target_field_plan <- target_field_plan[target_field_plan$Species %in% current_species, ]

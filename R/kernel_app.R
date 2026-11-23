@@ -13,7 +13,8 @@ get_web_kernel_data <- function(seapop_paths = NULL, combine_species = TRUE, out
         seapop_table <- dplyr::select(seapop_colonies, species, colony) %>%
             dplyr::filter(!colony == "All_colonies") %>%
             distinct()
-        selected_species <- unique(seapop_table$species)
+        # selected_species <- unique(seapop_table$species) # Don't subset by species.
+        selected_species <- seatrackR::getSpecies()$species_name_eng
 
         db_seapop_table <- dplyr::tbl(con, dbplyr::in_schema("metadata", "seapop_species_colony")) %>% collect()
 
@@ -60,10 +61,10 @@ get_web_kernel_data <- function(seapop_paths = NULL, combine_species = TRUE, out
                 output_folder = output_folder
             )
             if (combine_species) {
-                if(nrow(species_kernel_result$all_kernels)>0){
+                if (nrow(species_kernel_result$all_kernels) > 0) {
                     all_kernel_df <- rbind(all_kernel_df, species_kernel_result$all_kernels)
                 }
-                if(nrow(species_kernel_result$all_colonies)>0){
+                if (nrow(species_kernel_result$all_colonies) > 0) {
                     all_colony_df <- rbind(all_colony_df, species_kernel_result$all_colonies)
                 }
 
@@ -113,7 +114,6 @@ get_kernel <- function(
     dat$location <- dat$colony
     dat <- dplyr::left_join(dat, dplyr::select(locations, location_name, colony_int_name), by = dplyr::join_by(colony == location_name))
     dat$colony <- dat$colony_int_name
-    dat$colony_int_name <- NULL
 
     # if seapop, switch location out for seapop colony
     if (!is.null(seapop_data)) {
@@ -211,7 +211,7 @@ get_kernel <- function(
     for (k in seq_along(kids)) {
         tryCatch(
             {
-                log_info("Callculating kernel ", k, " of ", length(kids))
+                log_info("Calculating kernel ", k, " of ", length(kids))
                 kid <- kids[k]
 
                 sp_dat_sub <- sp_dat[sp_dat$kernel_id == kid, ]
@@ -406,21 +406,32 @@ get_kernel <- function(
 
     # Replace kernels with colony locations
     all_colonies <- sf::st_drop_geometry(all_kernels)
-    all_colonies <- dplyr::left_join(all_colonies, select(colonies, colony_int_name, geometry), by = dplyr::join_by(colony == colony_int_name))
+    # drop density
+    all_colonies <- dplyr::distinct(all_colonies, species, season, colony, period, project, technology, colonies)
+    # rename column
+    all_colonies$colony_int_name <- all_colonies$colony
+    all_colonies$id <- paste(all_colonies$species, all_colonies$season, all_colonies$colony, all_colonies$period)
+    all_colonies <- dplyr::left_join(all_colonies, select(colonies, colony_int_name, geometry), by = dplyr::join_by(colony == colony_int_name), relationship = "many-to-many")
     all_colonies <- sf::st_as_sf(all_colonies)
 
     all_colony_selection <- all_colonies[all_colonies$colony == "All_colonies", ]
+    all_colonies <- all_colonies[all_colonies$colony != "All_colonies", ]
+
     for (i in seq_len(nrow(all_colony_selection))) {
         missing_colony_row <- all_colony_selection[i, ]
-        current_colony_points <- dplyr::semi_join(all_colonies[!all_colonies$colony == "All_colonies", ], sf::st_drop_geometry(missing_colony_row), by = join_by("kernel_density", "species", "season", "period")) %>% dplyr::distinct()
-
-        sf::st_geometry(all_colonies)[all_colonies$kernel_density == missing_colony_row$kernel_density &
-            all_colonies$species == missing_colony_row$species &
-            all_colonies$season == missing_colony_row$season &
-            all_colonies$period == missing_colony_row$period &
-            all_colonies$colony == "All_colonies"] <-
-            sf::st_union(current_colony_points$geometry)
+        current_colony_points <- dplyr::semi_join(all_colonies[!all_colonies$colony == "All_colonies", ], sf::st_drop_geometry(missing_colony_row), by = join_by("species", "season", "period")) %>% dplyr::distinct()
+        current_colony_points$colony <- "All_colonies" # workaround
+        current_colony_points$colonies <- nrow(current_colony_points) # workaround
+        all_colonies <- rbind(all_colonies, current_colony_points) # workaround
+        # workaround
+        # sf::st_geometry(all_colonies)[
+        #     all_colonies$species == missing_colony_row$species &
+        #     all_colonies$season == missing_colony_row$season &
+        #     all_colonies$period == missing_colony_row$period &
+        #     all_colonies$colony == "All_colonies"] <-
+        #     sf::st_union(current_colony_points$geometry)
     }
+
 
     all_kernels <- sf::st_transform(all_kernels, 3857)
     all_colonies <- sf::st_transform(all_colonies, 3857)
