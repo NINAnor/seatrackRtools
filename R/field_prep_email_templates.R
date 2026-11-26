@@ -104,8 +104,8 @@ generate_fieldplan_templates <- function(
                 function(current_address) {
                     if (length(address) > 1) {
                         address_rows <- responsible_rows[responsible_rows$address == current_address, ]
-                        combined_identifier <- paste(address_rows$colony, address_rows$species, ifelse(address_rows$age == "A", "adults", "juveniles"))
-                        pre_address_string <- paste0(paste(combined_identifier, collapse = ", "), ":")
+                        combined_identifier <- paste0("<b>", address_rows$colony, " ", address_rows$species, " ", ifelse(address_rows$age == "A", "adults", "juveniles"), "</b>")
+                        pre_address_string <- paste0(paste(combined_identifier, collapse = ", "), ": ")
                     } else {
                         pre_address_string <- ""
                     }
@@ -162,7 +162,7 @@ generate_fieldplan_templates <- function(
                 Colour = `colour outer`,
                 Overlap = overlap,
                 `Height (mm)` = round(as.numeric(`height (mm)`), 2),
-                `Inner diameter(s) (mm)` = round(as.numeric(`inner diameter(s) (mm)`), 2),
+                `Inner diameter(s) (mm)` = ifelse(grepl("x", `inner diameter(s) (mm)`), `inner diameter(s) (mm)`, round(as.numeric(`inner diameter(s) (mm)`), 2)),
                 `Cable tie slot` = ifelse(!is.na(`cable tie slot`) & tolower(`cable tie slot`) == "yes", "Yes", "No"),
                 `Mounting holes diameter (mm)` = round(as.numeric(`mounting holes diameter (mm)`), 2),
                 `Mounting holes dist. apart (mm)` = round(as.numeric(`mounting holes apart (mm)`), ),
@@ -297,13 +297,13 @@ generate_fieldplan_templates <- function(
         }
 
         if (lsp_deployments) {
-            lsp_delivery_string <- glue::glue("<li>Leach's storm petrel loggers have very small batteries It is best to deploy them as soon as possible after we have started the loggers. What is the latest date that would be possible for delivery of these loggers?</li>")
+            lsp_delivery_string <- glue::glue("<li>Leach's storm petrel loggers have very small batteries. It is best to deploy them as soon as possible after we have started the loggers. <b>What is the latest date that would be possible for delivery of these loggers?</b></li>")
         } else {
             lsp_delivery_string <- ""
         }
 
         if (arte_deployments) {
-            arte_delivery_string <- glue::glue("<li>Leach's storm petrel loggers have very small batteries It is best to deploy them as soon as possible after we have started the loggers. What is the latest date that would be possible for delivery of these loggers?</li>")
+            arte_delivery_string <- glue::glue("<li>Leach's storm petrel loggers have very small batteries. It is best to deploy them as soon as possible after we have started the loggers. <b>What is the latest date that would be possible for delivery of these loggers?</b></li>")
         } else {
             arte_delivery_string <- ""
         }
@@ -333,7 +333,7 @@ generate_fieldplan_templates <- function(
         if (need_data || need_metadata || has_metadata_comment) {
             request_strings <- c(
                 ifelse(need_data, paste("your downloaded", field_year - 1, "logger data"), NA),
-                metadata_string <- ifelse(need_metadata, paste("your", field_year - 1, "metadata"), NA)
+                ifelse(need_metadata, paste("your", field_year - 1, "metadata"), NA)
             )
             if (any(!is.na(request_strings))) {
                 request_string <- paste(request_strings[!is.na(request_strings)], collapse = " and ")
@@ -356,12 +356,15 @@ generate_fieldplan_templates <- function(
             ")
         }
 
+        contact <- responsible_rows[["who's contacting"]][1]
+        contact_first_name <- strsplit(contact, " ", fixed = TRUE)[[1]][1]
+
         email_string <- glue::glue("
             {email_string}
             <p><span>
             Thank you and best regards
             </span></p>
-            <p>Julian</p>
+            <p>{contact_first_name}</p>
 
         ")
         arte_string <- ifelse(arte_deployments, arte_responsible, "")
@@ -369,7 +372,7 @@ generate_fieldplan_templates <- function(
         gps_gsm_string <- ifelse(has_gps_gsm, gps_gsm_responsible, "")
         cc_string <- ifelse(arte_deployments | has_gps_gsm, glue::glue(" cc {paste(unique(c(arte_string, lsp_string, gps_gsm_string)), collapse = ' ')}"), "")
 
-        contact <- responsible_rows[1, c("who's contacting")][1]
+
 
         full_template_dir <- file.path(template_dir, save_format, contact)
 
